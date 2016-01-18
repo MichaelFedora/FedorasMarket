@@ -1,0 +1,23 @@
+apply plugin: 'java'
+
+version = '0.1'
+group = 'io.github.michaelfedora'
+
+jar {
+    manifest {
+        attributes  'Implementation-Title': 'FedorasChestShop',
+                    'Implementation-Version': version
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'sponge'
+        url = 'http://repo.spongepowered.org/maven'
+    }
+}
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:3.1.0-SNAPSHOT'
+}
