@@ -1,5 +1,9 @@
 package io.github.michaelfedora.fedoraschestshop.shop;
 
+import io.github.michaelfedora.fedoraschestshop.data.shop.EconShopData;
+import io.github.michaelfedora.fedoraschestshop.data.shop.TradeShopData;
+import io.github.michaelfedora.fedoraschestshop.shop.data.ShopData;
+import io.github.michaelfedora.fedoraschestshop.shop.transaction.ShopTransaction;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
@@ -17,60 +21,20 @@ import java.util.Optional;
  */
 public class Shop {
 
+    //TODO: LATER: Add Admin Shop
+    /*public enum Stance {
+        CHEST,
+        ADMIN
+    }*/
+
     public enum Type {
         ECON,
         TRADE
-    };
-
-    public enum Op {
-        BUY,
-        SELL
-    }
-
-    public class EconTransactionData {
-        public Op op;
-        public int amt;
-        public int price;
-
-        public EconTransactionData(Op op, int amt, int price) {
-            this.op = op;
-            this.amt = amt;
-            this.price = price;
-        }
-    }
-
-    public class EconData {
-        public String itemName;
-        public EconTransactionData tData[] = new EconTransactionData[2];
-
-        public EconData(String itemName, EconTransactionData td[]) {
-            this.itemName = itemName;
-            this.tData[0] = td[0];
-            this.tData[1] = td[1];
-        }
-
-        public EconData(String itemName, Op op[], int amt[], int price[]) {
-            this.itemName = itemName;
-            this.tData[0] = new EconTransactionData(op[0], amt[0], price[0]);
-            this.tData[1] = new EconTransactionData(op[1], amt[1], price[1]);
-        }
-    }
-
-    public class TradeData {
-        public String itemName[] = new String[2];
-        public int amt[] = new int[2];
-
-        public TradeData(String itemName[], int amt[]) {
-            this.itemName[0] = itemName[0];
-            this.itemName[1] = itemName[1];
-            this.amt[0] = amt[0];
-            this.amt[1] = amt[1];
-        }
     }
 
 
     Type type; // econ vs trade?
-    Op op[] = new Op[2]; // used for shop
+    ShopTransaction.Op op[] = new ShopTransaction.Op[2]; // used for shop
     int amt[] = new int[2]; // used for both ratio [trade] & amount [econ].
     int price[] = new int[2]; // used for shop
     String itemName[] = new String[2]; // used for trade (both) and shop (one)
@@ -80,16 +44,19 @@ public class Shop {
     Location<World> loc; // location for reference
 
 
-    public Optional<EconData> getShopData() {
-        if(type == Type.ECON)
-            return Optional.of(new EconData(itemName[0], op, amt, price));
+    public Optional<ShopData> getShopData() {
 
-        return Optional.empty();
-    }
+        switch(type) {
 
-    public Optional<TradeData> getTradeData() {
-        if(type == Type.TRADE)
-            return Optional.of(new TradeData(itemName, amt));
+            case ECON:
+                return Optional.of(ShopData.makeEcon("", itemName[0], op, amt, price));
+
+            case TRADE:
+                return Optional.of(ShopData.makeTrade("", itemName, amt));
+
+            default:
+                return Optional.of(new ShopData("", type, ));
+        }
 
         return Optional.empty();
     }
@@ -101,7 +68,7 @@ public class Shop {
     private static void tryMakeShop(Optional<Shop> opt_shop, Sign sign) {
         Shop shop = new Shop();
 
-        List<String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<String>();
 
         for(Text t : sign.getSignData().lines())
             lines.add(t.toPlain());
@@ -130,10 +97,10 @@ public class Shop {
 
                     switch(s[ia].charAt(0)) {
                         case 'B':
-                            shop.op[ia] = Op.BUY;
+                            shop.op[ia] = ShopTransaction.Op.BUY;
                             break;
                         case 'S':
-                            shop.op[ia] = Op.SELL;
+                            shop.op[ia] = ShopTransaction.Op.SELL;
                     }
 
                     shop.amt[ia] = Integer.getInteger(s[1]);

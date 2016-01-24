@@ -9,6 +9,7 @@ package io.github.michaelfedora.fedoraschestshop;
 
 import com.google.inject.Inject;
 
+import io.github.michaelfedora.fedoraschestshop.shop.transaction.ShopTransaction;
 import io.github.michaelfedora.fedoraschestshop.shop.Shop;
 import org.slf4j.Logger;
 
@@ -198,7 +199,7 @@ public class FedorasChestShop {
 
     private void trySetup(Sign sign, ItemStack is) {
 
-        List<String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<String>();
         {
             List<Text> pages;
             {
@@ -220,8 +221,8 @@ public class FedorasChestShop {
         // then lets do a transaction
         switch(shop.getType()) {
             case ECON:
-                Shop.EconTransactionData etd = shop.getShopData().get().tData[0];
-                switch(etd.op) {
+                ShopTransaction st = shop.getShopData().get().tData[0];
+                switch(st.op) {
                     case BUY:
                         // check to make sure chest has the materials
                         // check to make sure we have the money
