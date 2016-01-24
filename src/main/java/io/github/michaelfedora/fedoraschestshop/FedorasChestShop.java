@@ -9,24 +9,27 @@ package io.github.michaelfedora.fedoraschestshop;
 
 import com.google.inject.Inject;
 
+import io.github.michaelfedora.fedoraschestshop.shop.Shop;
 import org.slf4j.Logger;
 
-import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
-import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
-import org.spongepowered.api.block.trait.BlockTrait;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.value.mutable.ListValue;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.tileentity.ChangeSignEvent;
-import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -44,7 +47,7 @@ public class FedorasChestShop {
         return logger;
     }
 
-    List<String> chestNames = new ArrayList<String>();
+    List<String> chestNames = new ArrayList<>();
 
     @Listener
     public void onServerInit(GameStartedServerEvent event) {
@@ -57,26 +60,29 @@ public class FedorasChestShop {
         getLogger().info("== Loaded! Enjoy! ==");
     }
 
-    @Listener
-    public void onSignChangeEvent(ChangeSignEvent event) {
-        getLogger().info("Sign Found!");
+    @Listener void onSignChangeevent(ChangeSignEvent event) {
 
-        //ListValue<Text> texts = event.getText().lines(); // get the text
-        Sign sign = event.getTargetTile(); // get our tile
-        //Location<World> location = sign.getLocation(); // get the location
-        BlockState sign_bs = sign.getBlock(); // get north/south/east/west
+    }
 
-        //getLogger().info("Texts: " + texts);
-        //getLogger().info("Sign: " + sign);
-        //getLogger().info("Location: " + location);
-        getLogger().info("BlockState: " + sign_bs);
+    public void setupShop(Sign sign, List<String> lines) {
+        getLogger().info("Setting up shop for sign `" + sign + "`!");
 
-        //FINISHED: Use `blockstate` and `location` to get the anchor-block's loc
-        //FINISHED: Check if anchor-block is chest, if false exit
+        BlockState sign_bs = sign.getBlock();
+
         //TODO: Check if sign text is correct, if false exit
-        //RESOLVED: Double chest - check, to make sure we won't sell more than
-        //          one thing out of one chest? IS THIS NECESSARY? - I think not :3
-        //FINISHED: Use both Trapped Chests and Standard Chest
+        //TODO: == If both same action (buy/sell), put larger quantity on top
+        //TODO: == If different actions, put sell on bottom (primary)
+        //TODO: == Register a shop by placing a book with parameters inside the chest, and then a sign outside with [FCS-Register]
+        //TODO: == == Book Shop Params: item ; buy/sell:amount:price ; buy/sell:amount:price
+        //TODO: == == Book Trade Params: take_item ; give_item ; take:give ratio
+        //== == == == i.e.: minecraft:trapped_chest ; buy:1:10 ; sell:1:25 ;
+        //== == == == i.e.: minecraft:iron_ingot ; minecraft:gold_nugget ; 1:14
+        //TODO: == == Sign Params: [FedChestShop] ; flags
+        //= == == == flags
+        //TODO: == == Shop-Sign becomes: [FCS][Shop] ; [ScrollingItemName] ; B/S:#:$ /*Secondary*/ ; B/S:#:$ /*Primary*/
+        //== == == == Colors:            Black Bold  ; Black               ; Green/Red ] ; Green/Red [Bold & Dark if Larger Quantity & same op]
+        //TODO: == == Trade-Sign becomes: [FCS][Trade] ; [ScrollingTakeItemName] ; ratio ; [ScrollingGiveItemName]
+        //== == == == Colors:             Purple Bold  ; Dark Red (Bold)         ; red:green ; Dark Green (Bold)
 
         {
             boolean attached;
@@ -136,7 +142,7 @@ public class FedorasChestShop {
                 return;
         }
 
-        getLogger().info("Chest is correct!");
+        getLogger().info("Chest is in the list!");
 
         TileEntity te;
         {
@@ -151,13 +157,190 @@ public class FedorasChestShop {
 
         getLogger().info("Chest is a tile entity carrier!");
 
-        TileEntityCarrier tec = (TileEntityCarrier) te;
-        Inventory inv = tec.getInventory(); // ERROR
-        //AbstractMethodError: Method net/minecraft/tileentity/TileEntityChest.getInventory()Lorg/spongpowered/api/item/inventory/type/TileentityInventory; is abstract
 
-        getLogger().info("Chest Inventory: " + inv);
+        //=== SETTING UP THE SIGN
 
-        //TODO: Fix the get-inventory.. it's not working?
+
+        ListValue<Text> sign_lines = sign.getSignData().lines(); // get the text
+
+
+        Shop.Type shopType;
+        {
+            String s = lines.get(0).toLowerCase();
+            if(s.equals("[shop]"))
+                shopType = Shop.Type.ECON;
+            else if(s.equals("[trade]"))
+                shopType = Shop.Type.TRADE;
+            else {
+                getLogger().warn("Not a correct type: " + lines.get(0));
+                return;
+            }
+        }
+
+        switch(shopType) {
+
+            case ECON:
+                sign_lines.set(0, Text.of(TextColors.BLACK, TextStyles.BOLD, "[FCS]", TextColors.DARK_GRAY, "[Shop]"));
+                break;
+
+            case TRADE:
+                sign_lines.set(0, Text.of(TextColors.BLACK, TextStyles.BOLD, "[FCS]", TextColors.DARK_PURPLE, "[Trade]"));
+                break;
+
+            default:
+                getLogger().error("Unsupported shop type: " + shopType);
+                return;
+        }
+
+        //TileEntityCarrier tec = (TileEntityCarrier) te;
+        //Inventory inv = tec.getInventory(); //TODO: Implement Inventory (once sponge has it)
+    }
+
+    private void trySetup(Sign sign, ItemStack is) {
+
+        List<String> lines = new ArrayList<>();
+        {
+            List<Text> pages;
+            {
+                Optional<List<Text>> opt_pages = is.get(Keys.BOOK_PAGES);
+                if (!opt_pages.isPresent())
+                    return;
+                pages = opt_pages.get();
+            }
+            String page = pages.get(0).toPlain();
+            String[] list = page.split("\n");
+            for (int i = 0; i < list.length; i++)
+                lines.set(i, list[i]);
+        }
+
+        setupShop(sign, lines);
+    }
+
+    private void doTransaction(boolean isSecondary, Shop shop) {
+        // then lets do a transaction
+        switch(shop.getType()) {
+            case ECON:
+                Shop.EconTransactionData etd = shop.getShopData().get().tData[0];
+                switch(etd.op) {
+                    case BUY:
+                        // check to make sure chest has the materials
+                        // check to make sure we have the money
+                        // transfer materials
+                        break;
+
+                    case SELL:
+                        // check to make sure we have the materials
+                        // check to make sure shop-owner has the money
+                        // transfer materials
+                        break;
+
+                    default:
+                        getLogger().error("Something went wrong with getting op's type...");
+                        return;
+                }
+                break;
+
+            case TRADE:
+                // check to make sure player has the materials
+                // check to make sure chest has the materials
+                // do a confirm?? enforce user to be holding the item??
+                // transfer materials
+                break;
+
+            default:
+                getLogger().error("Something went wrong with getting shop's type...");
+                return;
+        }
+    }
+
+    public static Optional<Sign> getSignFromLocation(Location<World> loc) {
+        TileEntity te;
+        {
+            Optional<TileEntity> opt_te = loc.getTileEntity();
+            if(!opt_te.isPresent())
+                return Optional.empty(); //TODO: Add errors to all these optional-returns
+            te = opt_te.get();
+        }
+        if(te instanceof Sign)
+            return Optional.of((Sign) te);
+
+        return Optional.empty();
+    }
+
+    public static Optional<Sign> getSignFromBlockSnapshot(BlockSnapshot bsnap) {
+
+        Optional<Location<World>> opt_loc = bsnap.getLocation();
+        if (opt_loc.isPresent())
+            return getSignFromLocation(opt_loc.get());
+
+        return Optional.empty();
+    }
+
+    @Listener
+    public void onBlockInteractPrimary(InteractBlockEvent.Primary event) {
+
+        BlockSnapshot sign_bsnap = event.getTargetBlock();
+
+        Sign sign;
+        {
+            Optional<Sign> opt_sign = getSignFromBlockSnapshot(sign_bsnap);
+            if(!opt_sign.isPresent())
+                return;
+            sign = opt_sign.get();
+        }
+
+        Shop shop;
+        {
+            Optional<Shop> opt_shop = Shop.make(sign);
+            if (!opt_shop.isPresent())
+                return;
+            shop = opt_shop.get();
+        }
+
+        doTransaction(false, shop);
+    }
+
+    @Listener
+    public void onBlockInteractSecondary(InteractBlockEvent.Secondary event) {
+
+        BlockSnapshot sign_bsnap = event.getTargetBlock();
+        Sign sign;
+        {
+            Optional<Sign> opt_sign = getSignFromBlockSnapshot(sign_bsnap);
+            if(!opt_sign.isPresent())
+                return; //TODO: Add note to these things?
+            sign = opt_sign.get();
+        }
+
+        Player plr;
+        {
+            Optional<Player> opt_plr = event.getCause().first(Player.class);
+            if(!opt_plr.isPresent())
+                return;
+            plr = opt_plr.get();
+        }
+
+
+        {
+            Optional<ItemStack> opt_is = plr.getItemInHand();
+            if (opt_is.isPresent()) {
+                if (opt_is.get().getItem().getName().equals("minecraft:writable_book")) {
+                    trySetup(sign, opt_is.get());
+                    return;
+                }
+            }
+        }
+
+        // if not setting up shop, lets check if the sign is valid in the first place
+        Shop shop;
+        {
+            Optional<Shop> opt_shop = Shop.make(sign);
+            if (!opt_shop.isPresent())
+                return;
+            shop = opt_shop.get();
+        }
+
+        doTransaction(true, shop);
 
     }
 }
