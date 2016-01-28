@@ -9,8 +9,9 @@ package io.github.michaelfedora.fedoraschestshop;
 
 import com.google.inject.Inject;
 
-import io.github.michaelfedora.fedoraschestshop.shop.transaction.ShopTransaction;
 import io.github.michaelfedora.fedoraschestshop.shop.Shop;
+import io.github.michaelfedora.fedoraschestshop.shop.ShopKeys;
+import io.github.michaelfedora.fedoraschestshop.shop.ShopTransaction;
 import org.slf4j.Logger;
 
 import org.spongepowered.api.block.BlockSnapshot;
@@ -23,18 +24,20 @@ import org.spongepowered.api.data.value.mutable.ListValue;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.tileentity.ChangeSignEvent;
+import org.spongepowered.api.event.game.state.GameConstructionEvent;
+import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
+import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
-
+import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,13 +45,30 @@ import java.util.Optional;
 @Plugin(id = "FedorasChestShop", name = "Fedora's Chest Shop", version = "0.1")
 public class FedorasChestShop {
 
+    private static FedorasChestShop instance;
+
     @Inject
     private Logger logger;
-    public Logger getLogger() {
-        return logger;
+    public static Logger getLogger() {
+        return instance.logger;
     }
 
-    List<String> chestNames = new ArrayList<>();
+    private EconomyService economyService;
+    public static EconomyService getEconomyService() { return instance.economyService; }
+
+    @Listener
+    public void onChangeServiceProvider(ChangeServiceProviderEvent event) {
+        if(event.getService().equals(EconomyService.class)) {
+            economyService = (EconomyService) event.getNewProviderRegistration().getProvider();
+        }
+    }
+
+    List<String> chestNames = new ArrayList<String>();
+
+    @Listener
+    void onConstruction(GameConstructionEvent gce) {
+        instance = this;
+    }
 
     @Listener
     public void onServerInit(GameStartedServerEvent event) {
@@ -76,6 +96,8 @@ public class FedorasChestShop {
         //TODO: == Register a shop by placing a book with parameters inside the chest, and then a sign outside with [FCS-Register]
         //TODO: == == Book Shop Params: item ; buy/sell:amount:price ; buy/sell:amount:price
         //TODO: == == Book Trade Params: take_item ; give_item ; take:give ratio
+        //TODO: == == Book Custom Params: { {item, itemAmt}, ... }, { {currency, currencyAmt}, ... };
+        //TODO: == == == page 1 for owner, 2 for customer
         //== == == == i.e.: minecraft:trapped_chest ; buy:1:10 ; sell:1:25 ;
         //== == == == i.e.: minecraft:iron_ingot ; minecraft:gold_nugget ; 1:14
         //TODO: == == Sign Params: [FedChestShop] ; flags
@@ -161,37 +183,7 @@ public class FedorasChestShop {
 
         //=== SETTING UP THE SIGN
 
-
         ListValue<Text> sign_lines = sign.getSignData().lines(); // get the text
-
-
-        Shop.Type shopType;
-        {
-            String s = lines.get(0).toLowerCase();
-            if(s.equals("[shop]"))
-                shopType = Shop.Type.ECON;
-            else if(s.equals("[trade]"))
-                shopType = Shop.Type.TRADE;
-            else {
-                getLogger().warn("Not a correct type: " + lines.get(0));
-                return;
-            }
-        }
-
-        switch(shopType) {
-
-            case ECON:
-                sign_lines.set(0, Text.of(TextColors.BLACK, TextStyles.BOLD, "[FCS]", TextColors.DARK_GRAY, "[Shop]"));
-                break;
-
-            case TRADE:
-                sign_lines.set(0, Text.of(TextColors.BLACK, TextStyles.BOLD, "[FCS]", TextColors.DARK_PURPLE, "[Trade]"));
-                break;
-
-            default:
-                getLogger().error("Unsupported shop type: " + shopType);
-                return;
-        }
 
         //TileEntityCarrier tec = (TileEntityCarrier) te;
         //Inventory inv = tec.getInventory(); //TODO: Implement Inventory (once sponge has it)
@@ -215,43 +207,6 @@ public class FedorasChestShop {
         }
 
         setupShop(sign, lines);
-    }
-
-    private void doTransaction(boolean isSecondary, Shop shop) {
-        // then lets do a transaction
-        switch(shop.getType()) {
-            case ECON:
-                ShopTransaction st = shop.getShopData().get().tData[0];
-                switch(st.op) {
-                    case BUY:
-                        // check to make sure chest has the materials
-                        // check to make sure we have the money
-                        // transfer materials
-                        break;
-
-                    case SELL:
-                        // check to make sure we have the materials
-                        // check to make sure shop-owner has the money
-                        // transfer materials
-                        break;
-
-                    default:
-                        getLogger().error("Something went wrong with getting op's type...");
-                        return;
-                }
-                break;
-
-            case TRADE:
-                // check to make sure player has the materials
-                // check to make sure chest has the materials
-                // do a confirm?? enforce user to be holding the item??
-                // transfer materials
-                break;
-
-            default:
-                getLogger().error("Something went wrong with getting shop's type...");
-                return;
-        }
     }
 
     public static Optional<Sign> getSignFromLocation(Location<World> loc) {
@@ -290,15 +245,24 @@ public class FedorasChestShop {
             sign = opt_sign.get();
         }
 
-        Shop shop;
+        Shop shop = Shop.makeServerShop(   sign, Shop.ShopType.ITEM_BUY, new ShopTransaction(  new ShopTransaction.Party().addItem(ItemTypes.APPLE, 1), new ShopTransaction.Party().addDefaultCurrency( BigDecimal.valueOf(10) )  )   );
+        shop.save();
         {
-            Optional<Shop> opt_shop = Shop.make(sign);
+            Optional<Shop> opt_shop = sign.get(ShopKeys.DATA);
             if (!opt_shop.isPresent())
                 return;
             shop = opt_shop.get();
         }
 
-        doTransaction(false, shop);
+        Player player;
+        {
+            Optional<Player> opt_player = event.getCause().first(Player.class);
+            if(!opt_player.isPresent())
+                return;
+            player = opt_player.get();
+        }
+
+        shop.doSecondary(player);
     }
 
     @Listener
@@ -313,17 +277,17 @@ public class FedorasChestShop {
             sign = opt_sign.get();
         }
 
-        Player plr;
+        Player player;
         {
-            Optional<Player> opt_plr = event.getCause().first(Player.class);
-            if(!opt_plr.isPresent())
+            Optional<Player> opt_player = event.getCause().first(Player.class);
+            if(!opt_player.isPresent())
                 return;
-            plr = opt_plr.get();
+            player = opt_player.get();
         }
 
 
         {
-            Optional<ItemStack> opt_is = plr.getItemInHand();
+            Optional<ItemStack> opt_is = player.getItemInHand();
             if (opt_is.isPresent()) {
                 if (opt_is.get().getItem().getName().equals("minecraft:writable_book")) {
                     trySetup(sign, opt_is.get());
@@ -335,13 +299,12 @@ public class FedorasChestShop {
         // if not setting up shop, lets check if the sign is valid in the first place
         Shop shop;
         {
-            Optional<Shop> opt_shop = Shop.make(sign);
+            Optional<Shop> opt_shop = sign.get(ShopKeys.DATA);
             if (!opt_shop.isPresent())
                 return;
             shop = opt_shop.get();
         }
 
-        doTransaction(true, shop);
-
+        shop.doPrimary(player);
     }
 }

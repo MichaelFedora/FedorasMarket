@@ -1,17 +1,17 @@
 package io.github.michaelfedora.fedoraschestshop.shop;
 
-import io.github.michaelfedora.fedoraschestshop.data.shop.EconShopData;
-import io.github.michaelfedora.fedoraschestshop.data.shop.TradeShopData;
-import io.github.michaelfedora.fedoraschestshop.shop.data.ShopData;
-import io.github.michaelfedora.fedoraschestshop.shop.transaction.ShopTransaction;
+import io.github.michaelfedora.fedoraschestshop.FedorasChestShop;
+import javafx.util.Pair;
 import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
+import org.spongepowered.api.data.DataTransactionResult;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.service.economy.EconomyService;
+import org.spongepowered.api.service.economy.account.Account;
+import org.spongepowered.api.service.economy.account.UniqueAccount;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by MichaelFedora on 1/23/2016.
@@ -21,119 +21,286 @@ import java.util.Optional;
  */
 public class Shop {
 
-    //TODO: LATER: Add Admin Shop
-    /*public enum Stance {
-        CHEST,
-        ADMIN
-    }*/
-
-    public enum Type {
-        ECON,
-        TRADE
+    private enum OwnerType {
+        USER,
+        SERVER
     }
 
+    public enum GoodType {
+        ALL,
+        ITEM,
+        CURRENCY
+    }
 
-    Type type; // econ vs trade?
-    ShopTransaction.Op op[] = new ShopTransaction.Op[2]; // used for shop
-    int amt[] = new int[2]; // used for both ratio [trade] & amount [econ].
-    int price[] = new int[2]; // used for shop
-    String itemName[] = new String[2]; // used for trade (both) and shop (one)
+    /**
+     * The Shop Type is what the customer is doing; Are they Buying Items? Selling Items? Trading Currency? Etc.
+     */
+    public enum ShopType {
+        ITEM_BUY(GoodType.ITEM, GoodType.CURRENCY),
+        ITEM_SELL(GoodType.CURRENCY, GoodType.ITEM),
+        ITEM_TRADE(GoodType.ITEM, GoodType.ITEM),
+        CURRENCY_TRADE(GoodType.CURRENCY, GoodType.CURRENCY),
+        CUSTOM(GoodType.ALL, GoodType.ALL);
 
-    //TODO: Implement
-    String owner; // uuid for economy
-    Location<World> loc; // location for reference
+        public final GoodType ownerGoodType;
+        public final GoodType customerGoodType;
 
-
-    public Optional<ShopData> getShopData() {
-
-        switch(type) {
-
-            case ECON:
-                return Optional.of(ShopData.makeEcon("", itemName[0], op, amt, price));
-
-            case TRADE:
-                return Optional.of(ShopData.makeTrade("", itemName, amt));
-
-            default:
-                return Optional.of(new ShopData("", type, ));
+        public boolean has(GoodType goodType) {
+            return (
+                    ownerGoodType == goodType
+                    || customerGoodType == goodType
+                    || ownerGoodType == GoodType.ALL
+                    || customerGoodType == GoodType.ALL
+                    || goodType == GoodType.ALL
+            );
         }
+
+        public boolean exclusiveHas(GoodType goodType) {
+            return (ownerGoodType == goodType || customerGoodType == goodType);
+        }
+
+        ShopType(GoodType ownerGoodType, GoodType customerGoodType) {
+            this.ownerGoodType = ownerGoodType;
+            this.customerGoodType = customerGoodType;
+        }
+    }
+
+    public enum SecondaryOp {
+        NONE(GoodType.ALL, false, null),
+        ITEM_SELL_SWITCH(GoodType.ITEM, true, ShopTransaction.Party.class, new ShopType[] {ShopType.ITEM_BUY}), // Only works for ITEM_BUY
+        ITEM_AUTO_STACK(GoodType.ITEM, true, null), // Works for all item types (could be non-exclusive, but CUSTOM)
+        FIXED_STACK(GoodType.ALL, false, Integer.class); // Works for all types except CUSTOM
+
+        public final GoodType goodType;
+        public boolean exclusiveGood;
+        public final Class paramType;
+        public final ShopType[] restrictedShopTypes;
+
+        public boolean restrictedShopType() { return (restrictedShopTypes.length > 0); }
+        public boolean requiresParam() { return (paramType != null); }
+
+        public boolean isCompatibleWith(ShopType shopType) {
+
+            boolean ret;
+
+            if(exclusiveGood)
+                ret = shopType.exclusiveHas(goodType);
+            else
+                ret = shopType.has(goodType);
+
+            if(restrictedShopType())
+                ret = ret && Arrays.asList(restrictedShopTypes).contains(shopType);
+
+            return ret;
+        }
+
+        SecondaryOp(GoodType goodType, boolean exclusiveGood, Class classType) {
+            this.goodType = goodType;
+            this.exclusiveGood = exclusiveGood;
+            this.paramType = classType;
+            this.restrictedShopTypes = new ShopType[]{};
+        }
+
+        SecondaryOp(GoodType goodType, boolean exclusiveGood, Class classType, ShopType[] restrictedShopTypes) {
+            this.goodType = goodType;
+            this.exclusiveGood = exclusiveGood;
+            this.paramType = classType;
+            this.restrictedShopTypes = restrictedShopTypes;
+        }
+
+    }
+
+    private Sign sign;
+    private UUID owner;
+    private OwnerType ownerType; // internal, to determine USER vs SERVER shop
+    private ShopType shopType;
+    private ShopTransaction shopTransaction;
+    private SecondaryOp secondaryOp;
+    private Object secondaryParam;
+
+    private Optional<?> getSecondaryParam() {
+
+        if(secondaryParam.getClass() == secondaryOp.paramType)
+            return Optional.of(secondaryParam);
 
         return Optional.empty();
     }
 
-    public Type getType() {
-        return type;
-    }
+    //private Shop() { }
+    private Shop(Sign sign, UUID owner, OwnerType ownerType, ShopType shopType, ShopTransaction shopTransaction, SecondaryOp secondaryOp, Object secondaryParam) {
 
-    private static void tryMakeShop(Optional<Shop> opt_shop, Sign sign) {
-        Shop shop = new Shop();
+        // check enums to make sure they line up
 
-        List<String> lines = new ArrayList<String>();
+        if(!secondaryOp.isCompatibleWith(shopType)) {
 
-        for(Text t : sign.getSignData().lines())
-            lines.add(t.toPlain());
+            secondaryOp = SecondaryOp.NONE;
+            secondaryParam = null;
 
-        {
-            String s = lines.get(0);
+        } else if(secondaryParam.getClass() != secondaryOp.paramType) {
 
-            if(s.equals("[FCP][Shop]"))
-                shop.type = Type.ECON;
-            else if(s.equals("[FCS][Trade]"))
-                shop.type = Type.TRADE;
-            else
-                return;
+            secondaryParam = null;
+
+            if(secondaryOp.requiresParam())
+                secondaryOp = SecondaryOp.NONE;
         }
 
-        shop.itemName[0] = lines.get(1);
+        this.sign = sign;
+        this.owner = owner;
+        this.ownerType = ownerType;
+        this.shopType = shopType;
+        this.shopTransaction = shopTransaction;
+        this.secondaryOp = secondaryOp;
+        this.secondaryParam = secondaryParam;
+    }
 
-        switch(shop.type) {
-            case ECON:
-                //il: iterator line ; ia: iterator array
-                for(int il = 2, ia = 0; ia < 2; il++, ia++) {
-                    String s[] = lines.get(il).split(":");
+    // no secondary ops
+    public static Shop makeUserShop(Sign sign, UUID owner, ShopType shopType, ShopTransaction shopTransaction) {
+        return new Shop(sign, owner, OwnerType.USER, shopType, shopTransaction, SecondaryOp.NONE, null);
+    }
 
-                    if(s.length < 3)
-                        return;
+    public static Shop makeServerShop(Sign sign, ShopType shopType, ShopTransaction shopTransaction) {
+        return new Shop(sign, null, OwnerType.SERVER, shopType, shopTransaction, SecondaryOp.NONE, null);
+    }
 
-                    switch(s[ia].charAt(0)) {
-                        case 'B':
-                            shop.op[ia] = ShopTransaction.Op.BUY;
-                            break;
-                        case 'S':
-                            shop.op[ia] = ShopTransaction.Op.SELL;
-                    }
+    // no secondaryParams
+    public static Shop makeUserShop(Sign sign, UUID owner, ShopType shopType, ShopTransaction shopTransaction, SecondaryOp secondaryOp) {
+        return new Shop(sign, owner, OwnerType.USER, shopType, shopTransaction, secondaryOp, null);
+    }
 
-                    shop.amt[ia] = Integer.getInteger(s[1]);
-                    shop.price[ia] = Integer.getInteger(s[2]);
-                }
-                break;
+    public static Shop makeServerShop(Sign sign, ShopType shopType, ShopTransaction shopTransaction, SecondaryOp secondaryOp) {
+        return new Shop(sign, null, OwnerType.SERVER, shopType, shopTransaction, secondaryOp, null);
+    }
 
-            case TRADE:
+    // == everything
+    public static Shop makeUserShop(Sign sign, UUID owner, ShopType shopType, ShopTransaction shopTransaction, SecondaryOp secondaryOp, Object secondaryParam) {
+        return new Shop(sign, owner, OwnerType.USER, shopType, shopTransaction, secondaryOp, secondaryParam);
+    }
 
-                String s[] = lines.get(2).split(":");
-                if(s.length < 2)
-                    return;
+    public static Shop makeServerShop(Sign sign, ShopType shopType, ShopTransaction shopTransaction, SecondaryOp secondaryOp, Object secondaryParam) {
+        return new Shop(sign, null, OwnerType.SERVER, shopType, shopTransaction, secondaryOp, secondaryParam);
+    }
 
-                shop.amt[0] = Integer.getInteger(s[0]);
-                shop.amt[1] = Integer.getInteger(s[1]);
+    public Optional<Pair<Account, Account>> getAccounts(UUID customer) {
+        EconomyService eco = FedorasChestShop.getEconomyService();
 
-                shop.itemName[1] = lines.get(3);
+        Account owner_acc;
+        switch(ownerType) {
+            case USER:
+            {
+                Optional<UniqueAccount> opt_uacc = eco.getAccount(owner);
+                if(!opt_uacc.isPresent())
+                    return Optional.empty();
+                owner_acc = opt_uacc.get();
+            }
+            break;
 
-                break;
+            case SERVER:
+            {
+                Optional<Account> opt_acc = eco.getAccount("fedoraschestshop:server");
+                if(!opt_acc.isPresent())
+                    return Optional.empty();
+                owner_acc = opt_acc.get();
+            }
+            break;
 
             default:
-                return;
+                return Optional.empty();
         }
 
-        opt_shop.of(shop);
+        Account customer_acc;
+        {
+            Optional<UniqueAccount> opt_uacc = eco.getAccount(customer);
+            if(!opt_uacc.isPresent())
+                return Optional.empty();
+            customer_acc = opt_uacc.get();
+        }
+
+        return Optional.of(new Pair<Account,Account>(owner_acc, customer_acc));
     }
 
-    public static Optional<Shop> make(Sign sign) {
-        Optional<Shop> ret = Optional.of(new Shop());
+    public void doPrimary(Player player) {
 
-        tryMakeShop(ret, sign);
+        Account owner_acc;
+        Account customer_acc;
+        {
+            Optional<Pair<Account,Account>> opt_accs = getAccounts(player.getUniqueId());
+            if(!opt_accs.isPresent())
+                return;
+            owner_acc = opt_accs.get().getKey();
+            customer_acc = opt_accs.get().getValue();
+        }
 
-        return ret;
+        shopTransaction.apply(owner_acc, customer_acc);
+
+    }
+
+    public void doSecondary(Player player) {
+
+        if(secondaryOp == SecondaryOp.NONE)
+            return;
+
+        Account owner_acc;
+        Account customer_acc;
+        {
+            Optional<Pair<Account,Account>> opt_accs = getAccounts(player.getUniqueId());
+            if(!opt_accs.isPresent())
+                return;
+            owner_acc = opt_accs.get().getKey();
+            customer_acc = opt_accs.get().getValue();
+        }
+
+        switch(secondaryOp) {
+
+            case NONE:
+                // don't do anything :)
+                break;
+
+            case ITEM_SELL_SWITCH:
+
+                ShopTransaction.Party ownerSellParty;
+                {
+                    Optional<?> opt = getSecondaryParam();
+                    if(!opt.isPresent())
+                        return;
+                    ownerSellParty = (ShopTransaction.Party) opt.get();
+                }
+
+                ShopTransaction switchShopTransaction = new ShopTransaction(ownerSellParty, this.shopTransaction.customerParty);
+                switchShopTransaction.apply(owner_acc, customer_acc);
+
+                break;
+
+            case ITEM_AUTO_STACK:
+
+                // get size limit for inventories, the limit for items, and the limit for currencies
+                // do transaction as many times as there are in the smallest item's stack size
+                break;
+
+            case FIXED_STACK:
+
+                int stackSize = 1;
+                {
+                    Optional<?> opt = getSecondaryParam();
+                    if(!opt.isPresent())
+                        return;
+                    stackSize = (Integer) opt.get();
+                }
+
+                // do transactions up-to or as close-to the stackSize in one swipe
+
+
+                break;
+        }
+    }
+
+    public DataTransactionResult save() {
+
+        // save the data to the sign
+        DataTransactionResult dtr = sign.offer(ShopKeys.DATA, this);
+
+        FedorasChestShop.getLogger().info("DTR: " + dtr);
+
+        return dtr;
     }
 
 }
