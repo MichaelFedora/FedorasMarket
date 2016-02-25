@@ -1,6 +1,7 @@
-# Fedora's Chest Shop
+# Fedora's Market
 ###### Built for `Sponge 3.1.0`, and off of `JDK 1.8.0_66`.
 
-Just another Chest Shop plugin, for Sponge. Also my first plugin in general.
+A Market plugin, currently in dev. It will include chest shops as well as misc. player
+trading and auctioning.
 
 Enjoy!

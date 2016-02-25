@@ -1,14 +1,10 @@
 apply plugin: 'java'
 
-version = '0.1'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version = '1.0'
 group = 'io.github.michaelfedora'
-
-jar {
-    manifest {
-        attributes  'Implementation-Title': 'FedorasChestShop',
-                    'Implementation-Version': version
-    }
-}
+archivesBaseName = "FedorasMarket"
 
 repositories {
     mavenCentral()
@@ -16,8 +12,26 @@ repositories {
         name = 'sponge'
         url = 'http://repo.spongepowered.org/maven'
     }
+    maven {
+        name = 'jitpack'
+        url = 'https://jitpack.io'
+    }
+}
+
+configurations {
+    shade
+    compile.extendsFrom shade
 }
 
 dependencies {
     compile 'org.spongepowered:spongeapi:3.1.0-SNAPSHOT'
+    shade 'com.github.Flibio:Updatifier:v1.3.0:api'
+}
+
+jar {
+    manifest {
+        attributes  'Implementation-Title': 'FedorasMarket',
+                'Implementation-Version': version
+    }
+    configurations.shade.copyRecursive().setTransitive(false).each { artifact -> from (zipTree(artifact))}
 }
