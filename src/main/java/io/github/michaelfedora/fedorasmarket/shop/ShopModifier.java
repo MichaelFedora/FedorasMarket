@@ -1,8 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
-import io.github.michaelfedora.fedorasmarket.data.ShopType;
-import io.github.michaelfedora.fedorasmarket.transaction.TransactionActiveParty;
-import org.spongepowered.api.entity.living.player.Player;
+import io.github.michaelfedora.fedorasmarket.data.TradeType;
+import io.github.michaelfedora.fedorasmarket.transaction.TradeActiveParty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,21 +12,21 @@ import java.util.List;
 public class ShopModifier {
 
     public final boolean negate;
-    public final List<ShopType> shopTypes;
+    public final List<TradeType> tradeTypes;
 
-    protected ShopModifier(boolean negate, List<ShopType> shopTypes) {
+    protected ShopModifier(boolean negate, List<TradeType> tradeTypes) {
         this.negate = negate;
-        this.shopTypes = shopTypes;
+        this.tradeTypes = tradeTypes;
     }
 
     public static final ShopModifier NONE = new ShopModifier(true, new ArrayList<>());
 
-    public boolean isValidWith(ShopType type) {
+    public boolean isValidWith(TradeType type) {
         if(this.negate)
-            return (!shopTypes.contains(type));
+            return (!tradeTypes.contains(type));
         else
-            return shopTypes.contains(type);
+            return tradeTypes.contains(type);
     }
 
-    public void execute(Shop shop, TransactionActiveParty owner, TransactionActiveParty customer) { }
+    public void execute(Shop shop, TradeActiveParty owner, TradeActiveParty customer) { }
 }

@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.transaction;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.data.TradeType;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.Inventory;
@@ -15,7 +16,6 @@ import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransferResult;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,20 +27,28 @@ import java.util.Optional;
  *
  * TODO: Serialize.
  */
-public class TradeTransaction {
+public class TradeTransaction implements java.io.Serializable {
 
-    public TransactionParty ownerParty;
-    public TransactionParty customerParty;
-    private Optional<TransferResult> lastTransferResult;
-    private Optional<InventoryTransactionResult> lastInventoryTransactionResult;
+    public TradeType tradeType;
+    private TradeParty ownerParty;
+    private TradeParty customerParty;
 
-    public Optional<TransferResult> getLastTransferResult() { return this.lastTransferResult; }
-    public Optional<InventoryTransactionResult> getLastInventoryTransactionResult() { return this.lastInventoryTransactionResult; }
+    public transient Optional<TransferResult> lastTransferResult;
+    public transient Optional<InventoryTransactionResult> lastInventoryTransactionResult;
 
+    public TradeTransaction(TradeType tradeType, TradeParty ownerParty, TradeParty customerParty) {
+        this.tradeType = tradeType;
+        setOwnerParty(ownerParty);
+        setCustomerParty(customerParty);
+    }
 
-    public TradeTransaction(TransactionParty owner, TransactionParty customer) {
-        this.ownerParty = owner;
-        this.customerParty = customer;
+    public TradeParty getOwnerParty() { return this.ownerParty; }
+    public TradeParty getCustomerParty() { return this.customerParty; }
+    public void setOwnerParty(TradeParty ownerParty) {
+        this.ownerParty = ownerParty.trim(tradeType.ownerGoodType);
+    }
+    public void setCustomerParty(TradeParty customerParty) {
+        this.customerParty = customerParty.trim(tradeType.customerGoodType);
     }
 
     //TODO: FIX
@@ -61,14 +69,14 @@ public class TradeTransaction {
         TransferResult result;
 
         // Be VERY careful here; we need to make sure nothing gets transferred if there is an error later on
-        for(Map.Entry<Currency,BigDecimal> entry : ownerParty.getCurrencies().entrySet()) {
+        for(Map.Entry<Currency,BigDecimal> entry : ownerParty.currencies.entrySet()) {
             result = owner.transfer(owner_v, entry.getKey(), entry.getValue(), Cause.of(this));
 
             if(result.getResult() != ResultType.SUCCESS)
                 return Optional.of(result);
         }
 
-        for(Map.Entry<Currency, BigDecimal> entry : customerParty.getCurrencies().entrySet()) {
+        for(Map.Entry<Currency, BigDecimal> entry : customerParty.currencies.entrySet()) {
             result =  customer.transfer(customer_v, entry.getKey(), entry.getValue(), Cause.of(this));
 
             if(result.getResult() != ResultType.SUCCESS)
@@ -101,7 +109,7 @@ public class TradeTransaction {
 
     }
 
-    private boolean tryApply(TransactionActiveParty owner, TransactionActiveParty customer, TransactionActiveParty owner_v, TransactionActiveParty customer_v) {
+    private boolean tryApply(TradeActiveParty owner, TradeActiveParty customer, TradeActiveParty owner_v, TradeActiveParty customer_v) {
 
         lastTransferResult = tryApplyCurrency(owner.account, customer.account, owner_v.account, customer_v.account);
 
@@ -128,7 +136,7 @@ public class TradeTransaction {
              customer_v.transfer(owner, entry.getKey(), entry.getValue(), Cause.of(this));
     }
 
-    private boolean finishApply(TransactionActiveParty owner, TransactionActiveParty customer, TransactionActiveParty owner_v, TransactionActiveParty customer_v) {
+    private boolean finishApply(TradeActiveParty owner, TradeActiveParty customer, TradeActiveParty owner_v, TradeActiveParty customer_v) {
 
         finishApplyCurrency(owner.account, customer.account, owner_v.account, customer_v.account);
 
@@ -143,11 +151,11 @@ public class TradeTransaction {
         return false;*/
     }
 
-    public boolean apply(TransactionActiveParty owner, TransactionActiveParty customer) {
+    public boolean apply(TradeActiveParty owner, TradeActiveParty customer) {
         EconomyService eco = FedorasMarket.getEconomyService();
 
-        TransactionActiveParty owner_v;
-        TransactionActiveParty customer_v;
+        TradeActiveParty owner_v;
+        TradeActiveParty customer_v;
         {
             Optional<VirtualAccount> opt_owner_acc = eco.createVirtualAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_ID_PREFIX + owner.account.getIdentifier());
             Optional<VirtualAccount> opt_customer_acc = eco.createVirtualAccount(FedorasMarket.ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX + customer.account.getIdentifier());
@@ -158,8 +166,8 @@ public class TradeTransaction {
             CustomInventory owner_v_inv = CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
             CustomInventory customer_v_inv = CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
 
-            owner_v = new TransactionActiveParty(opt_owner_acc.get(), owner_v_inv);
-            customer_v = new TransactionActiveParty(opt_customer_acc.get(), customer_v_inv);
+            owner_v = new TradeActiveParty(opt_owner_acc.get(), owner_v_inv);
+            customer_v = new TradeActiveParty(opt_customer_acc.get(), customer_v_inv);
         }
 
         // Be VERY careful here; we need to make sure nothing gets transferred if there is an error later on
@@ -200,5 +208,9 @@ public class TradeTransaction {
         }
 
         return finishApply(owner, customer, owner_v, customer_v);
+    }
+
+    public String toString() {
+        return "TradeType: " + tradeType.niceName + ", Owner Party: {" + ownerParty + "}, Customer Party: {" + customerParty + "}";
     }
 }

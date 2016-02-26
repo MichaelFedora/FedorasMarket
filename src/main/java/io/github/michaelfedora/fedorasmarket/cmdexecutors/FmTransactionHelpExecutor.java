@@ -15,25 +15,34 @@ import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Inspired by Polis (though heavily edited)
+ * Created by Michael on 2/26/2016.
  */
-public class FmHelpExecutor implements CommandExecutor {
+public class FmTransactionHelpExecutor implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
-        HashMap<List<String>,CommandSpec> fmSubCommands = FedorasMarket.getSubCommands();
+        HashMap<List<String>,CommandSpec> transSubCommands;
+        {
+            Optional<HashMap<List<String>,CommandSpec>> opt_transSubCommands = FedorasMarket.getGrandChildCommands(Arrays.asList("transaction", "trans"));
+            if(!opt_transSubCommands.isPresent())
+                return CommandResult.empty();
+            transSubCommands = opt_transSubCommands.get();
+        }
+
         List<Text> helpList = Lists.newArrayList();
 
-        for(List<String> aliases : fmSubCommands.keySet()) {
-            CommandSpec commandSpec = fmSubCommands.get(aliases);
+        for(List<String> aliases : transSubCommands.keySet()) {
+            CommandSpec commandSpec = transSubCommands.get(aliases);
             Text commandHelp = Text.builder()
                     .append(Text.builder()
                             .append(Text.of(TextColors.GREEN, aliases, ": "))
                             .append(Text.of(TextColors.BLUE,
                                     commandSpec.getUsage(src), "\n"))
-                            .append(Text.of(TextColors.GRAY, "    ",
+                            .append(Text.of(TextColors.WHITE, "    ",
                                     commandSpec.getShortDescription(src).get(), "\n"))
                             /*.append(Text.of(TextColors.AQUA, "Perm: ",
                                     (commandSpec.testPermission(src)) ? TextColors.GREEN : TextColors.RED,

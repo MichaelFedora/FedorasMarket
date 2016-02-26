@@ -7,9 +7,9 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 
 /**
- * Created by Michael on 2/24/2016.
+ * Created by Michael on 2/25/2016.
  */
-public class FmTransactionEditExecutor implements CommandExecutor {
+public class FmTransactionRemoveCurrencyExecutor implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         return CommandResult.success();

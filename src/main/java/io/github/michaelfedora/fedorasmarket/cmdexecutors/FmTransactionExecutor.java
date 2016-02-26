@@ -33,12 +33,15 @@ public class FmTransactionExecutor implements CommandExecutor {
             return CommandResult.empty();
         }
 
-        StringBuilder sb = new StringBuilder("");
+        Text.Builder tb = Text.builder();
+        int i = 0;
         for(Map.Entry<List<String>, CommandSpec> entry : opt_subCommands.get().entrySet()) {
-            sb.append(entry.getKey() + " ; ");
+            tb.append(Text.of(TextColors.BLUE, entry.getKey()));
+            if(++i < opt_subCommands.get().entrySet().size()) {
+                tb.append(Text.of(TextColors.GRAY, ", "));
+            }
         }
-        sb.delete(sb.length()-2, sb.length());
-        src.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "[transaction, trans]: ", sb));
+        src.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "[transaction, trans]: ", tb.build()));
         return CommandResult.success();
     }
 }

@@ -1,25 +1,20 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.data.TradeType;
 import io.github.michaelfedora.fedorasmarket.transaction.TradeTransaction;
-import io.github.michaelfedora.fedorasmarket.transaction.TransactionParty;
+import io.github.michaelfedora.fedorasmarket.transaction.TradeParty;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
-import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextStyles;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -38,25 +33,49 @@ public class FmTransactionCreateExecutor implements CommandExecutor {
 
         Player player = (Player) src;
 
-        Optional<String> opt_name = ctx.<String>getOne("name");
-        if(!opt_name.isPresent())
-            return CommandResult.empty();
+        String trans_name;
+        {
+            Optional<String> opt_trans_name = ctx.<String>getOne("trans_name");
+            if (!opt_trans_name.isPresent())
+                return CommandResult.empty();
+            trans_name = opt_trans_name.get();
+        }
+        TradeType tradeType;
+        {
+            Optional<TradeType> opt_tradeType = ctx.<TradeType>getOne("trade_type");
+            if(opt_tradeType.isPresent())
+                tradeType = opt_tradeType.get();
+            else
+                tradeType = TradeType.CUSTOM;
+        }
 
-        String name = opt_name.get();
 
-        TradeTransaction transaction = new TradeTransaction(new TransactionParty(), new TransactionParty());
+
+        TradeTransaction transaction = new TradeTransaction(tradeType, new TradeParty(), new TradeParty());
 
         try {
-            Connection conn = FedorasMarket.getDataSource("jdbc:h2:transactions.db").getConnection();
+            Connection conn = FedorasMarket.getDataSource(FedorasMarket.DB_TRANSACTION_ID).getConnection();
 
             try {
-                conn.prepareStatement("IF NOT EXISTS (SELECT name FROM users) CREATE TABLE " + player.getUniqueId().toString());
+
+                PreparedStatement preparedStatement = conn.prepareStatement("DELETE FROM fm_transactions WHERE id=? AND trans_name=?");
+                preparedStatement.setObject(1, player.getUniqueId());
+                preparedStatement.setString(2, trans_name);
+                preparedStatement.execute();
+
+                preparedStatement = conn.prepareStatement("INSERT INTO fm_transactions(id, trans_name, data) values (?, ?, ?)");
+                preparedStatement.setObject(1, player.getUniqueId());
+                preparedStatement.setString(2, trans_name);
+                preparedStatement.setObject(3, transaction);
+                preparedStatement.execute();
             } finally {
                 conn.close();
             }
 
         } catch(SQLException e) {
             FedorasMarket.getLogger().error("FmTransactionCreateExecutor", e);
+            src.sendMessage(FmUtil.makeMessageError("SQL ERROR: See console :c"));
+            return CommandResult.empty();
         }
 
         /*src.sendMessage(FmUtil.makeMessage("Attempted to offer you data c:"));

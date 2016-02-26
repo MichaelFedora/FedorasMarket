@@ -1,31 +1,30 @@
 package io.github.michaelfedora.fedorasmarket.shop.modifier;
 
-import io.github.michaelfedora.fedorasmarket.data.ShopType;
+import io.github.michaelfedora.fedorasmarket.data.TradeType;
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
+import io.github.michaelfedora.fedorasmarket.transaction.TradeParty;
 import io.github.michaelfedora.fedorasmarket.transaction.TradeTransaction;
-import io.github.michaelfedora.fedorasmarket.transaction.TransactionActiveParty;
-import io.github.michaelfedora.fedorasmarket.transaction.TransactionParty;
+import io.github.michaelfedora.fedorasmarket.transaction.TradeActiveParty;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * For ITEM_BUY shops, allows them to have "sell" as their secondary
  */
 public final class SellSwitch extends ShopModifier {
 
-    public TransactionParty ownerSellParty;
+    public TradeParty ownerSellParty;
 
-    public SellSwitch(TransactionParty ownerSellParty) {
-        super(false, Arrays.asList(ShopType.ITEM_BUY));
+    public SellSwitch(TradeParty ownerSellParty) {
+        super(false, Arrays.asList(TradeType.ITEM_BUY));
         this.ownerSellParty = ownerSellParty;
     }
 
     @Override
-    public void execute(Shop shop, TransactionActiveParty owner, TransactionActiveParty customer) {
+    public void execute(Shop shop, TradeActiveParty owner, TradeActiveParty customer) {
 
-        TradeTransaction switchTradeTransaction = new TradeTransaction(ownerSellParty, shop.tradeTransaction.customerParty);
+        TradeTransaction switchTradeTransaction = new TradeTransaction(shop.tradeType, ownerSellParty, shop.tradeTransaction.getCustomerParty());
         switchTradeTransaction.apply(owner, customer);
     }
 }

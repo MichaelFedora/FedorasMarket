@@ -9,14 +9,13 @@ package io.github.michaelfedora.fedorasmarket;
 
 import com.google.inject.Inject;
 
+import com.typesafe.config.ConfigException;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
 import io.github.michaelfedora.fedorasmarket.data.PartyType;
-import io.github.michaelfedora.fedorasmarket.data.ShopType;
+import io.github.michaelfedora.fedorasmarket.data.TradeType;
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
-import io.github.michaelfedora.fedorasmarket.shop.modifier.MultiAction;
 import io.github.michaelfedora.fedorasmarket.transaction.TradeTransaction;
-import io.github.michaelfedora.fedorasmarket.transaction.TransactionParty;
 import me.flibio.updatifier.Updatifier;
 import org.slf4j.Logger;
 
@@ -27,27 +26,24 @@ import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
-import org.spongepowered.api.command.args.CommandElement;
 import org.spongepowered.api.command.args.GenericArguments;
-import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.value.mutable.ListValue;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.event.block.tileentity.ChangeSignEvent;
-import org.spongepowered.api.event.game.state.GameConstructionEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
+import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
+import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
 import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.service.economy.EconomyService;
+import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.sql.SqlService;
@@ -56,8 +52,9 @@ import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -70,6 +67,8 @@ public class FedorasMarket {
     public static final String ACCOUNT_SERVER_ID = "fedorasmarket:server_account";
     public static final String ACCOUNT_VIRTUAL_OWNER_ID_PREFIX = "fedorasmarket:virtual_owner_account_"; //TODO: Read up to see if these are too big
     public static final String ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX = "fedorasmarket:virtual_customer_account_";
+
+    public static final String DB_TRANSACTION_ID = "jdbc:h2:./mods/FedorasMarket/transactions.db";
 
     @Inject
     private Logger logger;
@@ -119,20 +118,31 @@ public class FedorasMarket {
     }
 
     @Listener
-    public void onServerInit(GameInitializationEvent event) {
+    public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
-        game = Sponge.getGame();
+    }
 
-        getLogger().info("== " + PluginInfo.NAME + ", Loading... ==");
+    @Listener
+    public void onInit(GameInitializationEvent gie) {
+
+        getLogger().info("== " + PluginInfo.NAME + " -- GameInitialization ==");
+
+        game = Sponge.getGame();
 
         //TODO: Add read-config for chest names
         chestNames.add("minecraft:chest");
         chestNames.add("minecraft:trapped_chest");
 
+        getLogger().info("== == FIN == ==");
+    }
+
+    @Listener
+    public void onPostInit(GamePostInitializationEvent gpie) {
+        getLogger().info("== " + PluginInfo.NAME + " - GamePostInitialization ==");
         subCommands = new HashMap<>();
         grandChildCommands = new HashMap<>();
 
-        subCommands.put(Arrays.asList("help"), CommandSpec.builder()
+        subCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
                 .description(Text.of("Help Command"))
                 .permission(PluginInfo.DATA_ROOT + ".help")
                 .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("page no"))))
@@ -141,39 +151,99 @@ public class FedorasMarket {
 
         HashMap<List<String>, CommandSpec> transSubCommands = new HashMap<>();
 
+        transSubCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
+                .description(Text.of("Help Command"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.help")
+                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("page no")))) // is this used I dun even
+                .executor(new FmTransactionHelpExecutor())
+                .build());
+
         transSubCommands.put(Arrays.asList("create", "make", "new"), CommandSpec.builder()
                 .description(Text.of("Create a transaction"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction.create")
-                .arguments(GenericArguments.string(Text.of("name")))
+                .arguments(
+                        GenericArguments.string(Text.of("trans_name")),
+                        GenericArguments.optional(GenericArguments.enumValue(Text.of("trade_type"), TradeType.class)))
                 .executor(new FmTransactionCreateExecutor())
                 .build());
-
-        transSubCommands.put(Arrays.asList("edit", "ed"), CommandSpec.builder()
-                .description(Text.of("Edit a transaction"))
-                .permission(PluginInfo.DATA_ROOT + ".transaction.edit")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.string(Text.of("goodtype")),
-                        GenericArguments.doubleNum(Text.of("goodamt")))
-                .executor(new FmTransactionEditExecutor())
-                .build()); // perhaps SELECT? and then edit? Hmm...
 
         transSubCommands.put(Arrays.asList("delete", "del"), CommandSpec.builder()
                 .description(Text.of("Delete a transaction"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction.delete")
-                .arguments(GenericArguments.string(Text.of("name")))
-                .executor(new FmTransactionCreateExecutor())
+                .arguments(GenericArguments.string(Text.of("trans_name")))
+                .executor(new FmTransactionDeleteExecutor())
+                .build());
+
+        transSubCommands.put(Arrays.asList("deletemany", "delm"), CommandSpec.builder()
+                .description(Text.of("Delete many transactions"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.deletemany")
+                .arguments(GenericArguments.allOf(GenericArguments.string(Text.of("trans_names"))))
+                .executor(new FmTransactionDeleteManyExecutor())
                 .build());
 
         transSubCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
-                .description(Text.of("Lists all transaction"))
+                .description(Text.of("Lists all transactions"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction.list")
                 .executor(new FmTransactionListExecutor())
                 .build());
 
+        transSubCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
+                .description(Text.of("Lists the details about a transaction"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.details")
+                .arguments(GenericArguments.string(Text.of("trans_name")))
+                .executor(new FmTransactionDetailsExecutor())
+                .build());
+
+        transSubCommands.put(Arrays.asList("additem", "addi"), CommandSpec.builder()
+                .description(Text.of("Add(or set) an item entry to a transaction"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.additem")
+                .arguments(
+                        GenericArguments.string(Text.of("trans_name")),
+                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
+                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
+                        GenericArguments.integer(Text.of("amount")))
+                .executor(new FmTransactionAddItemExecutor())
+                .build()); // perhaps SELECT? and then edit? Hmm...
+
+        transSubCommands.put(Arrays.asList("removeitem", "remi"), CommandSpec.builder()
+                .description(Text.of("Remove an item entry from a transaction"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.removeitem")
+                .arguments(
+                        GenericArguments.string(Text.of("trans_name")),
+                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
+                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class))
+                .executor(new FmTransactionRemoveItemExecutor())
+                .build());
+
+        Map<String, Currency> currencies = new TreeMap<>();
+        for(Currency c : this.economyService.getCurrencies()) {
+            currencies.put(c.getDisplayName().toPlain(), c);
+        }
+
+        transSubCommands.put(Arrays.asList("addcurrency", "addc"), CommandSpec.builder()
+                .description(Text.of("Add(or set) a currency to a transaction"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.addcurrency")
+                .arguments(
+                        GenericArguments.string(Text.of("trans_name")),
+                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
+                        GenericArguments.choices(Text.of("currency"), currencies, true),
+                        GenericArguments.doubleNum(Text.of("amount")))
+                .executor(new FmTransactionAddCurrencyExecutor())
+                .build());
+
+        transSubCommands.put(Arrays.asList("removecurrency", "remc"), CommandSpec.builder()
+                .description(Text.of("Remove a currency from a transaction"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.removecurrency")
+                .arguments(
+                        GenericArguments.string(Text.of("trans_name")),
+                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
+                        GenericArguments.choices(Text.of("currency"), currencies, true))
+                .executor(new FmTransactionRemoveCurrencyExecutor())
+                .build());
+
+
         subCommands.put(Arrays.asList("transaction", "trans"), CommandSpec.builder()
-                .description(Text.of("Do transaction things (has sub commands)"))
+                .description(Text.of("Do transaction things (lists sub commands)"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction")
                 .executor(new FmTransactionExecutor())
                 .children(transSubCommands)
@@ -210,7 +280,29 @@ public class FedorasMarket {
 
         Sponge.getCommandManager().register(this, fmCommandSpec, "fedmarket", "fm");
 
-        getLogger().info("== Loaded! Enjoy! ==");
+        getLogger().info("== == FIN == ==");
+    }
+
+    @Listener
+    public void onLoadComplete(GameLoadCompleteEvent glce) {
+        getLogger().info("== " + PluginInfo.NAME + " - GameLoadComplete ==");
+        try {
+            Connection conn = getDataSource(DB_TRANSACTION_ID).getConnection();
+
+            try {
+                conn.prepareStatement("CREATE TABLE IF NOT EXISTS fm_transactions(id uuid, trans_name varchar(255), data object)").execute();
+                ResultSet resultSet = conn.prepareStatement("SELECT * FROM fm_transactions").executeQuery();
+                while(resultSet.next()) {
+                    getLogger().info("" + resultSet.getObject(1) + " | " + resultSet.getString(2) + " | " + resultSet.getObject(3));
+                }
+            } finally {
+                conn.close();
+            }
+
+        } catch(SQLException e) {
+            getLogger().error("OnServerInit(:c) ", e);
+        }
+        getLogger().info("== == FIN == ==");
     }
 
     //@Listener void onSignChangeevent(ChangeSignEvent event) { } // Do I still need this?
@@ -238,10 +330,10 @@ public class FedorasMarket {
         /*
          * Different shop types:
          * -- ITEM_BUY, ITEM_SELL, ITEM_TRADE, CURRENCY_TRADE, CUSTOM
-         * Flags are the same, disregards case of letters (toUpper), matches via (i.e.) Shop.ShopType.ITEM_BUY.name();
+         * Flags are the same, disregards case of letters (toUpper), matches via (i.e.) Shop.TradeType.ITEM_BUY.name();
          *
          * Register a shop by right clicking a sign with a signed book with the name "FCS-REGISTER"
-         *      [ShopType]
+         *      [TradeType]
          *
          *
          *
@@ -329,7 +421,7 @@ public class FedorasMarket {
                 return;
             account = opt_uacc.get();
         }
-        //Shop.makeShop(sign, account, tec.getInventory(), ShopType.ITEM_BUY, new TradeTransaction(new TransactionParty().addDefaultCurrency(BigDecimal.valueOf(100)), new TransactionParty().addItem(ItemTypes.COBBLESTONE, 32)), new MultiAction(64));
+        //Shop.makeShop(sign, account, tec.getInventory(), TradeType.ITEM_BUY, new TradeTransaction(new TradeParty().addDefaultCurrency(BigDecimal.valueOf(100)), new TradeParty().addItem(ItemTypes.COBBLESTONE, 32)), new MultiAction(64));
 
         //=== SETTING UP THE SIGN
 

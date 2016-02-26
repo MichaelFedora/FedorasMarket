@@ -4,6 +4,15 @@ package io.github.michaelfedora.fedorasmarket.data;
  * Created by Michael on 2/23/2016.
  */
 public enum GoodType {
+    ALL,
     ITEM,
-    CURRENCY
+    CURRENCY;
+
+    public boolean valid() {
+        return this != ALL;
+    }
+
+    public boolean equalsWeak(GoodType other) {
+        return this == ALL || this == other;
+    }
 }
