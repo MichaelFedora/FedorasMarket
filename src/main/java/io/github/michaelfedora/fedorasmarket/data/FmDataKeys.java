@@ -22,9 +22,7 @@ import java.util.List;
  */
 public class FmDataKeys {
     public static final Key<Value<Shop>> SHOP_DATA;
-    public static final Key<MapValue<String,TradeTransaction>> TRANSACTION_LIST;
     static {
         SHOP_DATA = KeyFactory.makeSingleKey(Shop.class, Value.class, DataQuery.of(PluginInfo.DATA_ROOT + ":shop_data"));
-        TRANSACTION_LIST = KeyFactory.makeMapKey(String.class, TradeTransaction.class, DataQuery.of(PluginInfo.DATA_ROOT + ":transaction_list"));
     }
 }

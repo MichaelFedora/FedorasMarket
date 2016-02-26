@@ -27,7 +27,7 @@ public class FmTransactionHelpExecutor implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
         HashMap<List<String>,CommandSpec> transSubCommands;
         {
-            Optional<HashMap<List<String>,CommandSpec>> opt_transSubCommands = FedorasMarket.getGrandChildCommands(Arrays.asList("transaction", "trans"));
+            Optional<HashMap<List<String>,CommandSpec>> opt_transSubCommands = FedorasMarket.getGrandChildCommands("transaction");
             if(!opt_transSubCommands.isPresent())
                 return CommandResult.empty();
             transSubCommands = opt_transSubCommands.get();

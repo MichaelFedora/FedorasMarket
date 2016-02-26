@@ -71,7 +71,7 @@ public class FmTransactionRemoveItemExecutor implements CommandExecutor {
 
                 TradeTransaction tradeTransaction;
                 if(resultSet.next()) {
-                    tradeTransaction = (TradeTransaction) resultSet.getObject("data");
+                    tradeTransaction = ((TradeTransaction.Data) resultSet.getObject("data")).deserialize();
 
                     switch(partyType) {
                         case OWNER:
@@ -85,7 +85,7 @@ public class FmTransactionRemoveItemExecutor implements CommandExecutor {
                     preparedStatement = conn.prepareStatement("UPDATE fm_transactions SET data=? WHERE id=? AND trans_name=?");
                     preparedStatement.setObject(2, player.getUniqueId());
                     preparedStatement.setString(3, trans_name);
-                    preparedStatement.setObject(1, tradeTransaction);
+                    preparedStatement.setObject(1, tradeTransaction.toData());
                     preparedStatement.execute();
                 }
 

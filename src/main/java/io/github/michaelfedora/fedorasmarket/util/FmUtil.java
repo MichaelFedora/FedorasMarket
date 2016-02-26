@@ -17,19 +17,19 @@ public class FmUtil {
     }
 
     public static Text makeMessageError(String s) {
-        return Text.of(TextStyles.BOLD, TextColors.RED, "[" + PluginInfo.NAME + "][ERROR]: ", TextStyles.NONE, s);
+        return Text.of(TextStyles.BOLD, TextColors.DARK_RED, "[" + PluginInfo.NAME + "][ERROR]: ", TextColors.RED, TextStyles.RESET, s);
     }
 
     public static Text makeMessage(String s) {
-        return Text.of(TextStyles.BOLD, TextColors.GREEN, "[" + PluginInfo.NAME + "]: ", TextColors.NONE, TextStyles.NONE, s);
+        return Text.of(TextStyles.BOLD, TextColors.GREEN, "[" + PluginInfo.NAME + "]: ", TextColors.WHITE, TextStyles.RESET, s);
     }
 
     public static Text makeMessageInfo(String s) {
-        return Text.of(TextStyles.BOLD, TextColors.DARK_GRAY, "[" + PluginInfo.NAME + "][INFO]: ", TextColors.GRAY, TextStyles.NONE, s);
+        return Text.of(TextStyles.BOLD, TextColors.DARK_GRAY, "[" + PluginInfo.NAME + "][INFO]: ", TextColors.GRAY, TextStyles.RESET, s);
     }
 
 
     public static Text makeMessageWarn(String s) {
-        return Text.of(TextStyles.BOLD, TextColors.YELLOW, "[" + PluginInfo.NAME + "][WARN]: ", TextStyles.NONE, s);
+        return Text.of(TextStyles.BOLD, TextColors.GOLD, "[" + PluginInfo.NAME + "][WARN]: ", TextColors.YELLOW, TextStyles.RESET, s);
     }
 }

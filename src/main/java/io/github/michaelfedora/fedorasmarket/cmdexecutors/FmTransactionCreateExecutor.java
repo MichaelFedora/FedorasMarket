@@ -66,7 +66,7 @@ public class FmTransactionCreateExecutor implements CommandExecutor {
                 preparedStatement = conn.prepareStatement("INSERT INTO fm_transactions(id, trans_name, data) values (?, ?, ?)");
                 preparedStatement.setObject(1, player.getUniqueId());
                 preparedStatement.setString(2, trans_name);
-                preparedStatement.setObject(3, transaction);
+                preparedStatement.setObject(3, transaction.toData());
                 preparedStatement.execute();
             } finally {
                 conn.close();

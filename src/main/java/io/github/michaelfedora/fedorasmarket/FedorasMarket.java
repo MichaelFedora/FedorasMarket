@@ -68,7 +68,7 @@ public class FedorasMarket {
     public static final String ACCOUNT_VIRTUAL_OWNER_ID_PREFIX = "fedorasmarket:virtual_owner_account_"; //TODO: Read up to see if these are too big
     public static final String ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX = "fedorasmarket:virtual_customer_account_";
 
-    public static final String DB_TRANSACTION_ID = "jdbc:h2:./mods/FedorasMarket/transactions.db";
+    public static final String DB_TRANSACTION_ID = "jdbc:h2:./mods/FedorasData/market.db";
 
     @Inject
     private Logger logger;
@@ -94,8 +94,8 @@ public class FedorasMarket {
 
     private HashMap<List<String>, CommandSpec> subCommands;
     public static HashMap<List<String>, CommandSpec> getSubCommands() { return instance.subCommands; }
-    private HashMap<List<String>, HashMap<List<String>, CommandSpec>> grandChildCommands;
-    public static Optional<HashMap<List<String>, CommandSpec>> getGrandChildCommands(List<String> key) {
+    private HashMap<String, HashMap<List<String>, CommandSpec>> grandChildCommands;
+    public static Optional<HashMap<List<String>, CommandSpec>> getGrandChildCommands(String key) {
 
         if(instance.grandChildCommands.containsKey(key))
             return Optional.of(instance.grandChildCommands.get(key));
@@ -194,8 +194,18 @@ public class FedorasMarket {
                 .executor(new FmTransactionDetailsExecutor())
                 .build());
 
+        transSubCommands.put(Arrays.asList("settradetype", "settype"), CommandSpec.builder()
+                .description(Text.of("Set the TradeType of the transaction"))
+                .permission(PluginInfo.DATA_ROOT + ".transaction.settradetype")
+                .arguments(
+                        GenericArguments.string(Text.of("trans_name")),
+                        GenericArguments.enumValue(Text.of("type"), TradeType.class))
+                .executor(new FmTransactionSetTradeTypeExecutor())
+                .build());
+
+        //TODO: Add "set" commands (because add commands do actually add...)
         transSubCommands.put(Arrays.asList("additem", "addi"), CommandSpec.builder()
-                .description(Text.of("Add(or set) an item entry to a transaction"))
+                .description(Text.of("Add an item amount to a transaction"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction.additem")
                 .arguments(
                         GenericArguments.string(Text.of("trans_name")),
@@ -221,13 +231,13 @@ public class FedorasMarket {
         }
 
         transSubCommands.put(Arrays.asList("addcurrency", "addc"), CommandSpec.builder()
-                .description(Text.of("Add(or set) a currency to a transaction"))
+                .description(Text.of("Add a currency amount to a transaction"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction.addcurrency")
                 .arguments(
                         GenericArguments.string(Text.of("trans_name")),
                         GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.choices(Text.of("currency"), currencies, true),
-                        GenericArguments.doubleNum(Text.of("amount")))
+                        GenericArguments.doubleNum(Text.of("amount")),
+                        GenericArguments.optional(GenericArguments.choices(Text.of("currency"), currencies, true)))
                 .executor(new FmTransactionAddCurrencyExecutor())
                 .build());
 
@@ -237,19 +247,19 @@ public class FedorasMarket {
                 .arguments(
                         GenericArguments.string(Text.of("trans_name")),
                         GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.choices(Text.of("currency"), currencies, true))
+                        GenericArguments.optional(GenericArguments.choices(Text.of("currency"), currencies, true)))
                 .executor(new FmTransactionRemoveCurrencyExecutor())
                 .build());
 
 
-        subCommands.put(Arrays.asList("transaction", "trans"), CommandSpec.builder()
+        subCommands.put(Arrays.asList("transaction", "trans", "tr"), CommandSpec.builder()
                 .description(Text.of("Do transaction things (lists sub commands)"))
                 .permission(PluginInfo.DATA_ROOT + ".transaction")
                 .executor(new FmTransactionExecutor())
                 .children(transSubCommands)
                 .build());
 
-        grandChildCommands.put(Arrays.asList("transaction", "trans"), transSubCommands);
+        grandChildCommands.put("transaction", transSubCommands);
 
         /*subCommands.put(Arrays.asList("offertrade", "otrade"), CommandSpec.builder()
                 .description(Text.of("Offer to Trade to another player the item in your hand"))
@@ -276,6 +286,7 @@ public class FedorasMarket {
                 .description(Text.of("FedorasMarket Command"))
                 .permission(PluginInfo.DATA_ROOT + ".use")
                 .children(subCommands)
+                .executor(new FmExecutor())
                 .build();
 
         Sponge.getCommandManager().register(this, fmCommandSpec, "fedmarket", "fm");
@@ -293,14 +304,14 @@ public class FedorasMarket {
                 conn.prepareStatement("CREATE TABLE IF NOT EXISTS fm_transactions(id uuid, trans_name varchar(255), data object)").execute();
                 ResultSet resultSet = conn.prepareStatement("SELECT * FROM fm_transactions").executeQuery();
                 while(resultSet.next()) {
-                    getLogger().info("" + resultSet.getObject(1) + " | " + resultSet.getString(2) + " | " + resultSet.getObject(3));
+                    getLogger().info("" + resultSet.getObject(1) + " | " + resultSet.getString(2) + " | " + ((TradeTransaction.Data) resultSet.getObject(3)).deserialize());
                 }
             } finally {
                 conn.close();
             }
 
         } catch(SQLException e) {
-            getLogger().error("OnServerInit(:c) ", e);
+            getLogger().error("OnLoadComplete(:c)", e);
         }
         getLogger().info("== == FIN == ==");
     }

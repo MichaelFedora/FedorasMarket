@@ -33,7 +33,7 @@ public class FmHelpExecutor implements CommandExecutor {
                             .append(Text.of(TextColors.GREEN, aliases, ": "))
                             .append(Text.of(TextColors.BLUE,
                                     commandSpec.getUsage(src), "\n"))
-                            .append(Text.of(TextColors.GRAY, "    ",
+                            .append(Text.of(TextColors.WHITE, "    ",
                                     commandSpec.getShortDescription(src).get(), "\n"))
                             /*.append(Text.of(TextColors.AQUA, "Perm: ",
                                     (commandSpec.testPermission(src)) ? TextColors.GREEN : TextColors.RED,

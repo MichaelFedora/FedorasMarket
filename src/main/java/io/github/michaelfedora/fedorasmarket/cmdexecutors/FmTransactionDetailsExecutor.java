@@ -52,12 +52,12 @@ public class FmTransactionDetailsExecutor implements CommandExecutor {
                 preparedStatement.setString(2, trans_name);
                 ResultSet resultSet = preparedStatement.executeQuery();
 
-                src.sendMessage(FmUtil.makeMessage("Transaction \"" + trans_name + "\" details: "));
+                src.sendMessage(FmUtil.makeMessage("Transaction [" + trans_name + "] details: "));
                 if(resultSet.next())
                     src.sendMessage(Text.of(TextColors.GREEN, "[",
                             TextColors.WHITE, trans_name,
                             TextColors.GREEN, "]: ",
-                            TextColors.BLUE, resultSet.getObject("data").toString()));
+                            TextColors.BLUE, (TradeTransaction.Data) resultSet.getObject("data")));
 
             } finally {
                 conn.close();

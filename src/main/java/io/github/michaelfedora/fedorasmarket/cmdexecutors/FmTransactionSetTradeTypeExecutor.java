@@ -2,6 +2,8 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.data.PartyType;
+import io.github.michaelfedora.fedorasmarket.data.TradeType;
+import io.github.michaelfedora.fedorasmarket.transaction.TradeParty;
 import io.github.michaelfedora.fedorasmarket.transaction.TradeTransaction;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
@@ -10,8 +12,6 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.service.economy.Currency;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,12 +20,21 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 /**
- * Created by Michael on 2/25/2016.
+ * Created by Michael on 2/26/2016.
  */
-public class FmTransactionRemoveCurrencyExecutor implements CommandExecutor {
+public class FmTransactionSetTradeTypeExecutor implements CommandExecutor {
+
+    // TODO: Make a better `error` function
+    public CommandResult error(CommandSource src) {
+
+        src.sendMessage(FmUtil.makeMessageError("Bad params, try again!"));
+
+        return CommandResult.empty();
+    }
+
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        if(!(src instanceof Player)) {
+        if (!(src instanceof Player)) {
             src.sendMessage(FmUtil.makeMessageError("Your not a player! No Transactions for you :<"));
 
             return CommandResult.empty();
@@ -37,25 +46,16 @@ public class FmTransactionRemoveCurrencyExecutor implements CommandExecutor {
         {
             Optional<String> opt_trans_name = ctx.<String>getOne("trans_name");
             if (!opt_trans_name.isPresent())
-                return CommandResult.empty(); // TODO: Call error() function, then return
+                return error(src);
             trans_name = opt_trans_name.get();
         }
 
-        PartyType partyType;
+        TradeType tradeType;
         {
-            Optional<PartyType> opt_partyType = ctx.<PartyType>getOne("party");
-            if (!opt_partyType.isPresent())
-                return CommandResult.empty();
-            partyType = opt_partyType.get();
-        }
-
-        Currency currency;
-        {
-            Optional<Currency> opt_currency = ctx.<Currency>getOne("currency");
-            if (opt_currency.isPresent())
-                currency = opt_currency.get();
-            else
-                currency = FedorasMarket.getEconomyService().getDefaultCurrency();
+            Optional<TradeType> opt_tradeType = ctx.<TradeType>getOne("type");
+            if (!opt_tradeType.isPresent())
+                return error(src);
+            tradeType = opt_tradeType.get();
         }
 
         try {
@@ -72,14 +72,7 @@ public class FmTransactionRemoveCurrencyExecutor implements CommandExecutor {
                 if(resultSet.next()) {
                     tradeTransaction = ((TradeTransaction.Data) resultSet.getObject("data")).deserialize();
 
-                    switch(partyType) {
-                        case OWNER:
-                            tradeTransaction.setOwnerParty(tradeTransaction.getOwnerParty().removeCurrency(currency));
-                            break;
-                        case CUSTOMER:
-                            tradeTransaction.setCustomerParty(tradeTransaction.getCustomerParty().removeCurrency(currency));
-                            break;
-                    }
+                    tradeTransaction.setTradeType(tradeType); // TODO: Why is this not going through very well?
 
                     preparedStatement = conn.prepareStatement("UPDATE fm_transactions SET data=? WHERE id=? AND trans_name=?");
                     preparedStatement.setObject(2, player.getUniqueId());
@@ -97,7 +90,6 @@ public class FmTransactionRemoveCurrencyExecutor implements CommandExecutor {
             src.sendMessage(FmUtil.makeMessageError("SQL ERROR: See console :c"));
             return CommandResult.empty();
         }
-
 
         return CommandResult.success();
     }

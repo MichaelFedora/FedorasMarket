@@ -26,7 +26,7 @@ public class FmTransactionExecutor implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        Optional<HashMap<List<String>, CommandSpec>> opt_subCommands = FedorasMarket.getGrandChildCommands(Arrays.asList("transaction", "trans"));
+        Optional<HashMap<List<String>, CommandSpec>> opt_subCommands = FedorasMarket.getGrandChildCommands("transaction");
         if(!opt_subCommands.isPresent()) {
             src.sendMessage(FmUtil.makeMessageError("Sub commands failed!?!?"));
             FedorasMarket.getLogger().error("FmTransactionExecutor, can't find subcommands!?");
@@ -41,7 +41,7 @@ public class FmTransactionExecutor implements CommandExecutor {
                 tb.append(Text.of(TextColors.GRAY, ", "));
             }
         }
-        src.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "[transaction, trans]: ", tb.build()));
+        src.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "[transaction]: ", TextStyles.NONE, tb.build()));
         return CommandResult.success();
     }
 }

@@ -24,12 +24,24 @@ import java.util.Optional;
  *
  * This file is released under the MIT License. Please see the LICENSE file for
  * more information. Thank you.
- *
- * TODO: Serialize.
  */
-public class TradeTransaction implements java.io.Serializable {
+public class TradeTransaction {
 
-    public TradeType tradeType;
+    public static class Data implements java.io.Serializable {
+        public TradeType tradeType;
+        public TradeParty.Data ownerPartyData;
+        public TradeParty.Data customerPartyData;
+
+        public TradeTransaction deserialize() {
+            return TradeTransaction.fromData(this);
+        }
+
+        public String toString() {
+            return "TradeType: " + tradeType + ", Owner Party Data: {" + ownerPartyData + "}, Customer Party Data: {" + customerPartyData + "}";
+        }
+    }
+
+    private TradeType tradeType;
     private TradeParty ownerParty;
     private TradeParty customerParty;
 
@@ -42,13 +54,37 @@ public class TradeTransaction implements java.io.Serializable {
         setCustomerParty(customerParty);
     }
 
+    public Data toData() {
+        Data data = new Data();
+
+        data.tradeType = this.tradeType;
+        data.ownerPartyData = this.ownerParty.toData();
+        data.customerPartyData = this.customerParty.toData();
+
+        return data;
+    }
+
+    public static TradeTransaction fromData(Data data) {
+        return new TradeTransaction(data.tradeType, data.ownerPartyData.deserialize(), data.customerPartyData.deserialize());
+    }
+
+    public TradeType getTradeType() { return this.tradeType; }
     public TradeParty getOwnerParty() { return this.ownerParty; }
     public TradeParty getCustomerParty() { return this.customerParty; }
+    public void setTradeType(TradeType tradeType) {
+        this.tradeType = tradeType;
+        trim();
+    }
     public void setOwnerParty(TradeParty ownerParty) {
         this.ownerParty = ownerParty.trim(tradeType.ownerGoodType);
     }
     public void setCustomerParty(TradeParty customerParty) {
         this.customerParty = customerParty.trim(tradeType.customerGoodType);
+    }
+
+    protected void trim() {
+        this.ownerParty.trim(this.tradeType.ownerGoodType);
+        this.customerParty.trim(this.tradeType.customerGoodType);
     }
 
     //TODO: FIX
@@ -162,7 +198,6 @@ public class TradeTransaction implements java.io.Serializable {
             if(!(opt_owner_acc.isPresent() && opt_customer_acc.isPresent()))
                 return true;
 
-            //TODO: Find a good size of things
             CustomInventory owner_v_inv = CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
             CustomInventory customer_v_inv = CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
 
@@ -211,6 +246,6 @@ public class TradeTransaction implements java.io.Serializable {
     }
 
     public String toString() {
-        return "TradeType: " + tradeType.niceName + ", Owner Party: {" + ownerParty + "}, Customer Party: {" + customerParty + "}";
+        return "TradeType: " + tradeType + ", Owner Party: {" + ownerParty + "}, Customer Party: {" + customerParty + "}";
     }
 }

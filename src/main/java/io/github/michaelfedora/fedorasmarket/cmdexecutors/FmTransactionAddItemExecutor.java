@@ -11,9 +11,6 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextStyles;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,6 +22,15 @@ import java.util.Optional;
  * Created by Michael on 2/25/2016.
  */
 public class FmTransactionAddItemExecutor implements CommandExecutor {
+
+    // TODO: Make a better `error` function
+    public CommandResult error(CommandSource src) {
+
+        src.sendMessage(FmUtil.makeMessageError("Bad params, try again!"));
+
+        return CommandResult.empty();
+    }
+
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
@@ -39,7 +45,7 @@ public class FmTransactionAddItemExecutor implements CommandExecutor {
         {
             Optional<String> opt_trans_name = ctx.<String>getOne("trans_name");
             if (!opt_trans_name.isPresent())
-                return CommandResult.empty(); // TODO: Call error() function, then return
+                return error(src);
             trans_name = opt_trans_name.get();
         }
 
@@ -47,7 +53,7 @@ public class FmTransactionAddItemExecutor implements CommandExecutor {
         {
             Optional<PartyType> opt_partyType = ctx.<PartyType>getOne("party");
             if (!opt_partyType.isPresent())
-                return CommandResult.empty();
+                return error(src);
             partyType = opt_partyType.get();
         }
 
@@ -55,7 +61,7 @@ public class FmTransactionAddItemExecutor implements CommandExecutor {
         {
             Optional<ItemType> opt_itemType = ctx.<ItemType>getOne("item");
             if (!opt_itemType.isPresent())
-                return CommandResult.empty();
+                return error(src);
             itemType = opt_itemType.get();
         }
 
@@ -63,7 +69,7 @@ public class FmTransactionAddItemExecutor implements CommandExecutor {
         {
             Optional<Integer> opt_amount = ctx.<Integer>getOne("amount");
             if (!opt_amount.isPresent())
-                return CommandResult.empty();
+                return error(src);
             amount = opt_amount.get();
         }
 
@@ -79,7 +85,7 @@ public class FmTransactionAddItemExecutor implements CommandExecutor {
 
                 TradeTransaction tradeTransaction;
                 if(resultSet.next()) {
-                    tradeTransaction = (TradeTransaction) resultSet.getObject("data");
+                    tradeTransaction = ((TradeTransaction.Data) resultSet.getObject("data")).deserialize();
 
                     switch(partyType) {
                         case OWNER:
@@ -93,7 +99,7 @@ public class FmTransactionAddItemExecutor implements CommandExecutor {
                     preparedStatement = conn.prepareStatement("UPDATE fm_transactions SET data=? WHERE id=? AND trans_name=?");
                     preparedStatement.setObject(2, player.getUniqueId());
                     preparedStatement.setString(3, trans_name);
-                    preparedStatement.setObject(1, tradeTransaction);
+                    preparedStatement.setObject(1, tradeTransaction.toData());
                     preparedStatement.execute();
                 }
 

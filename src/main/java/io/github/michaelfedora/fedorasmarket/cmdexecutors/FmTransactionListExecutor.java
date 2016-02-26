@@ -9,6 +9,7 @@ import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
@@ -18,6 +19,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,12 +50,15 @@ public class FmTransactionListExecutor implements CommandExecutor {
                 ResultSet resultSet = preparedStatement.executeQuery();
 
                 src.sendMessage(FmUtil.makeMessage("All Transactions (for your id);"));
+
+                Text.Builder tb = Text.builder();
                 while(resultSet.next()) {
-                    src.sendMessage(Text.of(TextColors.GREEN, "[",
-                                    TextColors.WHITE, resultSet.getString("trans_name"),
-                                    TextColors.GREEN, "]: ",
-                                    TextColors.BLUE, resultSet.getObject("data").toString()));
+                    tb.append(Text.of(TextColors.BLUE, "[", TextColors.WHITE, resultSet.getString("trans_name"), TextColors.BLUE, "]"));
+                    if(!resultSet.isLast()) {
+                        tb.append(Text.of(TextColors.GRAY, ", "));
+                    }
                 }
+                src.sendMessage(tb.build());
 
             } finally {
                 conn.close();
