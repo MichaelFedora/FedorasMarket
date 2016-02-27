@@ -1,7 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
-import io.github.michaelfedora.fedorasmarket.data.TradeType;
-import io.github.michaelfedora.fedorasmarket.transaction.TradeActiveParty;
+import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
+import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
 import java.util.ArrayList;
 import java.util.List;

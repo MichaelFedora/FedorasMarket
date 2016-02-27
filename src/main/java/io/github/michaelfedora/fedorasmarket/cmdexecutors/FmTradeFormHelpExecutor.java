@@ -23,11 +23,11 @@ import java.util.Optional;
 /**
  * Created by Michael on 2/26/2016.
  */
-public class FmTransactionHelpExecutor implements CommandExecutor {
+public class FmTradeFormHelpExecutor implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
         HashMap<List<String>,CommandSpec> transSubCommands;
         {
-            Optional<HashMap<List<String>,CommandSpec>> opt_transSubCommands = FedorasMarket.getGrandChildCommands("transaction");
+            Optional<HashMap<List<String>,CommandSpec>> opt_transSubCommands = FedorasMarket.getGrandChildCommands("trade");
             if(!opt_transSubCommands.isPresent())
                 return CommandResult.empty();
             transSubCommands = opt_transSubCommands.get();

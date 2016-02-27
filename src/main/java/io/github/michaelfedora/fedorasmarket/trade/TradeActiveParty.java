@@ -1,12 +1,12 @@
-package io.github.michaelfedora.fedorasmarket.transaction;
+package io.github.michaelfedora.fedorasmarket.trade;
 
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.service.economy.account.Account;
 
 /**
- * Data for actually doing the transaction (accounts & inventories)
+ * Data for actually doing the trade (accounts & inventories)
  */
-public class TradeActiveParty implements java.io.Serializable {
+public class TradeActiveParty {
     public final Account account;
     public final Inventory inventory;
 

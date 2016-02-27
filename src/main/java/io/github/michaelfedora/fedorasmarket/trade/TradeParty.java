@@ -1,7 +1,9 @@
-package io.github.michaelfedora.fedorasmarket.transaction;
+package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.data.GoodType;
+import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
+import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
+import io.github.michaelfedora.fedorasmarket.enumtype.GoodType;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.GameRegistry;
 import org.spongepowered.api.item.ItemType;
@@ -16,9 +18,9 @@ import java.util.Set;
 /**
  * Transaction data
  */
-public class TradeParty {
+public class TradeParty implements FmSerializable<TradeParty.Data> {
 
-    public static class Data implements java.io.Serializable {
+    public static class Data implements FmSerializedData<TradeParty> {
         public final Map<String,Integer> items = new HashMap<>();
         public final Map<String,BigDecimal> currencies = new HashMap<>();
 
@@ -35,6 +37,20 @@ public class TradeParty {
     public Map<Currency,BigDecimal> currencies = new HashMap<Currency,BigDecimal>();
 
     public TradeParty() { }
+
+    public Data toData() {
+        Data data = new Data();
+
+        for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
+            data.items.put(entry.getKey().getId(), entry.getValue());
+        }
+
+        for(Map.Entry<Currency,BigDecimal> entry : this.currencies.entrySet()) {
+            data.currencies.put(entry.getKey().getDisplayName().toPlain(), entry.getValue());
+        }
+
+        return data;
+    }
 
     public static TradeParty fromData(Data data) {
         TradeParty tradeParty = new TradeParty();
@@ -57,20 +73,6 @@ public class TradeParty {
         }
 
         return tradeParty;
-    }
-
-    public Data toData() {
-        Data data = new Data();
-
-        for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
-            data.items.put(entry.getKey().getId(), entry.getValue());
-        }
-
-        for(Map.Entry<Currency,BigDecimal> entry : this.currencies.entrySet()) {
-            data.currencies.put(entry.getKey().getDisplayName().toPlain(), entry.getValue());
-        }
-
-        return data;
     }
 
     public TradeParty addItem(ItemType itemType, int amt) {

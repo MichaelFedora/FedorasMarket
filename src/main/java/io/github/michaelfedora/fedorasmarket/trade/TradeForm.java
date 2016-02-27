@@ -1,7 +1,9 @@
-package io.github.michaelfedora.fedorasmarket.transaction;
+package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.data.TradeType;
+import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
+import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
+import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.Inventory;
@@ -25,15 +27,15 @@ import java.util.Optional;
  * This file is released under the MIT License. Please see the LICENSE file for
  * more information. Thank you.
  */
-public class TradeTransaction {
+public class TradeForm implements FmSerializable<TradeForm.Data> {
 
-    public static class Data implements java.io.Serializable {
+    public static class Data implements FmSerializedData<TradeForm> {
         public TradeType tradeType;
         public TradeParty.Data ownerPartyData;
         public TradeParty.Data customerPartyData;
 
-        public TradeTransaction deserialize() {
-            return TradeTransaction.fromData(this);
+        public TradeForm deserialize() {
+            return TradeForm.fromData(this);
         }
 
         public String toString() {
@@ -48,7 +50,7 @@ public class TradeTransaction {
     public transient Optional<TransferResult> lastTransferResult;
     public transient Optional<InventoryTransactionResult> lastInventoryTransactionResult;
 
-    public TradeTransaction(TradeType tradeType, TradeParty ownerParty, TradeParty customerParty) {
+    public TradeForm(TradeType tradeType, TradeParty ownerParty, TradeParty customerParty) {
         this.tradeType = tradeType;
         setOwnerParty(ownerParty);
         setCustomerParty(customerParty);
@@ -64,8 +66,8 @@ public class TradeTransaction {
         return data;
     }
 
-    public static TradeTransaction fromData(Data data) {
-        return new TradeTransaction(data.tradeType, data.ownerPartyData.deserialize(), data.customerPartyData.deserialize());
+    public static TradeForm fromData(Data data) {
+        return new TradeForm(data.tradeType, data.ownerPartyData.deserialize(), data.customerPartyData.deserialize());
     }
 
     public TradeType getTradeType() { return this.tradeType; }

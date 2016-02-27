@@ -1,25 +1,25 @@
-package io.github.michaelfedora.fedorasmarket.shop.modifier;
+package io.github.michaelfedora.fedorasmarket.shop;
 
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
-import io.github.michaelfedora.fedorasmarket.transaction.TradeActiveParty;
+import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
 import java.util.ArrayList;
 
 /**
- * For doing a transaction multiple times.
+ * For doing a trade multiple times.
  */
-public final class MultiAction extends ShopModifier {
+public final class MultiActionModifier extends ShopModifier {
 
     public final int number;
 
-    public MultiAction(int number) {
+    public MultiActionModifier(int number) {
         super(true, new ArrayList<>());
         this.number = number;
     }
 
     @Override
     public void execute(Shop shop, TradeActiveParty owner, TradeActiveParty customer) {
-        for(int i = 0; i < number && shop.tradeTransaction.apply(owner, customer); i++);
+        for(int i = 0; i < number && shop.tradeForm.apply(owner, customer); i++);
     }
 }
