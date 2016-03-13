@@ -9,11 +9,19 @@ package io.github.michaelfedora.fedorasmarket;
 
 import com.google.inject.Inject;
 
+import com.typesafe.config.ConfigException;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
+import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
+import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.enumtype.PartyType;
 import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
-import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
+import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
+import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import me.flibio.updatifier.Updatifier;
 import org.slf4j.Logger;
 
@@ -28,28 +36,27 @@ import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
 import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.Currency;
-import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.text.Text;
 
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
 @Updatifier(repoName = "FedorasMarket", repoOwner = "MichaelFedora", version = PluginInfo.VERSION)
-@Plugin(id = PluginInfo.ID, name = PluginInfo.NAME, version = PluginInfo.VERSION)
+@Plugin(id = PluginInfo.ID, name = PluginInfo.NAME, version = PluginInfo.VERSION,description = PluginInfo.DESCRIPTION, authors = PluginInfo.AUTHORS)
 public class FedorasMarket {
 
     private static FedorasMarket instance; // TODO: Set to an optional ;3
 
-    public static final String ACCOUNT_SERVER_ID = "fedorasmarket:server_account";
-    public static final String ACCOUNT_VIRTUAL_OWNER_ID_PREFIX = "fedorasmarket:virtual_owner_account_"; //TODO: Read up to see if these are too big
-    public static final String ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX = "fedorasmarket:virtual_customer_account_";
+    public static final String ACCOUNT_VIRTUAL_OWNER_ID_PREFIX = "fedorasmarket:v_o_acc_"; //TODO: Read up to see if these are too big
+    public static final String ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX = "fedorasmarket:v_c_acc_";
+
+    public static Set<Class> toRegister = new HashSet<>();
 
     @Inject
     private Logger logger;
@@ -84,7 +91,7 @@ public class FedorasMarket {
         return Optional.empty();
     }
 
-    private List<String> chestNames = new ArrayList<String>();
+    private List<String> chestNames = new ArrayList<>();
     public static List<String> getChestNames() { return instance.chestNames; }
 
     private int maxItemStacks = 36;
@@ -93,6 +100,14 @@ public class FedorasMarket {
     @Listener
     public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
+
+        // TODO: Make commands register themselves ;3
+        Sponge.getEventManager().registerListeners(this, new FmShopCreateExecutor());
+        Sponge.getEventManager().registerListeners(this, new FmShopDetailsExecutor());
+        Sponge.getEventManager().registerListeners(this, new PlayerInteractListener());
+
+        Sponge.getDataManager().register(ShopReferenceData.class, ImmutableShopReferenceData.class, new ShopReferenceDataManipulatorBuilder());
+        Sponge.getDataManager().registerBuilder(ShopReference.class, new ShopReferenceBuilder());
     }
 
     @Listener
@@ -122,59 +137,52 @@ public class FedorasMarket {
                 .executor(new FmHelpExecutor())
                 .build());
 
-        HashMap<List<String>, CommandSpec> transSubCommands = new HashMap<>();
+        HashMap<List<String>, CommandSpec> tradeformSubCommands = new HashMap<>();
 
-        transSubCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
                 .description(Text.of("Help Command"))
                 .permission(PluginInfo.DATA_ROOT + ".trade.help")
                 .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("page no")))) // is this used I dun even
                 .executor(new FmTradeFormHelpExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("create", "make", "new"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
                 .description(Text.of("Create a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.create")
                 .arguments(
                         GenericArguments.string(Text.of("name")),
-                        GenericArguments.optional(GenericArguments.enumValue(Text.of("trade_type"), TradeType.class)))
+                        GenericArguments.optional(GenericArguments.enumValue(Text.of("type"), TradeType.class)))
                 .executor(new FmTradeFormCreateExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("delete", "del"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("delete", "del"), CommandSpec.builder()
                 .description(Text.of("Delete a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.delete")
                 .arguments(GenericArguments.string(Text.of("name")))
                 .executor(new FmTradeFormDeleteExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("deletemany", "delm"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("deletemany", "delm"), CommandSpec.builder()
                 .description(Text.of("Delete many trade forms"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.deletemany")
                 .arguments(GenericArguments.allOf(GenericArguments.string(Text.of("names"))))
                 .executor(new FmTradeFormDeleteManyExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
                 .description(Text.of("Lists all trade forms"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.list")
                 .executor(new FmTradeFormListExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
                 .description(Text.of("Lists the details about a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.details")
                 .arguments(GenericArguments.string(Text.of("name")))
                 .executor(new FmTradeFormDetailsExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("apply"), CommandSpec.builder()
-                .description(Text.of("Apply a trade form to a sign"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.apply")
-                .arguments(GenericArguments.string(Text.of("name")))
-                .executor(new FmTradeFormApplyExecutor())
-                .build());
-
-        transSubCommands.put(Arrays.asList("settradetype", "settype"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("settradetype", "settype"), CommandSpec.builder()
                 .description(Text.of("Set the TradeType of the trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.settradetype")
                 .arguments(
@@ -183,7 +191,7 @@ public class FedorasMarket {
                 .executor(new FmTradeFormSetTradeTypeExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("additem", "addi"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("additem", "addi"), CommandSpec.builder()
                 .description(Text.of("Add an item amount to a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.additem")
                 .arguments(
@@ -194,7 +202,7 @@ public class FedorasMarket {
                 .executor(new FmTradeFormAddItemExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("setitem", "seti"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("setitem", "seti"), CommandSpec.builder()
                 .description(Text.of("Set an item entry in a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.setitem")
                 .arguments(
@@ -205,7 +213,7 @@ public class FedorasMarket {
                 .executor(new FmTradeFormSetItemExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("removeitem", "remi"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("removeitem", "remi"), CommandSpec.builder()
                 .description(Text.of("Remove an item entry from a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.removeitem")
                 .arguments(
@@ -221,7 +229,7 @@ public class FedorasMarket {
             currencies.put(c.getDisplayName().toPlain(), c);
         }
 
-        transSubCommands.put(Arrays.asList("addcurrency", "addc"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("addcurrency", "addc"), CommandSpec.builder()
                 .description(Text.of("Add a currency amount to a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.addcurrency")
                 .arguments(
@@ -232,7 +240,7 @@ public class FedorasMarket {
                 .executor(new FmTradeFormAddCurrencyExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("setcurrency", "setc"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("setcurrency", "setc"), CommandSpec.builder()
                 .description(Text.of("Sets a currency entry in a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.setcurrency")
                 .arguments(
@@ -243,7 +251,7 @@ public class FedorasMarket {
                 .executor(new FmTradeFormSetCurrencyExecutor())
                 .build());
 
-        transSubCommands.put(Arrays.asList("removecurrency", "remc"), CommandSpec.builder()
+        tradeformSubCommands.put(Arrays.asList("removecurrency", "remc"), CommandSpec.builder()
                 .description(Text.of("Remove a currency from a trade form"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.removecurrency")
                 .arguments(
@@ -255,13 +263,62 @@ public class FedorasMarket {
 
 
         subCommands.put(Arrays.asList("tradeform", "tform", "tf"), CommandSpec.builder()
-                .description(Text.of("Do trade-form things (lists sub commands)"))
+                .description(Text.of("Do tradeform things (lists sub commands)"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform")
                 .executor(new FmTradeFormExecutor())
-                .children(transSubCommands)
+                .children(tradeformSubCommands)
                 .build());
 
-        grandChildCommands.put("tradeform", transSubCommands);
+        grandChildCommands.put("tradeform", tradeformSubCommands);
+
+        HashMap<List<String>,CommandSpec> shopSubCommands = new HashMap<>();
+
+        shopSubCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
+                .description(Text.of("Lists help for the shop subcommand"))
+                .permission(PluginInfo.DATA_ROOT + ".shop.help")
+                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("pageno"))))
+                .executor(new FmShopHelpExecutor())
+                .build());
+
+
+        shopSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
+                .description(Text.of("Create a new shop"))
+                .permission(PluginInfo.DATA_ROOT + ".shop.create")
+                .arguments(
+                        GenericArguments.string(Text.of("formname")),
+                        GenericArguments.optional(GenericArguments.string(Text.of("modifiername"))))
+                .executor(new FmShopCreateExecutor())
+                .build());
+
+        shopSubCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
+                .description(Text.of("Get details about a shop"))
+                .permission(PluginInfo.DATA_ROOT + ".shop.details")
+                .arguments(GenericArguments.optional(GenericArguments.seq(
+                                GenericArguments.string(Text.of("name")),
+                                GenericArguments.string(Text.of("instance")))))
+                .executor(new FmShopDetailsExecutor())
+                .build());
+
+        shopSubCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
+                .description(Text.of("List all shops created by you"))
+                .permission(PluginInfo.DATA_ROOT + ".shop.list")
+                .executor(new FmShopListExecutor())
+                .build());
+
+        shopSubCommands.put(Arrays.asList("clean"), CommandSpec.builder()
+                .description(Text.of("Cleans up the shops \"references\" made by you that are stored in the database"))
+                .permission(PluginInfo.DATA_ROOT + ".shop.clean")
+                .executor(new FmShopCleanExecutor())
+                .build());
+
+        subCommands.put(Arrays.asList("shop", "sh"), CommandSpec.builder()
+            .description(Text.of("Do shop things (lists sub commands)"))
+                .permission(PluginInfo.DATA_ROOT + ".shop")
+                .executor(new FmShopExecutor())
+                .children(shopSubCommands)
+            .build());
+
+        grandChildCommands.put("shop", shopSubCommands);
 
         /*subCommands.put(Arrays.asList("offertrade", "otrade"), CommandSpec.builder()
                 .description(Text.of("Offer to Trade to another player the item in your hand"))
@@ -299,13 +356,10 @@ public class FedorasMarket {
     @Listener
     public void onLoadComplete(GameLoadCompleteEvent glce) {
         getLogger().info("== " + PluginInfo.NAME + " - GameLoadComplete ==");
-        try {
 
-            DatabaseManager.initialize();
+        DatabaseManager.initialize();
+        // TODO: Clean the shops
 
-        } catch(SQLException e) {
-            getLogger().error("OnLoadComplete(:c)", e);
-        }
         getLogger().info("== == FIN == ==");
     }
 }

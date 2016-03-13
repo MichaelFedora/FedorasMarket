@@ -5,5 +5,5 @@ package io.github.michaelfedora.fedorasmarket.database;
  */
 public interface FmSerializable<D extends FmSerializedData> {
 
-    D toData();
+    D serialize();
 }

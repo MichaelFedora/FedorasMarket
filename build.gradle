@@ -2,8 +2,8 @@ apply plugin: 'java'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-version = '1.0'
 group = 'io.github.michaelfedora'
+version = '1.0-SNAPSHOT'
 archivesBaseName = "FedorasMarket"
 
 repositories {
@@ -24,8 +24,8 @@ configurations {
 }
 
 dependencies {
-    compile 'org.spongepowered:spongeapi:3.1.0-SNAPSHOT'
-    shade 'com.github.Flibio:Updatifier:v1.3.0:api'
+    compile 'org.spongepowered:spongeapi:4.1.0-SNAPSHOT'
+    shade 'com.github.Flibio:Updatifier:v1.4.0:api'
 }
 
 jar {

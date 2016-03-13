@@ -2,9 +2,13 @@ package io.github.michaelfedora.fedorasmarket.shop;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.database.BadDataException;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
+import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.TileEntity;
@@ -20,6 +24,9 @@ import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Optional;
 
 /**
@@ -31,37 +38,57 @@ import java.util.Optional;
 public class Shop {
 
     protected Sign sign;
-    protected Account account;
-    protected Inventory inventory;
-    protected TradeType tradeType;
-    protected TradeForm tradeForm;
-    protected ShopModifier shopModifier;
+    protected ShopData data;
 
     protected ShopReference reference;
 
     //private Shop() { }
-    public Shop(Sign sign, Account account, Inventory inventory, TradeType tradeType, TradeForm tradeForm, ShopModifier modifier) {
-
-        // check enums to make sure they line up
-
-        if(!modifier.isValidWith(tradeType)) {
-            modifier = ShopModifier.NONE;
-        }
+    public Shop(Sign sign, ShopData shopData) {
 
         this.sign = sign;
-        this.account = account;
-        this.inventory = inventory;
-        this.tradeType = tradeType;
-        this.tradeForm = tradeForm;
-        this.shopModifier = modifier;
+        this.data = shopData;
     }
 
-    public static Shop makeShop(Sign sign, Account account, Inventory inventory, TradeType tradeType, TradeForm tradeForm) {
-        return new Shop(sign, account, inventory, tradeType, tradeForm, ShopModifier.NONE);
+    public static Optional<Shop> fromSign(Sign sign) {
+        ShopReference ref;
+        {
+            Optional<ShopReference> opt_ref = sign.get(FmDataKeys.SHOP_REFERENCE);
+            if(!opt_ref.isPresent())
+                return Optional.empty();
+            ref = opt_ref.get();
+        }
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            ResultSet resultSet = DatabaseManager.shopDataDB.select(conn, ref.author, ref.name, ref.instance);
+            if(resultSet.next()) {
+                try {
+                    Shop shop = new Shop(sign, ((SerializedShopData) resultSet.getObject("data")).deserialize());
+                    return Optional.of(shop);
+                } catch(BadDataException e) {
+                    FedorasMarket.getLogger().error("Bad shop data :o", e);
+                }
+            }
+
+        } catch (SQLException e) {
+            FedorasMarket.getLogger().error("SQL Error", e);
+        }
+
+        return Optional.empty();
     }
 
-    public static Shop makeShop(Sign sign, Account account, Inventory inventory, TradeType tradeType, TradeForm tradeForm, ShopModifier shopModifier) {
-        return new Shop(sign, account, inventory, tradeType, tradeForm, shopModifier);
+    public static Optional<Shop> fromLocation(Location<World> location) {
+
+        Sign sign;
+        {
+            Optional<Sign> opt_sign = FmUtil.getSignFromLocation(location);
+            if(opt_sign.isPresent())
+                return Optional.empty();
+
+            sign = opt_sign.get();
+        }
+
+        return fromSign(sign);
     }
 
     public void refresh() {
@@ -78,38 +105,26 @@ public class Shop {
 
         TradeActiveParty owner;
         TradeActiveParty customer;
-        {
-            Optional<UniqueAccount> opt_uacc = eco.getAccount(player.getUniqueId());
-            if(!opt_uacc.isPresent())
-                return;
+        owner = new TradeActiveParty(this.data.ownerData.account, this.data.ownerData.inventory);
+        customer = new TradeActiveParty(eco.getOrCreateAccount(player.getUniqueId()).get(), player.getInventory());
 
-            owner = new TradeActiveParty(account, inventory);
-            customer = new TradeActiveParty(opt_uacc.get(), player.getInventory());
-        }
-
-        tradeForm.apply(owner, customer);
+        this.data.tradeForm.apply(owner, customer);
 
     }
 
     public void doSecondary(Player player) {
 
-        if(shopModifier == ShopModifier.NONE)
+        if(this.data.modifier == ShopModifier.NONE)
             return;
 
         EconomyService eco = FedorasMarket.getEconomyService();
 
         TradeActiveParty owner;
         TradeActiveParty customer;
-        {
-            Optional<UniqueAccount> opt_uacc = eco.getAccount(player.getUniqueId());
-            if(!opt_uacc.isPresent())
-                return;
+        owner = new TradeActiveParty(this.data.ownerData.account, this.data.ownerData.inventory);
+        customer = new TradeActiveParty(eco.getOrCreateAccount(player.getUniqueId()).get(), player.getInventory());
 
-            owner = new TradeActiveParty(account, inventory);
-            customer = new TradeActiveParty(opt_uacc.get(), player.getInventory());
-        }
-
-        shopModifier.execute(this, owner, customer);
+        this.data.modifier.execute(this.data, owner, customer);
     }
 
     /*public void tryMakeShop() {

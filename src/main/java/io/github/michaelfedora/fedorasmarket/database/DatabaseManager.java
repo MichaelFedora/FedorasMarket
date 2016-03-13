@@ -1,18 +1,15 @@
 package io.github.michaelfedora.fedorasmarket.database;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.shop.ShopForm;
+import io.github.michaelfedora.fedorasmarket.shop.SerializedShopData;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
-import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
+import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.Tuple;
 
 import java.lang.reflect.Type;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -34,358 +31,295 @@ public final class DatabaseManager {
         return SQL.getDataSource(jdbcUrl);
     }
 
-    public static void initialize() throws SQLException {
-
-        tradeForms.initialize();
-        shopForms.initialize();
-    }
-
-    private static void initialize_generic(String table, Map<String,Tuple<String,Type>> params) throws SQLException {
-        Connection conn = getDataSource(DB_ID).getConnection();
-
-        StringBuilder sb = new StringBuilder("");
-        sb.append("CREATE TABLE IF NOT EXISTS ");
-        sb.append(table);
-
-        int i = 0;
-        for(Map.Entry<String,Tuple<String,Type>> entry : params.entrySet()) {
-            sb.append(entry.getKey()).append(" ").append(params.get(entry.getValue().getFirst()).toString());
-            if(i++ < params.size())
-                sb.append(", ");
-        }
-        sb.append(")");
-
+    public static void initialize() {
 
         try {
-            conn.prepareStatement(sb.toString()).execute();
-
-            ResultSet resultSet = conn.prepareStatement("SELECT * FROM " + table).executeQuery();
-
-            FedorasMarket.getLogger().info("Table [" + table + "]: ");
-            FedorasMarket.getLogger().info(resultSet.toString()); // FIXME: resultset thing
-
-            // DEBUG THING
-            /*while(resultSet.next()) {
-                sb.setLength(0);
-                i = 0;
-                for(Map.Entry<String,Tuple<String,Type>> entry : params.entrySet()) {
-                    sb.append(resultSet.getObject(entry.getKey()));
-                    if(++i < params.size())
-                        sb.append(" | ");
-                }
-                FedorasMarket.getLogger().info(sb.toString());
-            }*/
-
-        } finally {
-            conn.close();
+            tradeFormDB.initialize();
+        } catch(SQLException e) {
+            FedorasMarket.getLogger().error("SQL Error: ", e);
         }
 
-
+        try {
+            shopDataDB.initialize();
+        } catch(SQLException e) {
+            FedorasMarket.getLogger().error("SQL Error: ", e);
+        }
     }
 
-    public static final class tradeForms {
+    public static Connection getConnection() throws SQLException {
+        return getDataSource(DB_ID).getConnection();
+    }
+
+    public static final class tradeFormDB {
 
         private static Map<String,Tuple<String,Type>> PARAMS = new LinkedHashMap<>();
         static {
-            PARAMS.put("id", new Tuple<>("uuid", UUID.class));
+            PARAMS.put("author", new Tuple<>("uuid", UUID.class));
             PARAMS.put("name", new Tuple<>("varchar(255)", String.class)); // FIXME: String or varchar(255)?
-            PARAMS.put("data", new Tuple<>("other", TradeForm.Data.class)); // FIXME: Object or other?
+            PARAMS.put("data", new Tuple<>("other", SerializedTradeForm.class)); // FIXME: Object or other?
         }
 
         public static Map<String,Tuple<String,Type>> getParams() { return PARAMS; }
+        public static String getKey(int i) {
+            return (String) PARAMS.keySet().toArray()[1];
+        }
 
         public static void initialize() throws SQLException {
             //DatabaseManager.initialize_generic(DB_TABLE_TRADE_FORMS, PARAMS);
-            Connection conn = getDataSource(DB_ID).getConnection();
 
-            try {
-                conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + DB_TABLE_TRADE_FORMS + "(id uuid, name varchar(255), data other)").execute();
+            try(Connection conn = getDataSource(DB_ID).getConnection()) {
+                conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + DB_TABLE_TRADE_FORMS + "(author uuid, name varchar(255), data other)").execute();
 
                 ResultSet resultSet = conn.prepareStatement("SELECT * FROM " + DB_TABLE_TRADE_FORMS).executeQuery();
+                ResultSetMetaData metaData = resultSet.getMetaData();
 
                 FedorasMarket.getLogger().info("Table [" + DB_TABLE_TRADE_FORMS + "]: ");
                 FedorasMarket.getLogger().info(resultSet.toString()); // FIXME: resultset thing
 
-                // DEBUG THING
-                /*while(resultSet.next()) {
+                StringBuilder sb = new StringBuilder();
+
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
+
+                    sb.append(metaData.getColumnName(i));
+                    if (i < metaData.getColumnCount())
+                        sb.append(" | ");
+                }
+                FedorasMarket.getLogger().info(sb.toString());
+
+                while(resultSet.next()) {
+
                     sb.setLength(0);
-                    i = 0;
-                    for(Map.Entry<String,Tuple<String,Type>> entry : params.entrySet()) {
-                        sb.append(resultSet.getObject(entry.getKey()));
-                        if(++i < params.size())
+                    for(int i = 1; i <= metaData.getColumnCount(); i++) {
+
+                        sb.append(resultSet.getObject(i));
+                        if(i < metaData.getColumnCount())
                             sb.append(" | ");
                     }
                     FedorasMarket.getLogger().info(sb.toString());
-                }*/
+                }
 
-            } finally {
-                conn.close();
             }
         }
 
-        public static ResultSet selectWithMore(UUID id, String name, String more) throws SQLException {
+        public static ResultSet selectWithMore(Connection conn, UUID author, String name, String more) throws SQLException {
 
-            Connection conn = getDataSource(DB_ID).getConnection();
+            int i = 0;
+            String statement = "SELECT * FROM " + DB_TABLE_TRADE_FORMS + " WHERE author=? AND name=? " + more;
 
-            try {
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            return preparedStatement.executeQuery();
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("SELECT * FROM ? WHERE id=? AND name=? " + more);
-                preparedStatement.setString(++i, DB_TABLE_TRADE_FORMS);
-                preparedStatement.setObject(++i, id);
-                preparedStatement.setString(++i, name);
-                return preparedStatement.executeQuery();
-
-            } finally {
-                conn.close();
-            }
         }
 
-        public static ResultSet select(UUID id, String name) throws SQLException {
-            return selectWithMore(id, name, "");
+        public static ResultSet select(Connection conn, UUID author, String name) throws SQLException {
+            return selectWithMore(conn, author, name, "");
         }
 
-        public static ResultSet selectWithMore(UUID id, String more) throws SQLException {
+        public static ResultSet selectWithMore(Connection conn, UUID author, String more) throws SQLException {
 
-            Connection conn = getDataSource(DB_ID).getConnection();
+            int i = 0;
+            String statement = "SELECT * FROM " + DB_TABLE_TRADE_FORMS + " WHERE author=? " + more;
 
-            try {
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("SELECT * FROM ? WHERE id=?" + more);
-                preparedStatement.setString(++i, DB_TABLE_TRADE_FORMS);
-                preparedStatement.setObject(++i, id);
-                return preparedStatement.executeQuery();
+        PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            return preparedStatement.executeQuery();
 
-            } finally {
-                conn.close();
-            }
         }
 
-        public static ResultSet select(UUID id) throws SQLException {
-            return selectWithMore(id, "");
+        public static ResultSet select(Connection conn, UUID author) throws SQLException {
+            return selectWithMore(conn, author, "");
         }
 
-        public static boolean update(TradeForm.Data data, UUID id, String name) throws SQLException {
+        public static boolean update(Connection conn, SerializedTradeForm data, UUID author, String name) throws SQLException {
 
-            Connection conn = getDataSource(DB_ID).getConnection();
+            int i = 0;
+            String statement = "UPDATE " + DB_TABLE_TRADE_FORMS + " SET data=? WHERE author=? AND name=?";
 
-            try {
-
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("UPDATE ? SET data=? WHERE id=? AND name=?");
-                preparedStatement.setString(++i, DB_TABLE_TRADE_FORMS);
-                preparedStatement.setObject(++i, data);
-                preparedStatement.setObject(++i, id);
-                preparedStatement.setString(++i, name);
-                return preparedStatement.execute();
-
-            } finally {
-                conn.close();
-            }
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, data);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            return preparedStatement.execute();
         }
 
-        public static boolean delete(UUID id, String name) throws SQLException {
-            Connection conn = getDataSource(DB_ID).getConnection();
+        public static boolean delete(Connection conn, UUID author, String name) throws SQLException {
 
-            try {
+            int i = 0;
+            String statement = "DELETE FROM " + DB_TABLE_TRADE_FORMS + " WHERE author=? AND name=?";
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("DELETE FROM ? WHERE id=? AND name=?");
-                preparedStatement.setString(++i, DB_TABLE_TRADE_FORMS);
-                preparedStatement.setObject(++i, id);
-                preparedStatement.setString(++i, name);
-                return preparedStatement.execute();
-
-            } finally {
-                conn.close();
-            }
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            return preparedStatement.execute();
         }
 
-        public static boolean insert(UUID id, String name, TradeForm.Data data) throws SQLException {
-            Connection conn = getDataSource(DB_ID).getConnection();
+        public static boolean insert(Connection conn, UUID author, String name, SerializedTradeForm data) throws SQLException {
 
-            try {
+            int i = 0;
+            String statement = "INSERT INTO " + DB_TABLE_TRADE_FORMS + "(author, name, data) values (?, ?, ?)";
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO ?(id, name, data) values (?, ?, ?)");
-                preparedStatement.setString(++i, DB_TABLE_TRADE_FORMS);
-                preparedStatement.setObject(++i, id);
-                preparedStatement.setString(++i, name);
-                preparedStatement.setObject(++i, data);
-                return preparedStatement.execute();
-
-            } finally {
-                conn.close();
-            }
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            preparedStatement.setObject(++i, data);
+            return preparedStatement.execute();
         }
     }
 
-    public static final class shopForms {
+    public static final class shopDataDB {
 
         private static Map<String,Tuple<String,Type>> PARAMS = new LinkedHashMap<>();
         static {
             PARAMS.put("author", new Tuple<>("uuid", UUID.class));
             PARAMS.put("name", new Tuple<>("varchar(255)", String.class)); // FIXME: String or varchar(255)?
             PARAMS.put("instance", new Tuple<>("uuid", UUID.class));
-            PARAMS.put("data", new Tuple<>("other", ShopForm.Data.class));
+            PARAMS.put("data", new Tuple<>("other", SerializedShopData.class));
         }
 
         public static Map<String,Tuple<String,Type>> getParams() { return PARAMS; }
 
         public static void initialize() throws SQLException {
-            DatabaseManager.initialize_generic(DB_TABLE_SHOP_FORMS, PARAMS);
-        }
+            //DatabaseManager.initialize_generic(DB_TABLE_TRADE_FORMS, PARAMS);
 
-        public static ResultSet selectWithMore(UUID author, String name, UUID instance, String more) throws SQLException {
+            try(Connection conn = getDataSource(DB_ID).getConnection()) {
+                conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + DB_TABLE_SHOP_FORMS + "(author uuid, name varchar(255), instance uuid, data other)").execute();
 
-            Connection conn = getDataSource(DB_ID).getConnection();
+                ResultSet resultSet = conn.prepareStatement("SELECT * FROM " + DB_TABLE_SHOP_FORMS).executeQuery();
+                ResultSetMetaData metaData = resultSet.getMetaData();
+                FedorasMarket.getLogger().info("Table [" + DB_TABLE_SHOP_FORMS + "]: ");
+                FedorasMarket.getLogger().info(resultSet.toString()); // FIXME: resultset thing
 
-            try {
+                // DEBUG THING
+                StringBuilder sb = new StringBuilder();
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("SELECT * FROM ? WHERE author=? AND name=? AND instance=? " + more);
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                preparedStatement.setObject(++i, author);
-                preparedStatement.setString(++i, name);
-                preparedStatement.setObject(++i, instance);
-                return preparedStatement.executeQuery();
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
 
-            } finally {
-                conn.close();
+                    sb.append(metaData.getColumnName(i));
+                    if (i < metaData.getColumnCount())
+                        sb.append(" | ");
+                }
+                FedorasMarket.getLogger().info(sb.toString());
+
+                while(resultSet.next()) {
+
+                    sb.setLength(0);
+                    for(int i = 1; i <= metaData.getColumnCount(); i++) {
+
+                        sb.append(resultSet.getObject(i));
+                        if(i < metaData.getColumnCount())
+                            sb.append(" | ");
+                    }
+                    FedorasMarket.getLogger().info(sb.toString());
+                }
+
             }
         }
 
-        public static ResultSet select(UUID author, String name, UUID instance) throws SQLException {
-            return selectWithMore(author, name, instance, "");
+        public static ResultSet selectWithMore(Connection conn, UUID author, String name, UUID instance, String more) throws SQLException {
+
+            int i = 0;
+            String statement = "SELECT * FROM " + DB_TABLE_SHOP_FORMS + " WHERE author=? AND name=? AND instance=? " + more;
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            preparedStatement.setObject(++i, instance);
+            return preparedStatement.executeQuery();
         }
 
-        public static ResultSet selectWithMore(UUID author, String name, String more) throws SQLException {
-
-            Connection conn = getDataSource(DB_ID).getConnection();
-
-            try {
-
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("SELECT * FROM ? WHERE author=? AND name=? " + more);
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                preparedStatement.setObject(++i, author);
-                preparedStatement.setString(++i, name);
-                return preparedStatement.executeQuery();
-
-            } finally {
-                conn.close();
-            }
+        public static ResultSet select(Connection conn, UUID author, String name, UUID instance) throws SQLException {
+            return selectWithMore(conn, author, name, instance, "");
         }
 
-        public static ResultSet select(UUID author, String name) throws SQLException {
-            return selectWithMore(author, name, "");
+        public static ResultSet selectWithMore(Connection conn, UUID author, String name, String more) throws SQLException {
+
+            int i = 0;
+            String statement = "SELECT * FROM " + DB_TABLE_SHOP_FORMS + " WHERE author=? AND name=? " + more;
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            return preparedStatement.executeQuery();
         }
 
-        public static ResultSet selectWithMore(UUID author, String more) throws SQLException {
-
-            Connection conn = getDataSource(DB_ID).getConnection();
-
-            try {
-
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("SELECT * FROM ? WHERE author=? " + more);
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                preparedStatement.setObject(++i, author);
-                return preparedStatement.executeQuery();
-
-            } finally {
-                conn.close();
-            }
+        public static ResultSet select(Connection conn, UUID author, String name) throws SQLException {
+            return selectWithMore(conn, author, name, "");
         }
 
-        public static ResultSet select(UUID author) throws SQLException {
-            return selectWithMore(author, "");
+        public static ResultSet selectWithMore(Connection conn, UUID author, String more) throws SQLException {
+
+            int i = 0;
+            String statement = "SELECT * FROM " + DB_TABLE_SHOP_FORMS + " WHERE author=? " + more;
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            return preparedStatement.executeQuery();
         }
 
-        public static ResultSet selectWithMore(String more) throws SQLException {
 
-            Connection conn = getDataSource(DB_ID).getConnection();
-
-            try {
-
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("SELECT * FROM ? " + more);
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                return preparedStatement.executeQuery();
-
-            } finally {
-                conn.close();
-            }
+        public static ResultSet select(Connection conn, UUID author) throws SQLException {
+            return selectWithMore(conn, author, "");
         }
 
-        public static ResultSet select() throws SQLException {
-            return selectWithMore("");
+        public static ResultSet selectWithMore(Connection conn, String more) throws SQLException {
+
+            String statement = "SELECT * FROM " + DB_TABLE_SHOP_FORMS + " " + more;
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            return preparedStatement.executeQuery();
         }
 
-        public static ResultSet selectWithMore(ShopReference shopReference, String more) throws SQLException {
-            return selectWithMore(shopReference.author, shopReference.name, shopReference.instance, more);
+        public static ResultSet select(Connection conn) throws SQLException {
+            return selectWithMore(conn, "");
         }
 
-        public static ResultSet select(ShopReference shopReference) throws SQLException {
-            return select(shopReference.author, shopReference.name, shopReference.instance);
+        public static ResultSet selectWithMore(Connection conn, ShopReference shopReference, String more) throws SQLException {
+            return selectWithMore(conn, shopReference.author, shopReference.name, shopReference.instance, more);
         }
 
-        public static boolean update(ShopForm.Data data, UUID author, String name, UUID instance) throws SQLException {
-
-            Connection conn = getDataSource(DB_ID).getConnection();
-
-            try {
-
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("UPDATE ? SET data=? WHERE author=? AND name=? AND instance=?");
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                preparedStatement.setObject(++i, data);
-                preparedStatement.setObject(++i, author);
-                preparedStatement.setString(++i, name);
-                preparedStatement.setObject(++i, instance);
-                return preparedStatement.execute();
-
-            } finally {
-                conn.close();
-            }
+        public static ResultSet select(Connection conn, ShopReference shopReference) throws SQLException {
+            return select(conn, shopReference.author, shopReference.name, shopReference.instance);
         }
 
-        public static boolean delete(UUID author, String name, UUID instance) throws SQLException {
-            Connection conn = getDataSource(DB_ID).getConnection();
+        public static boolean update(Connection conn, SerializedShopData data, UUID author, String name, UUID instance) throws SQLException {
 
-            try {
+            int i = 0;
+            String statement = "UPDATE " + DB_TABLE_SHOP_FORMS + " SET data=? WHERE author=? AND name=? AND instance=?";
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("DELETE FROM ? WHERE author=? AND name=? AND instance=?");
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                preparedStatement.setObject(++i, author);
-                preparedStatement.setString(++i, name);
-                preparedStatement.setObject(++i, instance);
-                return preparedStatement.execute();
-
-            } finally {
-                conn.close();
-            }
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, data);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            preparedStatement.setObject(++i, instance);
+            return preparedStatement.execute();
         }
 
-        public static boolean insert(UUID author, String name, UUID instance, ShopForm.Data data) throws SQLException {
-            Connection conn = getDataSource(DB_ID).getConnection();
+        public static boolean delete(Connection conn, UUID author, String name, UUID instance) throws SQLException {
 
-            try {
+            int i = 0;
+            String statement = "DELETE FROM " + DB_TABLE_SHOP_FORMS + " WHERE author=? AND name=? AND instance=?";
 
-                int i = 0;
-                PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO ?(author, name, instance, data) values (?, ?, ?, ?)");
-                preparedStatement.setString(++i, DB_TABLE_SHOP_FORMS);
-                preparedStatement.setObject(++i, author);
-                preparedStatement.setString(++i, name);
-                preparedStatement.setObject(++i, instance);
-                preparedStatement.setObject(++i, data);
-                return preparedStatement.execute();
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            preparedStatement.setObject(++i, instance);
+            return preparedStatement.execute();
+        }
 
-            } finally {
-                conn.close();
-            }
+        public static boolean insert(Connection conn, UUID author, String name, UUID instance, SerializedShopData data) throws SQLException {
+
+            int i = 0;
+            String statement = "INSERT INTO " + DB_TABLE_SHOP_FORMS + "(author, name, instance, data) values (?, ?, ?, ?)";
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, author);
+            preparedStatement.setString(++i, name);
+            preparedStatement.setObject(++i, instance);
+            preparedStatement.setObject(++i, data);
+            return preparedStatement.execute();
         }
     }
 

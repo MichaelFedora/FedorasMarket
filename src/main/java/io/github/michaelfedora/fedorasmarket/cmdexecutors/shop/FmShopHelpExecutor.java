@@ -1,14 +1,14 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
 import com.google.common.collect.Lists;
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.pagination.PaginationService;
@@ -19,21 +19,23 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Inspired by Polis (though heavily edited)
+ * Created by Michael on 2/29/2016.
  */
-public class FmHelpExecutor extends FmExecutorBase {
+public class FmShopHelpExecutor extends FmExecutorBase {
 
     @Override
     protected String getName() {
-        return "help";
+        return "shop help";
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
-        HashMap<List<String>,CommandSpec> fmSubCommands = FedorasMarket.getSubCommands();
+
+        HashMap<List<String>,CommandSpec> transSubCommands = FedorasMarket.getGrandChildCommands("shop").orElseThrow(makeExceptionSupplier("Can't find the subcommands :o"));
+
         List<Text> helpList = Lists.newArrayList();
 
-        for(List<String> aliases : fmSubCommands.keySet()) {
-            CommandSpec commandSpec = fmSubCommands.get(aliases);
+        for(List<String> aliases : transSubCommands.keySet()) {
+            CommandSpec commandSpec = transSubCommands.get(aliases);
             Text commandHelp = Text.builder()
                     .append(Text.builder()
                             .append(Text.of(TextColors.GREEN, aliases, ": "))

@@ -7,6 +7,8 @@ import org.spongepowered.api.data.key.Key;
 import org.spongepowered.api.data.key.KeyFactory;
 import org.spongepowered.api.data.value.mutable.Value;
 
+import java.util.UUID;
+
 /**
  * Created by MichaelFedora on 1/25/2016.
  *

@@ -18,28 +18,15 @@ import java.util.Set;
 /**
  * Transaction data
  */
-public class TradeParty implements FmSerializable<TradeParty.Data> {
+public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
-    public static class Data implements FmSerializedData<TradeParty> {
-        public final Map<String,Integer> items = new HashMap<>();
-        public final Map<String,BigDecimal> currencies = new HashMap<>();
-
-        public TradeParty deserialize() {
-            return TradeParty.fromData(this);
-        }
-
-        public String toString() {
-            return "Items: " + items + ", Currencies: " + currencies;
-        }
-    }
-
-    public Map<ItemType,Integer> items = new HashMap<ItemType,Integer>();
-    public Map<Currency,BigDecimal> currencies = new HashMap<Currency,BigDecimal>();
+    public Map<ItemType,Integer> items = new HashMap<>();
+    public Map<Currency,BigDecimal> currencies = new HashMap<>();
 
     public TradeParty() { }
 
-    public Data toData() {
-        Data data = new Data();
+    public SerializedTradeParty serialize() {
+        SerializedTradeParty data = new SerializedTradeParty();
 
         for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
             data.items.put(entry.getKey().getId(), entry.getValue());
@@ -52,7 +39,7 @@ public class TradeParty implements FmSerializable<TradeParty.Data> {
         return data;
     }
 
-    public static TradeParty fromData(Data data) {
+    public static TradeParty fromSerializedData(SerializedTradeParty data) {
         TradeParty tradeParty = new TradeParty();
 
         GameRegistry gameRegistry = FedorasMarket.getGame().getRegistry();
@@ -77,10 +64,10 @@ public class TradeParty implements FmSerializable<TradeParty.Data> {
 
     public TradeParty addItem(ItemType itemType, int amt) {
 
-        if(items.containsKey(itemType))
-            amt += items.get(itemType);
+        if(this.items.containsKey(itemType))
+            amt += this.items.get(itemType);
 
-        items.put(itemType, amt);
+        this.items.put(itemType, amt);
 
         return this;
     }
@@ -97,32 +84,32 @@ public class TradeParty implements FmSerializable<TradeParty.Data> {
     }
 
     public TradeParty setItem(ItemType itemType, int amt) {
-        items.put(itemType, amt);
+        this.items.put(itemType, amt);
         return this;
     }
 
     public TradeParty removeItem(ItemType itemType) {
-        items.remove(itemType);
+        this.items.remove(itemType);
         return this;
     }
 
     public TradeParty addCurrency(Currency currency, BigDecimal amt) {
 
-        if(currencies.containsKey(currency))
-            amt = amt.add(currencies.get(currency));
+        if(this.currencies.containsKey(currency))
+            amt = amt.add(this.currencies.get(currency));
 
-        currencies.put(currency, amt);
+        this.currencies.put(currency, amt);
 
         return this;
     }
 
     public TradeParty setCurrency(Currency currency, BigDecimal amt) {
-        currencies.put(currency, amt);
+        this.currencies.put(currency, amt);
         return this;
     }
 
     public TradeParty removeCurrency(Currency currency) {
-        currencies.remove(currency);
+        this.currencies.remove(currency);
         return this;
     }
 
@@ -140,21 +127,21 @@ public class TradeParty implements FmSerializable<TradeParty.Data> {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Items: {");
+        sb.append("items: {");
         int i = 0;
-        for(Map.Entry<ItemType,Integer> entry : items.entrySet()) {
+        for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
             sb.append(entry.getKey().getName()).append("=").append(entry.getValue());
-            if(++i < items.entrySet().size()) {
+            if(++i < this.items.entrySet().size()) {
                 sb.append(", ");
             }
         }
 
-        sb.append("}, Currencies: {");
+        sb.append("}, currencies: {");
 
         i = 0;
-        for(Map.Entry<Currency,BigDecimal> entry : currencies.entrySet()) {
+        for(Map.Entry<Currency,BigDecimal> entry : this.currencies.entrySet()) {
             sb.append(entry.getKey().getDisplayName().toPlain()).append("=").append(entry.getValue());
-            if(++i < currencies.entrySet().size()) {
+            if(++i < this.currencies.entrySet().size()) {
                 sb.append("; ");
             }
         }

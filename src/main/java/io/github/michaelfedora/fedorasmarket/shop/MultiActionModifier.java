@@ -11,6 +11,10 @@ import java.util.ArrayList;
  */
 public final class MultiActionModifier extends ShopModifier {
 
+    static {
+        ShopModifier.register("MultiAction", MultiActionModifier.class);
+    }
+
     public final int number;
 
     public MultiActionModifier(int number) {
@@ -19,7 +23,7 @@ public final class MultiActionModifier extends ShopModifier {
     }
 
     @Override
-    public void execute(Shop shop, TradeActiveParty owner, TradeActiveParty customer) {
-        for(int i = 0; i < number && shop.tradeForm.apply(owner, customer); i++);
+    public void execute(ShopData data, TradeActiveParty owner, TradeActiveParty customer) {
+        for(int i = 0; i < number && data.tradeForm.apply(owner, customer); i++);
     }
 }

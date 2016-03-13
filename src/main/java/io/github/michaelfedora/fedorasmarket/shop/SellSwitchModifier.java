@@ -14,6 +14,10 @@ import java.util.Arrays;
  */
 public final class SellSwitchModifier extends ShopModifier {
 
+    static {
+        ShopModifier.register("SellSwitch", SellSwitchModifier.class);
+    }
+
     public TradeParty ownerSellParty;
 
     public SellSwitchModifier(TradeParty ownerSellParty) {
@@ -22,9 +26,9 @@ public final class SellSwitchModifier extends ShopModifier {
     }
 
     @Override
-    public void execute(Shop shop, TradeActiveParty owner, TradeActiveParty customer) {
+    public void execute(ShopData data, TradeActiveParty owner, TradeActiveParty customer) {
 
-        TradeForm switchTradeForm = new TradeForm(shop.tradeType, ownerSellParty, shop.tradeForm.getCustomerParty());
+        TradeForm switchTradeForm = new TradeForm(data.tradeForm.getTradeType(), ownerSellParty, data.tradeForm.getCustomerParty());
         switchTradeForm.apply(owner, customer);
     }
 }

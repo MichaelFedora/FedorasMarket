@@ -6,8 +6,8 @@ import static io.github.michaelfedora.fedorasmarket.data.shopreference.ShopRefer
 
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import org.spongepowered.api.data.DataView;
-import org.spongepowered.api.util.persistence.DataBuilder;
-import org.spongepowered.api.util.persistence.InvalidDataException;
+import org.spongepowered.api.data.persistence.DataBuilder;
+import org.spongepowered.api.data.persistence.InvalidDataException;
 
 import java.util.Optional;
 import java.util.UUID;

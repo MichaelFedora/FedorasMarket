@@ -1,19 +1,21 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.enumtype.PartyType;
+import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
-import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.economy.Currency;
+import org.spongepowered.api.text.Text;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -21,19 +23,17 @@ import java.util.Optional;
 /**
  * Created by Michael on 2/25/2016.
  */
-public class FmTradeFormSetCurrencyExecutor implements CommandExecutor {
+public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
-    public CommandResult error(CommandSource src) {
-
-        src.sendMessage(FmUtil.makeMessageError("Bad params, try again!"));
-
-        return CommandResult.empty();
+    @Override
+    protected String getName() {
+        return "tradeform setcurrency";
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            return FmTradeFormExecutor.errorNotPlayer(src);
+            throw sourceNotPlayerException;
         }
 
         Player player = (Player) src;
@@ -42,7 +42,7 @@ public class FmTradeFormSetCurrencyExecutor implements CommandExecutor {
         {
             Optional<String> opt_name = ctx.<String>getOne("name");
             if (!opt_name.isPresent())
-                return error(src);
+                throw makeException("bad param");
             name = opt_name.get();
         }
 
@@ -50,7 +50,7 @@ public class FmTradeFormSetCurrencyExecutor implements CommandExecutor {
         {
             Optional<PartyType> opt_partyType = ctx.<PartyType>getOne("party");
             if (!opt_partyType.isPresent())
-                return error(src);
+                throw makeException("bad param");
             partyType = opt_partyType.get();
         }
 
@@ -58,45 +58,44 @@ public class FmTradeFormSetCurrencyExecutor implements CommandExecutor {
         {
             Optional<Double> opt_amount = ctx.<Double>getOne("amount");
             if (!opt_amount.isPresent())
-                return error(src);
+                throw makeException("bad param");
             amount = opt_amount.get();
         }
 
-        Currency currency;
-        {
-            Optional<Currency> opt_currency = ctx.<Currency>getOne("currency");
-            if (opt_currency.isPresent())
-                currency = opt_currency.get();
-            else
-                currency = FedorasMarket.getEconomyService().getDefaultCurrency();
-        }
+        Currency currency = ctx.<Currency>getOne("currency").orElse(FedorasMarket.getEconomyService().getDefaultCurrency());
 
-        try {
+        boolean success = false;
 
-            ResultSet resultSet = DatabaseManager.tradeForms.selectWithMore(player.getUniqueId(), name, "LIMIT 1");
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            ResultSet resultSet = DatabaseManager.tradeFormDB.selectWithMore(conn, player.getUniqueId(), name, "LIMIT 1");
 
             TradeForm tradeForm;
             if(resultSet.next()) {
-                tradeForm = ((TradeForm.Data) resultSet.getObject("data")).deserialize();
+                tradeForm = ((SerializedTradeForm) resultSet.getObject("data")).safeDeserialize().get();
 
                 switch(partyType) {
                     case OWNER:
                         tradeForm.setOwnerParty(tradeForm.getOwnerParty().setCurrency(currency, BigDecimal.valueOf(amount)));
+                        success = tradeForm.getOwnerParty().currencies.containsKey(currency);
                         break;
                     case CUSTOMER:
                         tradeForm.setCustomerParty(tradeForm.getCustomerParty().setCurrency(currency, BigDecimal.valueOf(amount)));
+                        success = tradeForm.getCustomerParty().currencies.containsKey(currency);
                         break;
                 }
 
-                DatabaseManager.tradeForms.update(tradeForm.toData(), player.getUniqueId(), name);
+                DatabaseManager.tradeFormDB.update(conn, tradeForm.serialize(), player.getUniqueId(), name);
             }
 
         } catch(SQLException e) {
-            FedorasMarket.getLogger().error("SQL Error: ", this, e);
-            src.sendMessage(FmUtil.makeMessageError("SQL ERROR: See console :c"));
-            return CommandResult.empty();
+            throw makeException("SQL Error", e, src);
         }
 
+        if(success)
+            msgf(src, Text.of("Set ", currency.format(BigDecimal.valueOf(amount)), " to the transaction [", name, "]!"));
+        else
+            msgf(src, Text.of("Failed to set ", currency.format(BigDecimal.valueOf(amount)), " to the transaction [", name, "]!"));
 
         return CommandResult.success();
     }

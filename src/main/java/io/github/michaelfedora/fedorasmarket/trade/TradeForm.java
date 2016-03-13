@@ -2,9 +2,9 @@ package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
-import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
 import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -13,7 +13,6 @@ import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResu
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.Account;
-import org.spongepowered.api.service.economy.account.VirtualAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransferResult;
 
@@ -27,21 +26,9 @@ import java.util.Optional;
  * This file is released under the MIT License. Please see the LICENSE file for
  * more information. Thank you.
  */
-public class TradeForm implements FmSerializable<TradeForm.Data> {
+public class TradeForm implements FmSerializable<SerializedTradeForm> {
 
-    public static class Data implements FmSerializedData<TradeForm> {
-        public TradeType tradeType;
-        public TradeParty.Data ownerPartyData;
-        public TradeParty.Data customerPartyData;
-
-        public TradeForm deserialize() {
-            return TradeForm.fromData(this);
-        }
-
-        public String toString() {
-            return "TradeType: " + tradeType + ", Owner Party Data: {" + ownerPartyData + "}, Customer Party Data: {" + customerPartyData + "}";
-        }
-    }
+    private Cause thisAsCause() { return Cause.of(NamedCause.of("TradeForm", this)); }
 
     private TradeType tradeType;
     private TradeParty ownerParty;
@@ -56,18 +43,18 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
         setCustomerParty(customerParty);
     }
 
-    public Data toData() {
-        Data data = new Data();
+    public SerializedTradeForm serialize() {
+        SerializedTradeForm data = new SerializedTradeForm();
 
         data.tradeType = this.tradeType;
-        data.ownerPartyData = this.ownerParty.toData();
-        data.customerPartyData = this.customerParty.toData();
+        data.ownerPartyData = this.ownerParty.serialize();
+        data.customerPartyData = this.customerParty.serialize();
 
         return data;
     }
 
-    public static TradeForm fromData(Data data) {
-        return new TradeForm(data.tradeType, data.ownerPartyData.deserialize(), data.customerPartyData.deserialize());
+    public static TradeForm fromSerializedData(SerializedTradeForm data) {
+        return new TradeForm(data.tradeType, data.ownerPartyData.safeDeserialize().get(), data.customerPartyData.safeDeserialize().get());
     }
 
     public TradeType getTradeType() { return this.tradeType; }
@@ -107,15 +94,15 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
         TransferResult result;
 
         // Be VERY careful here; we need to make sure nothing gets transferred if there is an error later on
-        for(Map.Entry<Currency,BigDecimal> entry : ownerParty.currencies.entrySet()) {
-            result = owner.transfer(owner_v, entry.getKey(), entry.getValue(), Cause.of(this));
+        for(Map.Entry<Currency,BigDecimal> entry : this.ownerParty.currencies.entrySet()) {
+            result = owner.transfer(owner_v, entry.getKey(), entry.getValue(), thisAsCause());
 
             if(result.getResult() != ResultType.SUCCESS)
                 return Optional.of(result);
         }
 
-        for(Map.Entry<Currency, BigDecimal> entry : customerParty.currencies.entrySet()) {
-            result =  customer.transfer(customer_v, entry.getKey(), entry.getValue(), Cause.of(this));
+        for(Map.Entry<Currency, BigDecimal> entry : this.customerParty.currencies.entrySet()) {
+            result =  customer.transfer(customer_v, entry.getKey(), entry.getValue(), thisAsCause());
 
             if(result.getResult() != ResultType.SUCCESS)
                 return Optional.of(result);
@@ -149,16 +136,16 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
 
     private boolean tryApply(TradeActiveParty owner, TradeActiveParty customer, TradeActiveParty owner_v, TradeActiveParty customer_v) {
 
-        lastTransferResult = tryApplyCurrency(owner.account, customer.account, owner_v.account, customer_v.account);
+        this.lastTransferResult = tryApplyCurrency(owner.account, customer.account, owner_v.account, customer_v.account);
 
-        if (lastTransferResult.isPresent())
-            if (lastTransferResult.get().getResult() != ResultType.SUCCESS)
+        if (this.lastTransferResult.isPresent())
+            if (this.lastTransferResult.get().getResult() != ResultType.SUCCESS)
                 return true;
 
-        lastInventoryTransactionResult = tryApplyItems(owner.inventory, customer.inventory, owner_v.inventory, customer_v.inventory);
+        this.lastInventoryTransactionResult = tryApplyItems(owner.inventory, customer.inventory, owner_v.inventory, customer_v.inventory);
 
-        if (lastInventoryTransactionResult.isPresent())
-            if (lastInventoryTransactionResult.get().getType() != InventoryTransactionResult.Type.SUCCESS)
+        if (this.lastInventoryTransactionResult.isPresent())
+            if (this.lastInventoryTransactionResult.get().getType() != InventoryTransactionResult.Type.SUCCESS)
                 return true;
 
         return false;
@@ -168,10 +155,10 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
 
         //TODO: Add error handling
         for(Map.Entry<Currency, BigDecimal> entry : owner_v.getBalances().entrySet())
-            owner_v.transfer(customer, entry.getKey(), entry.getValue(), Cause.of(this));
+            owner_v.transfer(customer, entry.getKey(), entry.getValue(), thisAsCause());
 
         for(Map.Entry<Currency, BigDecimal> entry : owner_v.getBalances().entrySet())
-             customer_v.transfer(owner, entry.getKey(), entry.getValue(), Cause.of(this));
+             customer_v.transfer(owner, entry.getKey(), entry.getValue(), thisAsCause());
     }
 
     private boolean finishApply(TradeActiveParty owner, TradeActiveParty customer, TradeActiveParty owner_v, TradeActiveParty customer_v) {
@@ -195,8 +182,8 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
         TradeActiveParty owner_v;
         TradeActiveParty customer_v;
         {
-            Optional<VirtualAccount> opt_owner_acc = eco.createVirtualAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_ID_PREFIX + owner.account.getIdentifier());
-            Optional<VirtualAccount> opt_customer_acc = eco.createVirtualAccount(FedorasMarket.ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX + customer.account.getIdentifier());
+            Optional<Account> opt_owner_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_ID_PREFIX + owner.account.getIdentifier());
+            Optional<Account> opt_customer_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX + customer.account.getIdentifier());
             if(!(opt_owner_acc.isPresent() && opt_customer_acc.isPresent()))
                 return true;
 
@@ -213,11 +200,11 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
 
         if (failed) {
             for (Map.Entry<Currency, BigDecimal> entry : owner_v.account.getBalances().entrySet()) {
-                owner_v.account.transfer(owner.account, entry.getKey(), entry.getValue(), Cause.of(this));
+                owner_v.account.transfer(owner.account, entry.getKey(), entry.getValue(), thisAsCause());
             }
 
             for (Map.Entry<Currency, BigDecimal> entry : customer_v.account.getBalances().entrySet()) {
-                customer_v.account.transfer(customer.account, entry.getKey(), entry.getValue(), Cause.of(this));
+                customer_v.account.transfer(customer.account, entry.getKey(), entry.getValue(), thisAsCause());
             }
 
             //TODO: dis gonna be messy
@@ -248,6 +235,6 @@ public class TradeForm implements FmSerializable<TradeForm.Data> {
     }
 
     public String toString() {
-        return "TradeType: " + tradeType + ", Owner Party: {" + ownerParty + "}, Customer Party: {" + customerParty + "}";
+        return "tradeType: " + this.tradeType + ", ownerParty: {" + this.ownerParty + "}, customerParty: {" + this.customerParty + "}";
     }
 }

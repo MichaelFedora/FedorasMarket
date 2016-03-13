@@ -1,8 +1,9 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import com.google.common.collect.Lists;
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -10,7 +11,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
-import org.spongepowered.api.service.pagination.PaginationBuilder;
+import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
@@ -23,15 +24,16 @@ import java.util.Optional;
 /**
  * Created by Michael on 2/26/2016.
  */
-public class FmTradeFormHelpExecutor implements CommandExecutor {
+public class FmTradeFormHelpExecutor extends FmExecutorBase {
+
+    @Override
+    protected String getName() {
+        return "tradeform help";
+    }
+
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
-        HashMap<List<String>,CommandSpec> transSubCommands;
-        {
-            Optional<HashMap<List<String>,CommandSpec>> opt_transSubCommands = FedorasMarket.getGrandChildCommands("trade");
-            if(!opt_transSubCommands.isPresent())
-                return CommandResult.empty();
-            transSubCommands = opt_transSubCommands.get();
-        }
+
+        HashMap<List<String>,CommandSpec> transSubCommands = FedorasMarket.getGrandChildCommands("tradeform").orElseThrow(makeExceptionSupplier("Can't find the subcommands :o"));
 
         List<Text> helpList = Lists.newArrayList();
 
@@ -54,7 +56,7 @@ public class FmTradeFormHelpExecutor implements CommandExecutor {
         }
 
         PaginationService paginationService = Sponge.getServiceManager().provide(PaginationService.class).get();
-        PaginationBuilder paginationBuilder = paginationService.builder().title(Text.of(TextColors.GOLD, PluginInfo.NAME + " Help")).paddingString("=").contents(helpList);
+        PaginationList.Builder paginationBuilder = paginationService.builder().title(Text.of(TextColors.GOLD, PluginInfo.NAME + " Help")).padding(Text.of("=")).contents(helpList);
         paginationBuilder.sendTo(src);
         return CommandResult.success();
     }

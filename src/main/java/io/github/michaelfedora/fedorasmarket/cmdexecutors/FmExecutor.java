@@ -12,7 +12,13 @@ import org.spongepowered.api.text.format.TextColors;
 /**
  * Get Version info
  */
-public class FmExecutor implements CommandExecutor {
+public class FmExecutor extends FmExecutorBase {
+
+    @Override
+    protected String getName() {
+        return "fedmarket";
+    }
+
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
         src.sendMessage(Text.of(TextColors.AQUA, "FedorasMarket: ",
                 TextColors.GRAY, "Version: ",
