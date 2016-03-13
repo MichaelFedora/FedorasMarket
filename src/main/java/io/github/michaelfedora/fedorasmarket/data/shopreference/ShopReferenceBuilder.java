@@ -21,9 +21,9 @@ public class ShopReferenceBuilder implements DataBuilder<ShopReference> {
     public Optional<ShopReference> build(DataView container) throws InvalidDataException {
         if(container.contains(AUTHOR, NAME, INSTANCE)) {
             ShopReference data = new ShopReference(
-                    (UUID) container.get(AUTHOR).get(),
+                    container.getString(AUTHOR).get(),
                     container.getString(NAME).get(),
-                    (UUID) container.get(INSTANCE).get());
+                    container.getString(INSTANCE).get());
             return Optional.of(data);
         } else
             return Optional.empty();

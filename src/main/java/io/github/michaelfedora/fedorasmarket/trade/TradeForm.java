@@ -94,11 +94,13 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         TransferResult result;
 
         // Be VERY careful here; we need to make sure nothing gets transferred if there is an error later on
-        for(Map.Entry<Currency,BigDecimal> entry : this.ownerParty.currencies.entrySet()) {
-            result = owner.transfer(owner_v, entry.getKey(), entry.getValue(), thisAsCause());
+        if(owner != null) {
+            for (Map.Entry<Currency, BigDecimal> entry : this.ownerParty.currencies.entrySet()) {
+                result = owner.transfer(owner_v, entry.getKey(), entry.getValue(), thisAsCause());
 
-            if(result.getResult() != ResultType.SUCCESS)
-                return Optional.of(result);
+                if (result.getResult() != ResultType.SUCCESS)
+                    return Optional.of(result);
+            }
         }
 
         for(Map.Entry<Currency, BigDecimal> entry : this.customerParty.currencies.entrySet()) {
@@ -157,11 +159,14 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         for(Map.Entry<Currency, BigDecimal> entry : owner_v.getBalances().entrySet())
             owner_v.transfer(customer, entry.getKey(), entry.getValue(), thisAsCause());
 
-        for(Map.Entry<Currency, BigDecimal> entry : owner_v.getBalances().entrySet())
-             customer_v.transfer(owner, entry.getKey(), entry.getValue(), thisAsCause());
+        if(owner != null)
+            for(Map.Entry<Currency, BigDecimal> entry : customer_v.getBalances().entrySet())
+                customer_v.transfer(owner, entry.getKey(), entry.getValue(), thisAsCause());
     }
 
     private boolean finishApply(TradeActiveParty owner, TradeActiveParty customer, TradeActiveParty owner_v, TradeActiveParty customer_v) {
+
+        EconomyService eco = FedorasMarket.getEconomyService();
 
         finishApplyCurrency(owner.account, customer.account, owner_v.account, customer_v.account);
 
@@ -180,17 +185,24 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         EconomyService eco = FedorasMarket.getEconomyService();
 
         TradeActiveParty owner_v;
+        if(owner == TradeActiveParty.SERVER)
+            owner_v = TradeActiveParty.SERVER;
+        else {
+            Optional<Account> opt_owner_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_ID_PREFIX + owner.account.getIdentifier());
+            if(!opt_owner_acc.isPresent())
+                return true;
+            CustomInventory owner_v_inv = null;//CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
+            owner_v = new TradeActiveParty(opt_owner_acc.get(), owner_v_inv);
+        }
+
         TradeActiveParty customer_v;
         {
-            Optional<Account> opt_owner_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_ID_PREFIX + owner.account.getIdentifier());
+
             Optional<Account> opt_customer_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX + customer.account.getIdentifier());
-            if(!(opt_owner_acc.isPresent() && opt_customer_acc.isPresent()))
+            if(!opt_customer_acc.isPresent())
                 return true;
 
-            CustomInventory owner_v_inv = CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
-            CustomInventory customer_v_inv = CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
-
-            owner_v = new TradeActiveParty(opt_owner_acc.get(), owner_v_inv);
+            CustomInventory customer_v_inv = null;//CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
             customer_v = new TradeActiveParty(opt_customer_acc.get(), customer_v_inv);
         }
 
@@ -199,8 +211,11 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         boolean failed = tryApply(owner, customer, owner_v, customer_v);
 
         if (failed) {
-            for (Map.Entry<Currency, BigDecimal> entry : owner_v.account.getBalances().entrySet()) {
-                owner_v.account.transfer(owner.account, entry.getKey(), entry.getValue(), thisAsCause());
+
+            if(owner != TradeActiveParty.SERVER) {
+                for (Map.Entry<Currency, BigDecimal> entry : owner_v.account.getBalances().entrySet()) {
+                    owner_v.account.transfer(owner.account, entry.getKey(), entry.getValue(), thisAsCause());
+                }
             }
 
             for (Map.Entry<Currency, BigDecimal> entry : customer_v.account.getBalances().entrySet()) {

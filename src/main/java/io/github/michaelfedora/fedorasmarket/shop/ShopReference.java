@@ -30,6 +30,12 @@ public class ShopReference implements DataSerializable {
         this.instance = instance;
     }
 
+    public ShopReference(String author, String name, String instance) {
+        this.author = UUID.fromString(author);
+        this.name = name;
+        this.instance = UUID.fromString(instance);
+    }
+
     @Override
     public int getContentVersion() {
         return 1;
@@ -38,8 +44,8 @@ public class ShopReference implements DataSerializable {
     @Override
     public DataContainer toContainer() {
         return new MemoryDataContainer()
-                .set(ShopReferenceDataQueries.AUTHOR, this.author)
+                .set(ShopReferenceDataQueries.AUTHOR, this.author.toString())
                 .set(ShopReferenceDataQueries.NAME, this.name)
-                .set(ShopReferenceDataQueries.INSTANCE, this.instance);
+                .set(ShopReferenceDataQueries.INSTANCE, this.instance.toString());
     }
 }

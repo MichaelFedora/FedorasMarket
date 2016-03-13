@@ -10,6 +10,8 @@ public class TradeActiveParty {
     public final Account account;
     public final Inventory inventory;
 
+    public static final TradeActiveParty SERVER = new TradeActiveParty(null, null);
+
     public TradeActiveParty(Account account, Inventory inventory) {
         this.account = account;
         this.inventory = inventory;

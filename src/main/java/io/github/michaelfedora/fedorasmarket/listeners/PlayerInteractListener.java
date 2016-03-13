@@ -3,6 +3,7 @@ package io.github.michaelfedora.fedorasmarket.listeners;
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
+import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.tileentity.Sign;
@@ -20,11 +21,8 @@ import java.util.Optional;
 /**
  * Created by Michael on 2/23/2016.
  */
-public class PlayerInteractListener {
 
-    static {
-        FedorasMarket.toRegister.add(PlayerInteractListener.class);
-    }
+public class PlayerInteractListener {
 
     @Listener
     public void onPlayerPrimary(InteractBlockEvent.Primary event, @First Player player) {
@@ -34,11 +32,11 @@ public class PlayerInteractListener {
         if(player == null)
             return;
 
-        /*BlockSnapshot sign_bsnap = event.getTargetBlock();
+        BlockSnapshot sign_bsnap = event.getTargetBlock();
 
         Sign sign;
         {
-            Optional<Sign> opt_sign = getSignFromBlockSnapshot(sign_bsnap);
+            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(sign_bsnap);
             if(!opt_sign.isPresent())
                 return;
             sign = opt_sign.get();
@@ -46,21 +44,13 @@ public class PlayerInteractListener {
 
         Shop shop;
         {
-            Optional<Shop> opt_shop = sign.get(FmDataKeys.SHOP_DATA);
-            if (!opt_shop.isPresent())
+            Optional<Shop> opt_shop = Shop.fromSign(sign);
+            if(!opt_shop.isPresent())
                 return;
             shop = opt_shop.get();
         }
 
-        Player player;
-        {
-            Optional<Player> opt_player = event.getCause().first(Player.class);
-            if(!opt_player.isPresent())
-                return;
-            player = opt_player.get();
-        }
-
-        shop.doSecondary(player);*/
+        shop.doSecondary(player);
     }
 
     @Listener
@@ -71,44 +61,25 @@ public class PlayerInteractListener {
         if(player == null)
             return;
 
-        /*BlockSnapshot sign_bsnap = event.getTargetBlock();
+        BlockSnapshot sign_bsnap = event.getTargetBlock();
+
         Sign sign;
         {
-            Optional<Sign> opt_sign = getSignFromBlockSnapshot(sign_bsnap);
+            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(sign_bsnap);
             if(!opt_sign.isPresent())
-                return; //TODO: Add note to these things?
+                return;
             sign = opt_sign.get();
         }
 
-        Player player;
-        {
-            Optional<Player> opt_player = event.getCause().first(Player.class);
-            if(!opt_player.isPresent())
-                return;
-            player = opt_player.get();
-        }
-
-
-        {
-            Optional<ItemStack> opt_is = player.getItemInHand();
-            if (opt_is.isPresent()) {
-                if (opt_is.get().getItem().getName().equals("minecraft:writable_book")) {
-                    trySetup(sign, player, opt_is.get());
-                    return;
-                }
-            }
-        }
-
-        // if not setting up shop, lets check if the sign is valid in the first place
         Shop shop;
         {
-            Optional<Shop> opt_shop = sign.get(FmDataKeys.SHOP_DATA);
-            if (!opt_shop.isPresent())
+            Optional<Shop> opt_shop = Shop.fromSign(sign);
+            if(!opt_shop.isPresent())
                 return;
             shop = opt_shop.get();
         }
 
-        shop.doPrimary(player);*/
+        shop.doPrimary(player);
 
     }
 }

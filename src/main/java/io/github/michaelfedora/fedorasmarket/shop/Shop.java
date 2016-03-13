@@ -2,25 +2,15 @@ package io.github.michaelfedora.fedorasmarket.shop;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
-import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
-import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.block.tileentity.TileEntity;
-import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
 import org.spongepowered.api.data.DataTransactionResult;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.service.economy.EconomyService;
-import org.spongepowered.api.service.economy.account.Account;
-import org.spongepowered.api.service.economy.account.UniqueAccount;
-import org.spongepowered.api.util.Direction;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -40,9 +30,8 @@ public class Shop {
     protected Sign sign;
     protected ShopData data;
 
-    protected ShopReference reference;
+    //protected ShopReference reference;
 
-    //private Shop() { }
     public Shop(Sign sign, ShopData shopData) {
 
         this.sign = sign;
@@ -105,26 +94,39 @@ public class Shop {
 
         TradeActiveParty owner;
         TradeActiveParty customer;
-        owner = new TradeActiveParty(this.data.ownerData.account, this.data.ownerData.inventory);
+
+        if(this.data.ownerData != ShopData.OwnerData.SERVER)
+            owner = new TradeActiveParty(this.data.ownerData.account, this.data.ownerData.inventory);
+        else
+            owner = TradeActiveParty.SERVER;
+
         customer = new TradeActiveParty(eco.getOrCreateAccount(player.getUniqueId()).get(), player.getInventory());
 
         this.data.tradeForm.apply(owner, customer);
 
+        player.sendMessage(Text.of(FmUtil.makePrefix(), "[Shop] Did  primary!"));
     }
 
     public void doSecondary(Player player) {
 
-        if(this.data.modifier == ShopModifier.NONE)
-            return;
+        if(this.data.modifier != ShopModifier.NONE) {
 
-        EconomyService eco = FedorasMarket.getEconomyService();
+            EconomyService eco = FedorasMarket.getEconomyService();
 
-        TradeActiveParty owner;
-        TradeActiveParty customer;
-        owner = new TradeActiveParty(this.data.ownerData.account, this.data.ownerData.inventory);
-        customer = new TradeActiveParty(eco.getOrCreateAccount(player.getUniqueId()).get(), player.getInventory());
+            TradeActiveParty owner;
+            TradeActiveParty customer;
 
-        this.data.modifier.execute(this.data, owner, customer);
+            if(this.data.ownerData != ShopData.OwnerData.SERVER)
+                owner = new TradeActiveParty(this.data.ownerData.account, this.data.ownerData.inventory);
+            else
+                owner = TradeActiveParty.SERVER;
+
+            customer = new TradeActiveParty(eco.getOrCreateAccount(player.getUniqueId()).get(), player.getInventory());
+
+            this.data.modifier.execute(this.data, owner, customer);
+        }
+
+        player.sendMessage(Text.of(FmUtil.makePrefix(), "[Shop] Did  secondary!"));
     }
 
     /*public void tryMakeShop() {

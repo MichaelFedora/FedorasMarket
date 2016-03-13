@@ -4,6 +4,7 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.block.BlockSnapshot;
@@ -14,6 +15,7 @@ import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.filter.cause.First;
@@ -30,10 +32,6 @@ import java.util.*;
  */
 public class FmShopDetailsExecutor extends FmExecutorBase {
 
-    static {
-        FedorasMarket.toRegister.add(FmShopDetailsExecutor.class);
-    }
-
     public static Set<UUID> to_cat = new HashSet<>();
 
     @Override
@@ -43,10 +41,26 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
 
     private void printShopReferenceResult(CommandSource src, ShopReference shopReference, Object data) {
         src.sendMessage(Text.of(TextColors.GREEN, "{",
-                TextColors.BLUE, "id=", TextColors.WHITE, shopReference.author, TextColors.GREEN, ", ",
+                TextColors.BLUE, "author=", TextColors.WHITE, shopReference.author, TextColors.GREEN, ", ",
                 TextColors.BLUE, "name=", TextColors.WHITE, shopReference.name, TextColors.GREEN, ", ",
                 TextColors.BLUE, "instance=", TextColors.WHITE, shopReference.instance, TextColors.GREEN, ", ",
                 TextColors.BLUE, "data=", TextColors.WHITE, data, TextColors.GREEN, "}"));
+    }
+
+    private void printShopReferenceNice(CommandSource src, ShopReference shopReference, Object data) {
+
+        String author_name;
+
+        Optional<User> opt_user = FedorasMarket.getUserStorageService().get(shopReference.author);
+        if(opt_user.isPresent())
+            author_name = opt_user.get().getName();
+        else
+            author_name = shopReference.author.toString();
+
+        src.sendMessage(Text.of(TextColors.BLUE, "Made by: ", TextColors.WHITE, author_name, TextColors.GREEN, ", ",
+                TextColors.BLUE, "Shop: [", TextColors.WHITE, shopReference.name, TextColors.GRAY, "::",
+                TextColors.BLUE, "", TextColors.WHITE, shopReference.instance, TextColors.GREEN, ", ",
+                TextColors.BLUE, "Data: ", TextColors.WHITE, data, TextColors.GREEN, "}"));
     }
 
     @Listener
@@ -83,7 +97,7 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
                 ResultSet resultSet = DatabaseManager.shopDataDB.select(conn, shopReference);
                 if(resultSet.next()) {
                     msg(player, "Shop [" + sign + "] details: ");
-                    this.printShopReferenceResult(player, shopReference, resultSet.getObject("data"));
+                    this.printShopReferenceNice(player, shopReference, resultSet.getObject("data"));
                 }
                 conn.close();
 

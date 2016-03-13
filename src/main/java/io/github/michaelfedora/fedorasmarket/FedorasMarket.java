@@ -1,11 +1,10 @@
-package io.github.michaelfedora.fedorasmarket;
-
 /**
  * Created by MichaelFedora on 1/17/2016.
  *
  * This file is released under the MIT License. Please see the LICENSE file for
  * more information. Thank you.
  */
+package io.github.michaelfedora.fedorasmarket;
 
 import com.google.inject.Inject;
 
@@ -41,6 +40,7 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.Currency;
+import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 
 import java.nio.file.Path;
@@ -70,10 +70,15 @@ public class FedorasMarket {
     private EconomyService economyService;
     public static EconomyService getEconomyService() { return instance.economyService; }
 
+    private UserStorageService userStorageService;
+    public static UserStorageService getUserStorageService() { return instance.userStorageService; }
+
     @Listener
     public void onChangeServiceProvider(ChangeServiceProviderEvent event) {
         if(event.getService().equals(EconomyService.class)) {
             economyService = (EconomyService) event.getNewProviderRegistration().getProvider();
+        } else if(event.getService().equals(UserStorageService.class)) {
+            userStorageService = (UserStorageService) event.getNewProviderRegistration().getProvider();
         }
     }
 

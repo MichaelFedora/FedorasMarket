@@ -46,7 +46,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
             while(resultSet.next()) {
                 //msg(src, "Looking at shop [" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]");
                 try {
-                    String prefix = "Shop [" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]" + ": ";
+                    String prefix = "[" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]" + ": ";
                     ShopData shopData = ((SerializedShopData) resultSet.getObject("data")).deserialize();
                     TileEntity te = shopData.location.getTileEntity().orElseGet(null);
                     if(te == null) {
@@ -60,9 +60,9 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                         msg(src, prefix + "Sign does not support the data key!");
                     } else if(!(Shop.fromSign((Sign) te).isPresent())) {
                         failed = true;
-                        msg(src, prefix + "Bad data key entry! Deleting & Refreshing...");
+                        msg(src, prefix + "Bad data key entry!");
                     } else
-                        msg(src, prefix + "Shop is good!");
+                        msg(src, prefix + "Good!");
                 } catch (BadDataException e) {
                     failed = true;
                     msg(src, "Bad database entry! Deleting & Refreshing...");
