@@ -32,35 +32,16 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        if(!(src instanceof Player)) {
+        if(!(src instanceof Player))
             throw sourceNotPlayerException;
-        }
 
         Player player = (Player) src;
 
-        String name;
-        {
-            Optional<String> opt_name = ctx.<String>getOne("name");
-            if (!opt_name.isPresent())
-                throw makeException("bad param");
-            name = opt_name.get();
-        }
+        String name = ctx.<String>getOne("name").orElseThrow(makeParamExceptionSupplier("name"));
 
-        PartyType partyType;
-        {
-            Optional<PartyType> opt_partyType = ctx.<PartyType>getOne("party");
-            if (!opt_partyType.isPresent())
-                throw makeException("bad param");
-            partyType = opt_partyType.get();
-        }
+        PartyType partyType = ctx.<PartyType>getOne("party").orElseThrow(makeParamExceptionSupplier("party"));
 
-        double amount;
-        {
-            Optional<Double> opt_amount = ctx.<Double>getOne("amount");
-            if (!opt_amount.isPresent())
-                throw makeException("bad param");
-            amount = opt_amount.get();
-        }
+        BigDecimal amount = BigDecimal.valueOf(ctx.<Double>getOne("amount").orElseThrow(makeParamExceptionSupplier("amount")));
 
         Currency currency = ctx.<Currency>getOne("currency").orElse(FedorasMarket.getEconomyService().getDefaultCurrency());
 
@@ -76,12 +57,16 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
                 switch(partyType) {
                     case OWNER:
-                        tradeForm.setOwnerParty(tradeForm.getOwnerParty().setCurrency(currency, BigDecimal.valueOf(amount)));
+                        tradeForm.setOwnerParty(tradeForm.getOwnerParty().setCurrency(currency, amount));
                         success = tradeForm.getOwnerParty().currencies.containsKey(currency);
+                        if(success)
+                            success = (amount.compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0);
                         break;
                     case CUSTOMER:
-                        tradeForm.setCustomerParty(tradeForm.getCustomerParty().setCurrency(currency, BigDecimal.valueOf(amount)));
+                        tradeForm.setCustomerParty(tradeForm.getCustomerParty().setCurrency(currency, amount));
                         success = tradeForm.getCustomerParty().currencies.containsKey(currency);
+                        if(success)
+                            success = (amount.compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0);
                         break;
                 }
 
@@ -93,9 +78,9 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
         }
 
         if(success)
-            msgf(src, Text.of("Set ", currency.format(BigDecimal.valueOf(amount)), " to the transaction [", name, "]!"));
+            msgf(src, Text.of("Set ", currency.format(amount), " to the transaction [", name, "]!"));
         else
-            msgf(src, Text.of("Failed to set ", currency.format(BigDecimal.valueOf(amount)), " to the transaction [", name, "]!"));
+            msgf(src, Text.of("Failed to set ", currency.format(amount), " to the transaction [", name, "]!"));
 
         return CommandResult.success();
     }

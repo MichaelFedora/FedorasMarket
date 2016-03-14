@@ -38,6 +38,9 @@ public class Shop {
         this.data = shopData;
     }
 
+    public Sign getSign() { return this.sign; }
+    public ShopData getData() { return this.data; }
+
     public static Optional<Shop> fromSign(Sign sign) {
         ShopReference ref;
         {

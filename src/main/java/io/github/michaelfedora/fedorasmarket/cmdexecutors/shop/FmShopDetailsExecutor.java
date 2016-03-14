@@ -4,6 +4,7 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
@@ -31,8 +32,6 @@ import java.util.*;
  * Created by Michael on 2/29/2016.
  */
 public class FmShopDetailsExecutor extends FmExecutorBase {
-
-    public static Set<UUID> to_cat = new HashSet<>();
 
     @Override
     protected String getName() {
@@ -63,15 +62,9 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
                 TextColors.BLUE, "Data: ", TextColors.WHITE, data, TextColors.GREEN, "}"));
     }
 
-    @Listener
-    public void OnSecondaryInteact(InteractBlockEvent.Secondary event, @First Player player) {
-        if(player == null)
-            return;
+    public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
 
-        if(!to_cat.contains(player.getUniqueId()))
-            return;
-
-        to_cat.remove(player.getUniqueId());
+        event.setCancelled(true);
 
         BlockSnapshot blockSnapshot = event.getTargetBlock();
         if(blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN) {
@@ -116,11 +109,11 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
             throw sourceNotPlayerException;
         }
 
-        UUID uuid = ((Player) src).getUniqueId();
+        UUID playerId = ((Player) src).getUniqueId();
 
         //TODO: See if they specified a name/instance
 
-        to_cat.add(uuid);
+        PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");
 

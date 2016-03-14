@@ -18,6 +18,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -45,20 +46,28 @@ public class FmShopCleanExecutor extends FmExecutorBase {
 
             while(resultSet.next()) {
                 //msg(src, "Looking at shop [" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]");
+                String name = resultSet.getString("name");
+                UUID instance = (UUID) resultSet.getObject("instance");
                 try {
-                    String prefix = "[" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]" + ": ";
+
+                    String prefix = "[" + name + "::" + instance + "]" + ": ";
                     ShopData shopData = ((SerializedShopData) resultSet.getObject("data")).deserialize();
-                    TileEntity te = shopData.location.getTileEntity().orElseGet(null);
-                    if(te == null) {
+                    Optional<TileEntity> opt_te = shopData.location.getTileEntity();
+                    Sign sign;
+                    Shop shop;
+                    if(!opt_te.isPresent()) {
                         failed = true;
                         msg(src, prefix + "Location does not have a tile entity!");
-                    } else if(!(te instanceof Sign)) {
+                    } else if(!(opt_te.get() instanceof Sign)) {
                         failed = true;
                         msg(src, prefix + "Tile Entity is not a Sign!");
-                    } else if(!te.get(FmDataKeys.SHOP_REFERENCE).isPresent()) {
+                    } else if(!((sign = (Sign) opt_te.get()).get(FmDataKeys.SHOP_REFERENCE).isPresent())) {
                         failed = true;
                         msg(src, prefix + "Sign does not support the data key!");
-                    } else if(!(Shop.fromSign((Sign) te).isPresent())) {
+                    } else if(!(sign.get(FmDataKeys.SHOP_REFERENCE).get().instance.equals(instance))) {
+                        failed = true;
+                        msg(src, prefix + "Instances do not match up!");
+                    } else if(!(Shop.fromSign(sign).isPresent())) {
                         failed = true;
                         msg(src, prefix + "Bad data key entry!");
                     } else
@@ -71,7 +80,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 if(failed) {
                     failed = false;
 
-                    DatabaseManager.shopDataDB.delete(conn, uuid, resultSet.getString("name"), (UUID) resultSet.getObject("instance"));
+                    DatabaseManager.shopDataDB.delete(conn, uuid, name, instance);
                     DatabaseManager.shopDataDB.select(conn, uuid);
                 }
             }

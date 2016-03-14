@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -31,9 +32,8 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        if(!(src instanceof Player)) {
+        if(!(src instanceof Player))
             throw sourceNotPlayerException;
-        }
 
         Player player = (Player) src;
 
@@ -41,7 +41,7 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
 
         PartyType partyType = ctx.<PartyType>getOne("party").orElseThrow(makeParamExceptionSupplier("party"));
 
-        double amount = ctx.<Double>getOne("amount").orElseThrow(makeParamExceptionSupplier("amount"));
+        BigDecimal amount = BigDecimal.valueOf(ctx.<Double>getOne("amount").orElseThrow(makeParamExceptionSupplier("amount")));
 
         Currency currency = ctx.<Currency>getOne("currency").orElse(FedorasMarket.getEconomyService().getDefaultCurrency());
 
@@ -53,14 +53,21 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
             if(resultSet.next()) {
                 TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject("data")).safeDeserialize().get();
 
+                BigDecimal old_val;
                 switch (partyType) {
                     case OWNER:
-                        tradeForm.setOwnerParty(tradeForm.getOwnerParty().addCurrency(currency, BigDecimal.valueOf(amount)));
+                        old_val = tradeForm.getOwnerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
+                        tradeForm.setOwnerParty(tradeForm.getOwnerParty().addCurrency(currency, amount));
                         success = tradeForm.getOwnerParty().currencies.containsKey(currency);
+                        if(success)
+                            success = (old_val.add(amount).compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0);
                         break;
                     case CUSTOMER:
-                        tradeForm.setCustomerParty(tradeForm.getCustomerParty().addCurrency(currency, BigDecimal.valueOf(amount)));
+                        old_val = tradeForm.getCustomerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
+                        tradeForm.setCustomerParty(tradeForm.getCustomerParty().addCurrency(currency, amount));
                         success = tradeForm.getCustomerParty().currencies.containsKey(currency);
+                        if(success)
+                            success = (old_val.add(amount).compareTo(tradeForm.getCustomerParty().currencies.get(currency)) == 0);
                         break;
                 }
 
@@ -73,9 +80,9 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
         }
 
         if(success)
-            msgf(src, Text.of("Added ", currency.format(BigDecimal.valueOf(amount)), " to the transaction [", name, "]!"));
+            msgf(src, Text.of("Added ", currency.format(amount), " to the transaction [", name, "]!"));
         else
-            msgf(src, Text.of("Failed to add ", currency.format(BigDecimal.valueOf(amount)), " to the transaction [", name, "]!"));
+            msgf(src, Text.of("Failed to add ", currency.format(amount), " to the transaction [", name, "]!"));
 
         return CommandResult.success();
     }

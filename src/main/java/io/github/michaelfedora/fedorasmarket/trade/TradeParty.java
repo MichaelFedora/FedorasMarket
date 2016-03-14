@@ -62,34 +62,70 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         return tradeParty;
     }
 
-    public TradeParty addItem(ItemType itemType, int amt) {
-
-        if(this.items.containsKey(itemType))
-            amt += this.items.get(itemType);
-
-        this.items.put(itemType, amt);
-
-        return this;
-    }
-
     public TradeParty trim(GoodType filter) {
+
+        clean();
+
         switch(filter) {
+
             case CURRENCY:
                 return (new TradeParty()).setCurrencies(this.currencies);
+
             case ITEM:
                 return (new TradeParty()).setItems(this.items);
+
             default:
                 return this;
         }
     }
 
-    public TradeParty setItem(ItemType itemType, int amt) {
+    public TradeParty clean() {
+
+        cleanItems();
+
+        cleanCurrencies();
+
+        return this;
+    }
+
+    public TradeParty addItem(ItemType itemType, int amt) {
+
+        if(this.items.containsKey(itemType))
+            amt += this.items.get(itemType);
+
+        if(amt < 0)
+            amt = 0;
+
         this.items.put(itemType, amt);
+
+        return this;
+    }
+
+    public TradeParty setItem(ItemType itemType, int amt) {
+
+        if(amt < 0)
+            return this;
+
+        this.items.put(itemType, amt);
+
         return this;
     }
 
     public TradeParty removeItem(ItemType itemType) {
+
         this.items.remove(itemType);
+
+        return this;
+    }
+
+    public TradeParty cleanItems() {
+
+        Set<ItemType> keys = items.keySet();
+
+        for(ItemType i : keys)
+            if(items.get(i) <= 0)
+                items.remove(i);
+
         return this;
     }
 
@@ -98,18 +134,39 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         if(this.currencies.containsKey(currency))
             amt = amt.add(this.currencies.get(currency));
 
+        if(amt.compareTo(BigDecimal.ZERO) < 0)
+            amt = BigDecimal.ZERO;
+
         this.currencies.put(currency, amt);
 
         return this;
     }
 
     public TradeParty setCurrency(Currency currency, BigDecimal amt) {
+
+        if(amt.compareTo(BigDecimal.ZERO) < 0)
+            return this;
+
         this.currencies.put(currency, amt);
+
         return this;
     }
 
     public TradeParty removeCurrency(Currency currency) {
+
         this.currencies.remove(currency);
+
+        return this;
+    }
+
+    public TradeParty cleanCurrencies() {
+
+        Set<Currency> keys = currencies.keySet();
+
+        for(Currency c : keys)
+            if(currencies.get(c).compareTo(BigDecimal.ZERO) <= 0)
+                currencies.remove(c);
+
         return this;
     }
 
@@ -121,13 +178,26 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         return setCurrency(FmUtil.getDefaultCurrency(), amt);
     }
 
-    public TradeParty setItems(Map<ItemType,Integer> items) { this.items = items; return this; }
+    public TradeParty setItems(Map<ItemType,Integer> items) {
 
-    public TradeParty setCurrencies(Map<Currency,BigDecimal> currencies) { this.currencies = currencies; return this; }
+        this.items = items;
+
+        return this;
+    }
+
+    public TradeParty setCurrencies(Map<Currency,BigDecimal> currencies) {
+
+        this.currencies = currencies;
+
+        return this;
+    }
 
     public String toString() {
+
         StringBuilder sb = new StringBuilder();
+
         sb.append("items: {");
+
         int i = 0;
         for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
             sb.append(entry.getKey().getName()).append("=").append(entry.getValue());

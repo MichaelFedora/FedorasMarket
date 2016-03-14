@@ -181,6 +181,12 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         return false;*/
     }
 
+    /**
+     * Applies the transaction
+     * @param owner the owner data
+     * @param customer the customer data
+     * @return whether or not it succeeded
+     */
     public boolean apply(TradeActiveParty owner, TradeActiveParty customer) {
         EconomyService eco = FedorasMarket.getEconomyService();
 
@@ -188,7 +194,7 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         if(owner == TradeActiveParty.SERVER)
             owner_v = TradeActiveParty.SERVER;
         else {
-            Optional<Account> opt_owner_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_ID_PREFIX + owner.account.getIdentifier());
+            Optional<Account> opt_owner_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_OWNER_PREFIX + owner.account.getIdentifier());
             if(!opt_owner_acc.isPresent())
                 return true;
             CustomInventory owner_v_inv = null;//CustomInventory.builder().size(FedorasMarket.getMaxItemStacks()).build();
@@ -198,7 +204,7 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
         TradeActiveParty customer_v;
         {
 
-            Optional<Account> opt_customer_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX + customer.account.getIdentifier());
+            Optional<Account> opt_customer_acc = eco.getOrCreateAccount(FedorasMarket.ACCOUNT_VIRTUAL_CUSTOMER_PREFIX + customer.account.getIdentifier());
             if(!opt_customer_acc.isPresent())
                 return true;
 
@@ -208,11 +214,14 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
 
         // Be VERY careful here; we need to make sure nothing gets transferred if there is an error later on
 
-        boolean failed = tryApply(owner, customer, owner_v, customer_v);
+        boolean success = tryApply(owner, customer, owner_v, customer_v);
 
-        if (failed) {
+        if(success) {
 
-            if(owner != TradeActiveParty.SERVER) {
+            success = finishApply(owner, customer, owner_v, customer_v);
+
+        } else {
+            if (owner != TradeActiveParty.SERVER) {
                 for (Map.Entry<Currency, BigDecimal> entry : owner_v.account.getBalances().entrySet()) {
                     owner_v.account.transfer(owner.account, entry.getKey(), entry.getValue(), thisAsCause());
                 }
@@ -242,11 +251,9 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
             /*for (Map.Entry<Currency, BigDecimal> entry : customer_v.account.getBalances().entrySet()) {
                 customer_v.account.transfer(customer.account, entry.getKey(), entry.getValue(), Cause.of(this));
             }*/
-
-            return true;
         }
 
-        return finishApply(owner, customer, owner_v, customer_v);
+        return success;
     }
 
     public String toString() {

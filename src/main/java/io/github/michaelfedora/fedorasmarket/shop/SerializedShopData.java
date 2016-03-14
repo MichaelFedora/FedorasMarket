@@ -17,12 +17,22 @@ public class SerializedShopData implements FmSerializedData<ShopData> {
     public ShopModifier modifier;
     public Vector3d position;
     public UUID worldId;
+    public boolean isServerShop;
+
+    public SerializedShopData(SerializedTradeForm tradeFormData, ShopModifier modifier, Vector3d position, UUID worldId, boolean isServerShop) {
+        this.tradeFormData = tradeFormData;
+        this.modifier = modifier;
+        this.position = position;
+        this.worldId = worldId;
+        this.isServerShop = isServerShop;
+    }
 
     public SerializedShopData(SerializedTradeForm tradeFormData, ShopModifier modifier, Vector3d position, UUID worldId) {
         this.tradeFormData = tradeFormData;
         this.modifier = modifier;
         this.position = position;
         this.worldId = worldId;
+        this.isServerShop = false;
     }
 
     @Override

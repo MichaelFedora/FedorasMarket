@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 import com.typesafe.config.ConfigException;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
@@ -22,6 +23,11 @@ import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import me.flibio.updatifier.Updatifier;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.gson.GsonConfigurationLoader;
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.slf4j.Logger;
 
 import org.spongepowered.api.Game;
@@ -43,6 +49,7 @@ import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.*;
@@ -53,8 +60,8 @@ public class FedorasMarket {
 
     private static FedorasMarket instance; // TODO: Set to an optional ;3
 
-    public static final String ACCOUNT_VIRTUAL_OWNER_ID_PREFIX = "fedorasmarket:v_o_acc_"; //TODO: Read up to see if these are too big
-    public static final String ACCOUNT_VIRTUAL_CUSTOMER_ID_PREFIX = "fedorasmarket:v_c_acc_";
+    public static final String ACCOUNT_VIRTUAL_OWNER_PREFIX = "fedorasmarket:v_o_acc_"; //TODO: Read up to see if these are too big
+    public static final String ACCOUNT_VIRTUAL_CUSTOMER_PREFIX = "fedorasmarket:v_c_acc_";
 
     public static Set<Class> toRegister = new HashSet<>();
 
@@ -80,6 +87,8 @@ public class FedorasMarket {
         } else if(event.getService().equals(UserStorageService.class)) {
             userStorageService = (UserStorageService) event.getNewProviderRegistration().getProvider();
         }
+
+        Path file = null;
     }
 
     private Game game;
@@ -99,16 +108,13 @@ public class FedorasMarket {
     private List<String> chestNames = new ArrayList<>();
     public static List<String> getChestNames() { return instance.chestNames; }
 
-    private int maxItemStacks = 36;
+    private int maxItemStacks = 36; // 9 (columns) * 4 (rows) = 36 (slots)
     public static int getMaxItemStacks() { return instance.maxItemStacks; }
 
     @Listener
     public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
 
-        // TODO: Make commands register themselves ;3
-        Sponge.getEventManager().registerListeners(this, new FmShopCreateExecutor());
-        Sponge.getEventManager().registerListeners(this, new FmShopDetailsExecutor());
         Sponge.getEventManager().registerListeners(this, new PlayerInteractListener());
 
         Sponge.getDataManager().register(ShopReferenceData.class, ImmutableShopReferenceData.class, new ShopReferenceDataManipulatorBuilder());
@@ -135,21 +141,11 @@ public class FedorasMarket {
         subCommands = new HashMap<>();
         grandChildCommands = new HashMap<>();
 
-        subCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
-                .description(Text.of("Help Command"))
-                .permission(PluginInfo.DATA_ROOT + ".help")
-                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("page no"))))
-                .executor(new FmHelpExecutor())
-                .build());
+        subCommands.put(Arrays.asList("help", "?"), FmHelpExecutor.create());
 
         HashMap<List<String>, CommandSpec> tradeformSubCommands = new HashMap<>();
 
-        tradeformSubCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
-                .description(Text.of("Help Command"))
-                .permission(PluginInfo.DATA_ROOT + ".trade.help")
-                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("page no")))) // is this used I dun even
-                .executor(new FmTradeFormHelpExecutor())
-                .build());
+        tradeformSubCommands.put(Arrays.asList("help", "?"), FmTradeFormHelpExecutor.create());
 
         tradeformSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
                 .description(Text.of("Create a trade form"))
@@ -213,8 +209,9 @@ public class FedorasMarket {
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
-                        GenericArguments.integer(Text.of("amount")))
+                        GenericArguments.integer(Text.of("amount")),
+                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class))
+
                 .executor(new FmTradeFormSetItemExecutor())
                 .build());
 
@@ -278,20 +275,17 @@ public class FedorasMarket {
 
         HashMap<List<String>,CommandSpec> shopSubCommands = new HashMap<>();
 
-        shopSubCommands.put(Arrays.asList("help", "?"), CommandSpec.builder()
-                .description(Text.of("Lists help for the shop subcommand"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.help")
-                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("pageno"))))
-                .executor(new FmShopHelpExecutor())
-                .build());
-
+        shopSubCommands.put(Arrays.asList("help", "?"), FmShopHelpExecutor.create());
 
         shopSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
                 .description(Text.of("Create a new shop"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.create")
                 .arguments(
                         GenericArguments.string(Text.of("formname")),
-                        GenericArguments.optional(GenericArguments.string(Text.of("modifiername"))))
+                        GenericArguments.optional(GenericArguments.string(Text.of("modifiername"))),
+                        GenericArguments.flags()
+                                .flag("s", "-server")
+                                .buildWith(GenericArguments.none()))
                 .executor(new FmShopCreateExecutor())
                 .build());
 
@@ -310,18 +304,36 @@ public class FedorasMarket {
                 .executor(new FmShopListExecutor())
                 .build());
 
+        shopSubCommands.put(Arrays.asList("remove", "rem"), CommandSpec.builder()
+                .description(Text.of("Removes a shop (sign & reference)"))
+                .permission(PluginInfo.DATA_ROOT + ".shop.remove")
+                .executor(new FmShopRemoveExecutor())
+                .build());
+
         shopSubCommands.put(Arrays.asList("clean"), CommandSpec.builder()
-                .description(Text.of("Cleans up the shops \"references\" made by you that are stored in the database"))
+                .description(Text.of("Cleans up shop \"references\" in the database"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.clean")
                 .executor(new FmShopCleanExecutor())
                 .build());
 
+        HashMap<List<String>,CommandSpec> shopQuickCreateSubCommands = new HashMap<>();
+
+        shopQuickCreateSubCommands.put(FmShopQuickCreateHelpExecutor.aliases, FmShopQuickCreateHelpExecutor.create());
+        shopQuickCreateSubCommands.put(FmShopQuickCreateItemBuyExecutor.aliases, FmShopQuickCreateItemBuyExecutor.create());
+        shopQuickCreateSubCommands.put(FmShopQuickCreateItemSellExecutor.aliases, FmShopQuickCreateItemSellExecutor.create());
+        shopQuickCreateSubCommands.put(FmShopQuickCreateItemTradeExecutor.aliases, FmShopQuickCreateItemTradeExecutor.create());
+        shopQuickCreateSubCommands.put(FmShopQuickCreateCurrencyTradeExecutor.aliases, FmShopQuickCreateCurrencyTradeExecutor.create());
+
+        shopSubCommands.put(FmShopQuickCreateExecutor.aliases, FmShopQuickCreateExecutor.create(shopQuickCreateSubCommands));
+
+        grandChildCommands.put("shop quickcreate", shopQuickCreateSubCommands);
+
         subCommands.put(Arrays.asList("shop", "sh"), CommandSpec.builder()
-            .description(Text.of("Do shop things (lists sub commands)"))
+                .description(Text.of("Do shop things (lists sub commands)"))
                 .permission(PluginInfo.DATA_ROOT + ".shop")
                 .executor(new FmShopExecutor())
                 .children(shopSubCommands)
-            .build());
+                .build());
 
         grandChildCommands.put("shop", shopSubCommands);
 

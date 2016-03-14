@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
@@ -28,17 +29,8 @@ public class FmTradeFormExecutor extends FmExecutorBase {
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        HashMap<List<String>, CommandSpec> subCommands = FedorasMarket.getGrandChildCommands("tradeform").orElseThrow(makeExceptionSupplier("Can't find subcommands?!"));
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("tradeform").orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), "tradeform");
 
-        Text.Builder tb = Text.builder();
-        int i = 0;
-        for(Map.Entry<List<String>, CommandSpec> entry : subCommands.entrySet()) {
-            tb.append(Text.of(TextColors.BLUE, entry.getKey()));
-            if(++i < subCommands.entrySet().size()) {
-                tb.append(Text.of(TextColors.GRAY, ", "));
-            }
-        }
-        src.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "[tradeform]: ", TextStyles.RESET, tb.build()));
         return CommandResult.success();
     }
 }

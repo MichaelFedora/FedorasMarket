@@ -15,14 +15,22 @@ import org.spongepowered.api.event.entity.InteractEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.util.Tuple;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * Created by Michael on 2/23/2016.
  */
 
 public class PlayerInteractListener {
+
+    public static Map<UUID, BiConsumer<InteractBlockEvent.Secondary, Player>> toRun = new HashMap<>();
 
     @Listener
     public void onPlayerPrimary(InteractBlockEvent.Primary event, @First Player player) {
@@ -50,6 +58,11 @@ public class PlayerInteractListener {
             shop = opt_shop.get();
         }
 
+        if(event.isCancelled())
+            return;
+
+        event.setCancelled(true);
+
         shop.doSecondary(player);
     }
 
@@ -60,6 +73,12 @@ public class PlayerInteractListener {
 
         if(player == null)
             return;
+
+        if(toRun.containsKey(player.getUniqueId())) {
+            toRun.get(player.getUniqueId()).accept(event, player);
+            toRun.remove(player.getUniqueId());
+            return;
+        }
 
         BlockSnapshot sign_bsnap = event.getTargetBlock();
 
@@ -79,7 +98,11 @@ public class PlayerInteractListener {
             shop = opt_shop.get();
         }
 
-        shop.doPrimary(player);
+        if(event.isCancelled())
+            return;
 
+        event.setCancelled(true);
+
+        shop.doPrimary(player);
     }
 }

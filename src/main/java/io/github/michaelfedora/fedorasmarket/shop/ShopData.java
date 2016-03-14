@@ -30,7 +30,20 @@ public class ShopData implements FmSerializable<SerializedShopData> {
     public TradeForm tradeForm;
     public ShopModifier modifier;
     public Location<World> location;
-    //boolean serverOwned = false; // just deposit/withdraw/give/take (i.e. owned by the server :3)
+    boolean isServerShop; // just deposit/withdraw/give/take (i.e. owned by the server :3)
+
+    public ShopData(TradeForm tradeForm, ShopModifier modifier, Location<World> location, OwnerData ownerData, boolean isServerShop) {
+
+        if(!modifier.isValidWith(tradeForm.getTradeType())) {
+            modifier = ShopModifier.NONE;
+        }
+
+        this.tradeForm = tradeForm;
+        this.modifier = modifier;
+        this.location = location;
+        this.ownerData = ownerData;
+        this.isServerShop = isServerShop;
+    }
 
     public ShopData(TradeForm tradeForm, ShopModifier modifier, Location<World> location, OwnerData ownerData) {
 
@@ -42,6 +55,7 @@ public class ShopData implements FmSerializable<SerializedShopData> {
         this.modifier = modifier;
         this.location = location;
         this.ownerData = ownerData;
+        this.isServerShop = false;
     }
 
     public SerializedShopData serialize() {
@@ -50,10 +64,10 @@ public class ShopData implements FmSerializable<SerializedShopData> {
 
     public static ShopData fromSerializedData(SerializedShopData data) throws BadDataException {
         World world = Sponge.getServer().getWorld(data.worldId).orElseThrow(() -> new BadDataException("Could not fetch world [" + data.worldId + "]! Could not create ShopData instance!"));
-        return new ShopData(data.tradeFormData.deserialize(), data.modifier, new Location<>(world, data.position), OwnerData.SERVER);
+        return new ShopData(data.tradeFormData.deserialize(), data.modifier, new Location<>(world, data.position), OwnerData.SERVER, data.isServerShop);
     }
 
     public String toString() {
-        return "tradeForm: {" + this.tradeForm + "}, modifier: {" + this.modifier + "}, location: {" + this.location + "}";
+        return "tradeForm: {" + this.tradeForm + "}, modifier: {" + this.modifier + "}, location: {" + this.location + "}, isServerShop: " + isServerShop;
     }
 }

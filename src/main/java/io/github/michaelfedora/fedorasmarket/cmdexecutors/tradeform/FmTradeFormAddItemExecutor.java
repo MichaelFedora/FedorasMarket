@@ -52,14 +52,21 @@ public class FmTradeFormAddItemExecutor extends FmExecutorBase {
             if(resultSet.next()) {
                 tradeForm = ((SerializedTradeForm) resultSet.getObject("data")).safeDeserialize().get();
 
+                int old_amt;
                 switch(partyType) {
                     case OWNER:
+                        old_amt = tradeForm.getOwnerParty().items.getOrDefault(itemType, 0);
                         tradeForm.setOwnerParty(tradeForm.getOwnerParty().addItem(itemType, amount));
                         success = tradeForm.getOwnerParty().items.containsKey(itemType);
+                        if(success)
+                            success = (old_amt + amount == tradeForm.getOwnerParty().items.get(itemType));
                         break;
                     case CUSTOMER:
+                        old_amt = tradeForm.getCustomerParty().items.getOrDefault(itemType, 0);
                         tradeForm.setCustomerParty(tradeForm.getCustomerParty().addItem(itemType, amount));
                         success = tradeForm.getCustomerParty().items.containsKey(itemType);
+                        if(success)
+                            success = (old_amt + amount == tradeForm.getCustomerParty().items.get(itemType));
                         break;
                 }
 

@@ -57,10 +57,14 @@ public class FmTradeFormSetItemExecutor extends FmExecutorBase {
                     case OWNER:
                         tradeForm.setOwnerParty(tradeForm.getOwnerParty().setItem(itemType, amount));
                         success = tradeForm.getOwnerParty().items.containsKey(itemType);
+                        if(success)
+                            success = (amount == tradeForm.getOwnerParty().items.get(itemType));
                         break;
                     case CUSTOMER:
                         tradeForm.setCustomerParty(tradeForm.getCustomerParty().setItem(itemType, amount));
                         success = tradeForm.getCustomerParty().items.containsKey(itemType);
+                        if(success)
+                            success = (amount == tradeForm.getCustomerParty().items.get(itemType));
                         break;
                 }
 
