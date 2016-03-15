@@ -25,7 +25,7 @@ import java.util.UUID;
 /**
  * Created by Michael on 3/13/2016.
  */
-public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateBase {
+public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateExecutorBase {
 
     public static final List<String> aliases = Arrays.asList("currencytrade", "currt");
 

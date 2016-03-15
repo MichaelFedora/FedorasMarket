@@ -12,6 +12,7 @@ import io.github.michaelfedora.fedorasmarket.trade.GoodType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
 import org.spongepowered.api.data.DataTransactionResult;
@@ -40,19 +41,22 @@ import java.util.UUID;
 public class Shop {
 
     protected Sign sign;
+    protected UUID instance;
     protected ShopData data;
 
-    public Shop(Sign sign, ShopData shopData) {
+    private Shop(Sign sign, UUID instance, ShopData shopData) {
 
         this.sign = sign;
+        this.instance = instance;
         this.data = shopData;
     }
 
     public Sign getSign() { return this.sign; }
+    public UUID getInstance() { return this.instance; }
     public ShopData getData() { return this.data; }
 
     public boolean isServerShop() {
-        return this.data.playerId.isPresent();
+        return this.data.ownerId.isPresent();
     }
 
     public boolean shouldHaveInventory() {
@@ -88,7 +92,7 @@ public class Shop {
 
         EconomyService eco = FedorasMarket.getEconomyService();
 
-        return eco.getOrCreateAccount(this.data.playerId.get()).map((a) -> (Account) a);
+        return eco.getOrCreateAccount(this.data.ownerId.get()).map((a) -> (Account) a);
     }
 
     /**
@@ -98,19 +102,21 @@ public class Shop {
      * @return success
      * @throws SQLException
      */
-    public boolean initialize(Connection conn) throws SQLException {
+    public static Optional<Shop> createNew(Connection conn, Sign sign, ShopData data) throws SQLException {
 
-        if(shouldHaveInventory())
-            if(!getInventory().isPresent())
-                return false;
+        Shop shop = new Shop(sign, null, data);
 
-        if(shouldHaveAccount())
-            if(!getAccount().isPresent())
-                return false;
+        if(shop.shouldHaveInventory())
+            if(!shop.getInventory().isPresent())
+                return Optional.empty();
+
+        if(shop.shouldHaveAccount())
+            if(!shop.getAccount().isPresent())
+                return Optional.empty();
 
         // =====
 
-        ResultSet resultSet = DatabaseManager.selectAll(conn, data.playerId.orElse(null), DatabaseCategory.SHOPDATA);
+        ResultSet resultSet = DatabaseManager.selectAll(conn, data.ownerId.orElse(null), DatabaseCategory.SHOPDATA);
 
         UUID instance;
 
@@ -131,20 +137,22 @@ public class Shop {
                 break;
         }
 
+        shop.instance = instance;
+
         // =====
 
         ShopReferenceDataManipulatorBuilder builder = (ShopReferenceDataManipulatorBuilder) Sponge.getDataManager().getManipulatorBuilder(ShopReferenceData.class).get();
-        ShopReferenceData data = builder.createFrom(new ShopReference(this.data.playerId.orElse(null), instance));
-        DataTransactionResult dtr = sign.offer(data);
+        ShopReferenceData refData = builder.createFrom(new ShopReference(data.ownerId.orElse(null), instance));
+        DataTransactionResult dtr = sign.offer(refData);
 
         if(dtr.isSuccessful()) {
-            DatabaseManager.insert(conn, this.data.playerId.orElse(null), DatabaseCategory.SHOPDATA, instance, this.data.serialize());
-            this.writeToSign();
+            DatabaseManager.insert(conn, data.ownerId.orElse(null), DatabaseCategory.SHOPDATA, instance, data.serialize());
+            shop.writeToSign();
             //msg(player, "Made the " + ((isServerOwned) ? "server-" : "")+ "shop!");
-            return true;
+            return Optional.of(shop);
         } else {
             //error(player, "Could not pass data to sign!");
-            return false;
+            return Optional.empty();
         }
     }
 
@@ -153,20 +161,20 @@ public class Shop {
     }
 
     public static Optional<Shop> fromSign(Sign sign) {
-        ShopReference ref;
-        {
-            Optional<ShopReference> opt_ref = sign.get(FmDataKeys.SHOP_REFERENCE);
-            if(!opt_ref.isPresent())
-                return Optional.empty();
-            ref = opt_ref.get();
-        }
+
+        if(sign.getType() != BlockTypes.WALL_SIGN)
+            return Optional.empty();
+
+        ShopReference ref = sign.get(FmDataKeys.SHOP_REFERENCE).orElse(null);
+        if(ref == null)
+            return Optional.empty();
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
             ResultSet resultSet = DatabaseManager.select(conn, 1, ref.author, DatabaseCategory.SHOPDATA, ref.instance);
             if(resultSet.next()) {
                 try {
-                    Shop shop = new Shop(sign, ((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
+                    Shop shop = new Shop(sign, ref.instance, ((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
                     return Optional.of(shop);
                 } catch(BadDataException e) {
                     FedorasMarket.getLogger().error("Bad shop data :o", e);
@@ -304,15 +312,5 @@ public class Shop {
 
         FedorasMarket.getLogger().info("Chest is a tile entity carrier!");
     }*/
-
-    public DataTransactionResult save() {
-
-        // save the data to the sign
-        DataTransactionResult dtr = sign.offer(FmDataKeys.SHOP_REFERENCE, this.toReference());
-
-        FedorasMarket.getLogger().info("DTR: " + dtr);
-
-        return dtr;
-    }
 
 }

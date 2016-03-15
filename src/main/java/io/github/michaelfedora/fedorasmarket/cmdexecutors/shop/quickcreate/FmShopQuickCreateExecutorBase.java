@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * Created by Michael on 3/13/2016.
  */
-public abstract class FmShopQuickCreateBase extends FmExecutorBase {
+public abstract class FmShopQuickCreateExecutorBase extends FmExecutorBase {
 
     public static Map<UUID, Tuple<String, TradeForm>> to_apply = new HashMap<>();
     public static Set<UUID> as_server = new HashSet<>();
@@ -54,7 +54,7 @@ public abstract class FmShopQuickCreateBase extends FmExecutorBase {
         try(Connection conn = DatabaseManager.getConnection()) {
 
             Shop shop = new Shop(sign, shopData);
-            shop.initialize(conn);
+            shop.createNew(conn);
 
         } catch(SQLException e) {
             throwSafeException("SQL Error", e, player);

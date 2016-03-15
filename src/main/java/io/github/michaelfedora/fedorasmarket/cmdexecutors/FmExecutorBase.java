@@ -5,6 +5,8 @@ import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.args.CommandElement;
+import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
@@ -15,6 +17,10 @@ import java.util.function.Supplier;
  * Created by Michael on 2/29/2016.
  */
 public abstract class FmExecutorBase implements CommandExecutor {
+
+    public static CommandElement makeServerFlag() {
+        return GenericArguments.flags().flag("s", "-server").buildWith(GenericArguments.none());
+    }
 
     protected abstract String getName();
 

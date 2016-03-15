@@ -15,8 +15,8 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.util.Tuple;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -28,7 +28,7 @@ import java.util.UUID;
 /**
  * Created by Michael on 2/29/2016.
  */
-public class FmShopSetTradeFormExecutor extends FmExecutorBase {
+public class FmShopSetTradeFormExecutor extends FmShopExecutorBase {
 
     public static List<String> aliases = Arrays.asList("settradeform", "settf");
 
@@ -36,7 +36,9 @@ public class FmShopSetTradeFormExecutor extends FmExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Set a shop's tradeform"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.settradeform")
-                .arguments(GenericArguments.string(Text.of("tradeform")))
+                .arguments(
+                        GenericArguments.string(Text.of("tradeform")),
+                       FmExecutorBase.makeServerFlag())
                 .executor(new FmShopSetTradeFormExecutor())
                 .build();
     }
@@ -44,17 +46,6 @@ public class FmShopSetTradeFormExecutor extends FmExecutorBase {
     @Override
     protected String getName() {
         return "shop settradeform";
-    }
-
-    public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
-
-        try(Connection conn = DatabaseManager.getConnection()) {
-
-            DatabaseManager.insert(conn, playerId, DatabaseCategory.SHOPDATA, instance, tradeform);
-
-        } catch(SQLException e) {
-            throwSafeException("SQL Error", e, player);
-        }
     }
 
     @Override
@@ -82,6 +73,7 @@ public class FmShopSetTradeFormExecutor extends FmExecutorBase {
             throw makeException("SQLException", e, src);
         }
 
+        to_apply.put(playerId, new Tuple<>(tradeForm, false));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select the shop!");

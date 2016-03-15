@@ -15,12 +15,12 @@ import java.util.UUID;
  */
 public class ShopData implements FmSerializable<SerializedShopData> {
 
-    public TradeForm tradeForm;
-    public ShopModifier modifier;
-    public Location<World> location;
-    public Optional<UUID> playerId;
+    protected TradeForm tradeForm;
+    protected ShopModifier modifier;
+    protected Location<World> location;
+    protected Optional<UUID> ownerId;
 
-    public ShopData(TradeForm tradeForm, ShopModifier modifier, Location<World> location, Optional<UUID> playerId) {
+    public ShopData(TradeForm tradeForm, ShopModifier modifier, Location<World> location, Optional<UUID> ownerId) {
 
         if(!modifier.isValidWith(tradeForm.getTradeType())) {
             modifier = ShopModifier.NONE;
@@ -29,7 +29,7 @@ public class ShopData implements FmSerializable<SerializedShopData> {
         this.tradeForm = tradeForm;
         this.modifier = modifier;
         this.location = location;
-        this.playerId = playerId;
+        this.ownerId = ownerId;
     }
 
     public static ShopData asPlayer(TradeForm tradeForm, ShopModifier shopModifier, Location<World> location, UUID playerId) {
@@ -40,8 +40,34 @@ public class ShopData implements FmSerializable<SerializedShopData> {
         return new ShopData(tradeForm, shopModifier, location, Optional.empty());
     }
 
+    public TradeForm getTradeForm() {
+        return this.tradeForm;
+    }
+
+    public ShopModifier getShopModifier() {
+        return this.modifier;
+    }
+
+    public Location<World> getLocation() {
+        return this.location;
+    }
+
+    public Optional<UUID> getOwnerId() {
+        return this.ownerId;
+    }
+
+    public ShopData setTradeForm(TradeForm tradeForm) {
+        this.tradeForm = tradeForm;
+        return this;
+    }
+
+    public ShopData setModifier(ShopModifier modifier) {
+        this.modifier = modifier;
+        return this;
+    }
+
     public SerializedShopData serialize() {
-        return new SerializedShopData(tradeForm.serialize(), modifier, location.getPosition(), location.getExtent().getUniqueId(), playerId);
+        return new SerializedShopData(tradeForm.serialize(), modifier, location.getPosition(), location.getExtent().getUniqueId(), ownerId);
     }
 
     public static ShopData fromSerializedData(SerializedShopData data) throws BadDataException {
@@ -50,6 +76,6 @@ public class ShopData implements FmSerializable<SerializedShopData> {
     }
 
     public String toString() {
-        return "tradeForm: {" + this.tradeForm + "}, modifier: {" + this.modifier + "}, location: {" + this.location + "}, ownerId: " + playerId.orElse(null);
+        return "tradeForm: {" + this.tradeForm + "}, modifier: {" + this.modifier + "}, location: {" + this.location + "}, ownerId: " + ownerId.orElse(null);
     }
 }

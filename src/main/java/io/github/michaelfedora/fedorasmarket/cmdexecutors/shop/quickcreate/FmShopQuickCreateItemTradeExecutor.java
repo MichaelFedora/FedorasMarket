@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * Created by Michael on 3/13/2016.
  */
-public class FmShopQuickCreateItemTradeExecutor extends FmShopQuickCreateBase {
+public class FmShopQuickCreateItemTradeExecutor extends FmShopQuickCreateExecutorBase {
 
     public static final List<String> aliases = Arrays.asList("itemtrade", "itrade");
 

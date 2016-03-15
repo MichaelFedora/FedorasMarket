@@ -192,6 +192,8 @@ public class FedorasMarket {
                 .executor(new FmShopRemoveExecutor())
                 .build());
 
+        shopSubCommands.put(FmShopSetTradeFormExecutor.aliases, FmShopSetTradeFormExecutor.create());
+
         shopSubCommands.put(Collections.singletonList("tips"), CommandSpec.builder()
                 .description(Text.of("Cleans up shop \"references\" in the database"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.clean")
