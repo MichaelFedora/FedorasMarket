@@ -21,7 +21,7 @@ public class FmShopSetTradeFormExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;

@@ -3,7 +3,9 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.shop.SerializedShopData;
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopData;
@@ -34,13 +36,12 @@ public class FmShopCleanExecutor extends FmExecutorBase {
         boolean failed = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.shopDataDB.select(conn);
+            ResultSet resultSet = DatabaseManager.selectAll(conn, DatabaseCategory.SHOPDATA);
             List<Tuple<ShopReference,ShopData>> results = new ArrayList<>();
             while(resultSet.next()) {
 
-                UUID playerId = (UUID) resultSet.getObject("author");
-                String name = resultSet.getString("name");
-                UUID instance = (UUID) resultSet.getObject("instance");
+                UUID playerId = (UUID) resultSet.getObject(DatabaseQuery.AUTHOR.v);
+                UUID instance = (UUID) resultSet.getObject(DatabaseQuery.NAME.v);
                 Optional<ShopData> opt_data = Optional.empty();
                 try {
                     opt_data = Optional.of(((SerializedShopData) resultSet.getObject("data")).deserialize());
@@ -51,20 +52,19 @@ public class FmShopCleanExecutor extends FmExecutorBase {
 
                 if(opt_data.isPresent() && !failed) {
 
-                    results.add(new Tuple<>(new ShopReference(playerId, name, instance), opt_data.get()));
+                    results.add(new Tuple<>(new ShopReference(playerId, instance), opt_data.get()));
 
                 } else {
 
                     failed = false;
 
-                    DatabaseManager.shopDataDB.delete(conn, playerId, name, instance);
+                    DatabaseManager.delete(conn, playerId, DatabaseCategory.SHOPDATA, instance);
                 }
             }
 
             for(Tuple<ShopReference,ShopData> result : results) {
                 //msg(src, "Looking at shop [" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]");
                 UUID playerId = result.getFirst().author;
-                String name = result.getFirst().name;
                 UUID instance = result.getFirst().instance;
                 ShopData data = result.getSecond();
 
@@ -92,7 +92,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 if(failed) {
                     failed = false;
                     //log(prefix + "Bad, deleting :c");
-                    DatabaseManager.shopDataDB.delete(conn, playerId, name, instance);
+                    DatabaseManager.delete(conn, playerId, DatabaseCategory.SHOPDATA, instance);
                 }
             }
 
@@ -110,7 +110,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         UUID playerId = ((Player) src).getUniqueId();
@@ -118,7 +118,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
         boolean failed = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.shopDataDB.select(conn, playerId);
+            ResultSet resultSet = DatabaseManager.selectAll(conn, playerId, DatabaseCategory.SHOPDATA);
             List<Tuple<Tuple<String,UUID>,ShopData>> results = new ArrayList<>();
             while(resultSet.next()) {
 
@@ -140,7 +140,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
 
                     failed = false;
 
-                    DatabaseManager.shopDataDB.delete(conn, playerId, name, instance);
+                    DatabaseManager.delete(conn, playerId, DatabaseCategory.SHOPDATA, instance);
                 }
             }
 
@@ -174,7 +174,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 if(failed) {
                     failed = false;
 
-                    DatabaseManager.shopDataDB.delete(conn, playerId, name, instance);
+                    DatabaseManager.delete(conn, playerId, DatabaseCategory.SHOPDATA, instance);
                 }
             }
 

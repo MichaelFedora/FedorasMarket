@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -17,6 +18,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Michael on 2/26/2016.
@@ -43,7 +45,7 @@ public class FmTradeFormDeleteManyExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
@@ -53,7 +55,7 @@ public class FmTradeFormDeleteManyExecutor extends FmExecutorBase {
         try(Connection conn = DatabaseManager.getConnection()) {
 
             for(String name : names) {
-                DatabaseManager.tradeFormDB.delete(conn, player.getUniqueId(), name);
+                DatabaseManager.delete(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
             }
 
         } catch(SQLException e) {

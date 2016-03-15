@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -11,7 +12,6 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
-import javax.xml.crypto.Data;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class FmSetAliasExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player))
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
 
         UUID playerId = ((Player) src).getUniqueId();
 
@@ -52,7 +52,7 @@ public class FmSetAliasExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            DatabaseManager.userDataDB.insert(conn, playerId, "alias", alias);
+            DatabaseManager.insert(conn, playerId, DatabaseCategory.USERDATA, "alias", alias);
 
         } catch (SQLException e) {
 

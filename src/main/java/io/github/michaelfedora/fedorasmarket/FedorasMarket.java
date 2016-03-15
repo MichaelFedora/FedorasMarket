@@ -8,7 +8,6 @@ package io.github.michaelfedora.fedorasmarket;
 
 import com.google.inject.Inject;
 
-import com.typesafe.config.ConfigException;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate.*;
@@ -18,16 +17,9 @@ import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBui
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.PartyType;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import me.flibio.updatifier.Updatifier;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
-import ninja.leaping.configurate.gson.GsonConfigurationLoader;
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
-import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.slf4j.Logger;
 
 import org.spongepowered.api.Game;
@@ -40,18 +32,13 @@ import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
-import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.service.economy.EconomyService;
-import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.*;
 
 @Updatifier(repoName = "FedorasMarket", repoOwner = "MichaelFedora", version = PluginInfo.VERSION)

@@ -1,7 +1,6 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
-import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
+import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
 import java.util.*;

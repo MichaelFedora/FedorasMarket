@@ -1,7 +1,5 @@
 package io.github.michaelfedora.fedorasmarket;
 
-import org.spongepowered.api.plugin.Dependency;
-
 /**
  * General plugin info
  */

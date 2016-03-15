@@ -2,7 +2,6 @@ package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 
 import java.util.Optional;
 

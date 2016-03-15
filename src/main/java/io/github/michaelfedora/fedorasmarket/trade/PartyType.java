@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.enumtype;
+package io.github.michaelfedora.fedorasmarket.trade;
 
 import java.util.Map;
 import java.util.TreeMap;

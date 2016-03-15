@@ -2,7 +2,9 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -49,7 +51,7 @@ public class FmTradeFormDetailsExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
@@ -58,11 +60,11 @@ public class FmTradeFormDetailsExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.tradeFormDB.selectWithMore(conn, player.getUniqueId(), name, "LIMIT 1");
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
             msg(src, "Transaction [" + name + "] details: ");
             if(resultSet.next()) {
-                printResult(src, name, resultSet.getObject("data"));
+                printResult(src, name, resultSet.getObject(DatabaseQuery.DATA.v));
             }
 
         } catch (SQLException e) {

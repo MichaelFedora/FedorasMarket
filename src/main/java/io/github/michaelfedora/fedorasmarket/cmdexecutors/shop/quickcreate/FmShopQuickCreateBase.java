@@ -1,32 +1,18 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate;
 
-import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.GoodType;
 import io.github.michaelfedora.fedorasmarket.shop.*;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.block.tileentity.TileEntity;
-import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
-import org.spongepowered.api.data.DataTransactionResult;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.item.inventory.Inventory;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.Tuple;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 

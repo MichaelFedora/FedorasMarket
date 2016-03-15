@@ -2,8 +2,9 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
+import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeParty;
 import org.spongepowered.api.command.CommandException;
@@ -47,7 +48,7 @@ public class FmTradeFormCreateExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
@@ -60,8 +61,8 @@ public class FmTradeFormCreateExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            DatabaseManager.tradeFormDB.delete(conn, player.getUniqueId(), name);
-            DatabaseManager.tradeFormDB.insert(conn, player.getUniqueId(), name, tradeForm.serialize());
+            DatabaseManager.delete(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            DatabaseManager.insert(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, tradeForm.serialize());
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);

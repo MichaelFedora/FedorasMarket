@@ -3,11 +3,11 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -17,28 +17,20 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
-import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
-import org.spongepowered.api.util.Tuple;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
-import org.spongepowered.api.world.extent.Extent;
 
-import javax.xml.crypto.Data;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -68,11 +60,12 @@ public class FmShopRemoveExecutor extends FmExecutorBase {
 
         ShopReference shopReference = sign.get(FmDataKeys.SHOP_REFERENCE).get();
 
-        if(shopReference.author != player.getUniqueId() && player.hasPermission(PluginInfo.DATA_ROOT + "admin.delete")) // TODO: make admin commands :3
+        if( !(shopReference.author == player.getUniqueId() || player.hasPermission(PluginInfo.DATA_ROOT + ".admin.removeshop")) ) // TODO: make admin commands :3
+            return;
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            boolean success = DatabaseManager.shopDataDB.delete(conn, shopReference.author, shopReference.name, shopReference.instance);
+            boolean success = DatabaseManager.delete(conn, shopReference.author, DatabaseCategory.SHOPDATA, shopReference.instance);
             if(success)
                 msg(player, "Success in deleting the shop-reference from the database");
             else
@@ -106,7 +99,7 @@ public class FmShopRemoveExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player))
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
 
         UUID playerId = ((Player) src).getUniqueId();
 

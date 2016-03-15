@@ -1,7 +1,5 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;

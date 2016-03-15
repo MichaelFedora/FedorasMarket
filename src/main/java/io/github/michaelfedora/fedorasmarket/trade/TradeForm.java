@@ -2,7 +2,6 @@ package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.item.ItemType;

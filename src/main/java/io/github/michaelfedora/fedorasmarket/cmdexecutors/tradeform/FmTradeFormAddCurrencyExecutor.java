@@ -4,8 +4,8 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.DatabaseCategory;
-import io.github.michaelfedora.fedorasmarket.enumtype.PartyType;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
+import io.github.michaelfedora.fedorasmarket.trade.PartyType;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import org.spongepowered.api.command.CommandException;
@@ -24,7 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -54,7 +53,7 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player))
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
 
         Player player = (Player) src;
 
@@ -69,7 +68,7 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
         boolean success = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, "1", player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
             if(resultSet.next()) {
                 TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject("data")).safeDeserialize().get();

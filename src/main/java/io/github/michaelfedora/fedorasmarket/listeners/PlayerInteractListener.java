@@ -1,28 +1,19 @@
 package io.github.michaelfedora.fedorasmarket.listeners;
 
-import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.action.InteractEvent;
 import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.event.entity.InteractEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
-import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.util.Tuple;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /**
  * Created by Michael on 2/23/2016.

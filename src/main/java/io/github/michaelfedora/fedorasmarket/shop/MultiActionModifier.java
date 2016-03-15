@@ -1,6 +1,5 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
-import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
@@ -24,6 +23,8 @@ public final class MultiActionModifier extends ShopModifier {
 
     @Override
     public void execute(ShopData data, TradeActiveParty owner, TradeActiveParty customer) {
-        for(int i = 0; i < number && data.tradeForm.apply(owner, customer); i++);
+        for(int i = 0; i < number; i++)
+            if(!data.tradeForm.apply(owner, customer))
+                break;
     }
 }

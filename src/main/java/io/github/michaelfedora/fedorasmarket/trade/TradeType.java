@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.enumtype;
+package io.github.michaelfedora.fedorasmarket.trade;
 
 /**
  * The Shop Type is what the customer is doing; Are they Buying Items? Selling Items? Trading Currency? Etc.

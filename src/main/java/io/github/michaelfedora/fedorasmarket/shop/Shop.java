@@ -6,13 +6,13 @@ import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDat
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.DatabaseCategory;
-import io.github.michaelfedora.fedorasmarket.enumtype.GoodType;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
+import io.github.michaelfedora.fedorasmarket.trade.GoodType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.data.key.Keys;
@@ -121,7 +121,7 @@ public class Shop {
             foundUnique = true;
             while (resultSet.next()) {
 
-                if (instance.equals(resultSet.getObject("instance"))) {
+                if (instance.equals(resultSet.getObject(DatabaseQuery.NAME.v))) {
                     foundUnique = false;
                     break;
                 }
@@ -138,7 +138,7 @@ public class Shop {
         DataTransactionResult dtr = sign.offer(data);
 
         if(dtr.isSuccessful()) {
-            DatabaseManager.insert(conn, this.data.playerId.orElse(null), instance.toString(), DatabaseCategory.SHOPDATA, this.data.serialize());
+            DatabaseManager.insert(conn, this.data.playerId.orElse(null), DatabaseCategory.SHOPDATA, instance, this.data.serialize());
             this.writeToSign();
             //msg(player, "Made the " + ((isServerOwned) ? "server-" : "")+ "shop!");
             return true;
@@ -163,10 +163,10 @@ public class Shop {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, "1", ref.author, DatabaseCategory.SHOPDATA, ref.instance.toString());
+            ResultSet resultSet = DatabaseManager.select(conn, 1, ref.author, DatabaseCategory.SHOPDATA, ref.instance);
             if(resultSet.next()) {
                 try {
-                    Shop shop = new Shop(sign, ((SerializedShopData) resultSet.getObject("data")).deserialize());
+                    Shop shop = new Shop(sign, ((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
                     return Optional.of(shop);
                 } catch(BadDataException e) {
                     FedorasMarket.getLogger().error("Bad shop data :o", e);

@@ -2,8 +2,9 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.PartyType;
+import io.github.michaelfedora.fedorasmarket.trade.PartyType;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import org.spongepowered.api.command.CommandException;
@@ -50,7 +51,7 @@ public class FmTradeFormAddItemExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
@@ -66,7 +67,7 @@ public class FmTradeFormAddItemExecutor extends FmExecutorBase {
         boolean success = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.tradeFormDB.selectWithMore(conn, player.getUniqueId(), name, "LIMIT 1");
+            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
             TradeForm tradeForm;
             if(resultSet.next()) {
@@ -90,7 +91,7 @@ public class FmTradeFormAddItemExecutor extends FmExecutorBase {
                         break;
                 }
 
-                DatabaseManager.tradeFormDB.update(conn, tradeForm.serialize(), player.getUniqueId(), name);
+                DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
             }
 
         } catch(SQLException e) {

@@ -1,7 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
+import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeParty;
@@ -12,7 +12,6 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.text.Text;
@@ -56,7 +55,7 @@ public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player))
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
 
         UUID playerId = ((Player) src).getUniqueId();
 

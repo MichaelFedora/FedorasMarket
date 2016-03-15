@@ -1,12 +1,9 @@
 package io.github.michaelfedora.fedorasmarket.database;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.enumtype.DatabaseCategory;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.service.sql.SqlService;
-import org.spongepowered.api.util.Tuple;
 
-import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.*;
 
@@ -32,30 +29,11 @@ public final class DatabaseManager {
         return getDataSource(DB_ID).getConnection();
     }
 
-    public static final Map<String,Tuple<String,Type>> PARAMS;
-    static {
-        Map<String, Tuple<String,Type>> p = new LinkedHashMap<>();
-        p.put("author", new Tuple<>("uuid", Object.class));
-        p.put("category", new Tuple<>("varchar(255)", String.class));
-        p.put("name", new Tuple<>("varchar(255)", String.class));
-        p.put("data", new Tuple<>("other", Object.class));
-        PARAMS = p;
-    }
-
     public static void initialize() {
-
-        StringBuilder constructor = new StringBuilder("(");
-        int count = 0;
-        for(Map.Entry<String, Tuple<String,Type>> entry : PARAMS.entrySet()) {
-            constructor.append(entry.getKey()).append(" ").append(entry.getValue().getFirst());
-            if(count < PARAMS.size())
-                constructor.append(" ");
-        }
-        constructor.append(")");
 
         try(Connection conn = getDataSource(DB_ID).getConnection()) {
 
-            conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + DB_TABLE + constructor).execute();
+            conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + DB_TABLE + DatabaseQuery.makeConstructor()).execute();
 
             ResultSet resultSet = conn.prepareStatement("SELECT * FROM " + DB_TABLE).executeQuery();
             ResultSetMetaData metaData = resultSet.getMetaData();
@@ -102,9 +80,9 @@ public final class DatabaseManager {
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet selectWithMore(Connection conn, Object amt, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, int amt, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
 
-        String statement = "SELECT " + amt + " FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=? " + more;
+        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -118,9 +96,9 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, Object amt, UUID author, DatabaseCategory category, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, int amt, UUID author, DatabaseCategory category, String more) throws SQLException {
 
-        String statement = "SELECT " + amt + " FROM " + DB_TABLE + " WHERE author=? AND category=? " + more;
+        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE author=? AND category=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -130,9 +108,9 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, Object amt, UUID author, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, int amt, UUID author, String more) throws SQLException {
 
-        String statement = "SELECT " + amt + " FROM " + DB_TABLE + " WHERE author=? " + more;
+        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE author=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -141,39 +119,23 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, Object amt, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, int amt, DatabaseCategory category, String more) throws SQLException {
 
-        String statement = "SELECT " + amt + " FROM " + DB_TABLE + " " + more;
+        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE category=? " + more;
 
+        int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
+        preparedStatement.setString(++i, category.toString());
+
         return preparedStatement.executeQuery();
     }
 
-    /**
-     * Select the specified amount of values from the given parameters
-     * @param conn the connection
-     * @param amt the amount of items to select
-     * @param author the author
-     * @param category the category of the data
-     * @param name the name of the data
-     * @return all the values which match the given criteria
-     * @throws SQLException
-     */
-    public static ResultSet select(Connection conn, Object amt, UUID author, DatabaseCategory category, Object name) throws SQLException {
-        return selectWithMore(conn, amt, author, category, name, "");
-    }
+    public static ResultSet selectWithMore(Connection conn, int amt, String more) throws SQLException {
 
-    public static ResultSet select(Connection conn, Object amt, UUID author, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, amt, author, category, "");
-    }
+        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " " + more;
 
-
-    public static ResultSet select(Connection conn, Object amt, UUID author) throws SQLException {
-        return selectWithMore(conn, amt, author, "");
-    }
-
-    public static ResultSet select(Connection conn, Object amt) throws SQLException {
-        return selectWithMore(conn, amt, "");
+        PreparedStatement preparedStatement = conn.prepareStatement(statement);
+        return preparedStatement.executeQuery();
     }
 
     /**
@@ -188,19 +150,50 @@ public final class DatabaseManager {
      * @throws SQLException
      */
     public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
-        return selectWithMore(conn, "*", author, category, name, more);
+        return selectWithMore(conn, -1, author, category, name, more);
     }
 
     public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, String more) throws SQLException {
-        return selectWithMore(conn, "*", author, category, more);
+        return selectWithMore(conn, -1, author, category, more);
     }
 
     public static ResultSet selectAllWithMore(Connection conn, UUID author, String more) throws SQLException {
-        return selectWithMore(conn, "*", author, more);
+        return selectWithMore(conn, -1, author, more);
     }
 
     public static ResultSet selectAllWithMore(Connection conn, String more) throws SQLException {
-        return selectWithMore(conn, "*", more);
+        return selectWithMore(conn, -1, more);
+    }
+
+    /**
+     * Select the specified amount of values from the given parameters
+     * @param conn the connection
+     * @param amt the amount of items to select
+     * @param author the author
+     * @param category the category of the data
+     * @param name the name of the data
+     * @return all the values which match the given criteria
+     * @throws SQLException
+     */
+    public static ResultSet select(Connection conn, int amt, UUID author, DatabaseCategory category, Object name) throws SQLException {
+        return selectWithMore(conn, amt, author, category, name, "");
+    }
+
+    public static ResultSet select(Connection conn, int amt, UUID author, DatabaseCategory category) throws SQLException {
+        return selectWithMore(conn, amt, author, category, "");
+    }
+
+
+    public static ResultSet select(Connection conn, int amt, UUID author) throws SQLException {
+        return selectWithMore(conn, amt, author, "");
+    }
+
+    public static ResultSet select(Connection conn, int amt, DatabaseCategory category) throws SQLException {
+        return selectWithMore(conn, amt, category, "");
+    }
+
+    public static ResultSet select(Connection conn, int amt) throws SQLException {
+        return selectWithMore(conn, amt, "");
     }
 
     /**
@@ -213,19 +206,23 @@ public final class DatabaseManager {
      * @throws SQLException
      */
     public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category, Object name) throws SQLException {
-        return select(conn, "*", author, category, name);
+        return select(conn, -1, author, category, name);
     }
 
     public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category) throws SQLException {
-        return select(conn, "*", author, category);
+        return select(conn,-1, author, category);
     }
 
     public static ResultSet selectAll(Connection conn, UUID author) throws SQLException {
-        return select(conn, "*", author);
+        return select(conn, -1, author);
+    }
+
+    public static ResultSet selectAll(Connection conn, DatabaseCategory category) throws SQLException {
+        return select(conn, -1, category);
     }
 
     public static ResultSet selectAll(Connection conn) throws SQLException {
-        return select(conn, "*");
+        return select(conn, -1);
     }
 
     public static boolean update(Connection conn, Object data, UUID author, DatabaseCategory category, Object name) throws SQLException {
@@ -261,7 +258,7 @@ public final class DatabaseManager {
         return preparedStatement.execute();
     }
 
-    public static boolean insert(Connection conn, UUID author, Object name, DatabaseCategory category, Object data) throws SQLException {
+    public static boolean insert(Connection conn, UUID author, DatabaseCategory category, Object name, Object data) throws SQLException {
 
         int i = 0;
         String statement = "INSERT INTO " + DB_TABLE + "(author, category, name, data) values (?, ?, ?, ?)";

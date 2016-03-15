@@ -4,11 +4,11 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -90,7 +90,9 @@ public abstract class FmExecutorBase implements CommandExecutor {
         return () -> makeException(msg);
     }
 
-    public final CommandException sourceNotPlayerException = makeException("Source not player! Sorry :<");
+    public CommandException makeSourceNotPlayerException() {
+        return makeException("Source not player! Sorry :<");
+    }
 
     public Supplier<CommandException> makeParamExceptionSupplier(String key) {
         return makeExceptionSupplier("Bad param '" + key + "'");

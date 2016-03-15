@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.enumtype;
+package io.github.michaelfedora.fedorasmarket.trade;
 
 /**
  * Created by Michael on 2/23/2016.

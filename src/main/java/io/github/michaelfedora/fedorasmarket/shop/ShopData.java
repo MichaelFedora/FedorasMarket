@@ -1,13 +1,9 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
-import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.item.inventory.Inventory;
-import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 

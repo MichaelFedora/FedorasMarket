@@ -9,7 +9,6 @@ import org.spongepowered.api.data.persistence.DataBuilder;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Created by Michael on 2/27/2016.

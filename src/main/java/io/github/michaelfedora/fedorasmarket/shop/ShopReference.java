@@ -4,10 +4,7 @@ import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDat
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.data.MemoryDataContainer;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**

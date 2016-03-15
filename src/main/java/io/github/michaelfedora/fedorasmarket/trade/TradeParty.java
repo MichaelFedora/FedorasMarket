@@ -2,8 +2,6 @@ package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
-import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
-import io.github.michaelfedora.fedorasmarket.enumtype.GoodType;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.GameRegistry;
 import org.spongepowered.api.item.ItemType;
@@ -52,12 +50,14 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
         Set<Currency> currencies = FedorasMarket.getEconomyService().getCurrencies();
 
-        for(Map.Entry<String,BigDecimal> entry : data.currencies.entrySet()) {
-            for(Currency currency : currencies) {
-                if(entry.getKey().equals(currency.getDisplayName().toPlain()))
-                    tradeParty.addCurrency(currency,entry.getValue());
-            }
-        }
+        data.currencies.entrySet().forEach(
+                (e) -> currencies.forEach(
+                        (c) -> {
+                            if(e.getKey().equals(c.getDisplayName().toPlain()))
+                                tradeParty.addCurrency(c, e.getValue());
+                        }
+                )
+        );
 
         return tradeParty;
     }
@@ -120,11 +120,10 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
     public TradeParty cleanItems() {
 
-        Set<ItemType> keys = items.keySet();
-
-        for(ItemType i : keys)
+        items.keySet().forEach((i) -> {
             if(items.get(i) <= 0)
                 items.remove(i);
+        });
 
         return this;
     }
@@ -161,11 +160,10 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
     public TradeParty cleanCurrencies() {
 
-        Set<Currency> keys = currencies.keySet();
-
-        for(Currency c : keys)
+        currencies.keySet().forEach((c) -> {
             if(currencies.get(c).compareTo(BigDecimal.ZERO) <= 0)
                 currencies.remove(c);
+        });
 
         return this;
     }

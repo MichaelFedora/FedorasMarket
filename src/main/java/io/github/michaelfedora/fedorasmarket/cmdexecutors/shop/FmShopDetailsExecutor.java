@@ -4,8 +4,9 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
-import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.block.BlockSnapshot;
@@ -17,9 +18,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -38,14 +37,6 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
         return "shop details";
     }
 
-    private void printShopReferenceResult(CommandSource src, ShopReference shopReference, Object data) {
-        src.sendMessage(Text.of(TextColors.GREEN, "{",
-                TextColors.BLUE, "author=", TextColors.WHITE, shopReference.author, TextColors.GREEN, ", ",
-                TextColors.BLUE, "name=", TextColors.WHITE, shopReference.name, TextColors.GREEN, ", ",
-                TextColors.BLUE, "instance=", TextColors.WHITE, shopReference.instance, TextColors.GREEN, ", ",
-                TextColors.BLUE, "data=", TextColors.WHITE, data, TextColors.GREEN, "}"));
-    }
-
     private void printShopReferenceNice(CommandSource src, ShopReference shopReference, Object data) {
 
         String author_name;
@@ -57,9 +48,8 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
             author_name = shopReference.author.toString();
 
         src.sendMessage(Text.of(TextColors.BLUE, "Made by: ", TextColors.WHITE, author_name, TextColors.GREEN, ", ",
-                TextColors.BLUE, "Shop: [", TextColors.WHITE, shopReference.name, TextColors.GRAY, "::",
-                TextColors.BLUE, "", TextColors.WHITE, shopReference.instance, TextColors.GREEN, ", ",
-                TextColors.BLUE, "Data: ", TextColors.WHITE, data, TextColors.GREEN, "}"));
+                TextColors.BLUE, "Shop: [", TextColors.WHITE, shopReference.instance, TextColors.BLUE, "]", TextColors.GREEN, ", ",
+                TextColors.BLUE, " Data: ", TextColors.WHITE, data, TextColors.GREEN, "}"));
     }
 
     public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
@@ -87,10 +77,10 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
             ShopReference shopReference = sign.get(FmDataKeys.SHOP_REFERENCE).get();
 
             try(Connection conn = DatabaseManager.getConnection()) {
-                ResultSet resultSet = DatabaseManager.shopDataDB.select(conn, shopReference);
+                ResultSet resultSet = DatabaseManager.select(conn, 1, shopReference.author, DatabaseCategory.SHOPDATA, shopReference.instance);
                 if(resultSet.next()) {
                     msg(player, "Shop [" + sign + "] details: ");
-                    this.printShopReferenceNice(player, shopReference, resultSet.getObject("data"));
+                    this.printShopReferenceNice(player, shopReference, resultSet.getObject(DatabaseQuery.DATA.v));
                 }
                 conn.close();
 
@@ -106,7 +96,7 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         UUID playerId = ((Player) src).getUniqueId();

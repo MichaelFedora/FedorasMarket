@@ -2,10 +2,11 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate.FmShopQuickCreateExecutor;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.SerializedShopData;
 import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
@@ -22,10 +23,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.Tuple;
 
 import java.sql.Connection;
@@ -57,6 +55,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
         boolean isServerOwned = as_server.contains(playerId);
         as_server.remove(playerId);
 
+        Optional<UUID> opt_ownerId = (isServerOwned) ? Optional.empty() : Optional.of(playerId);
 
         BlockSnapshot blockSnapshot = event.getTargetBlock();
         if(blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN) {
@@ -79,18 +78,18 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.tradeFormDB.selectWithMore(conn, playerId, name, "LIMIT 1");
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, playerId, DatabaseCategory.TRADEFORM, name);
 
             if(!resultSet.next()) {
                 error(player,"Bad name! :c");
                 return;
             }
 
-            tradeformData = (SerializedTradeForm) resultSet.getObject("data");
+            tradeformData = (SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v);
 
             // =====
 
-            resultSet = DatabaseManager.shopDataDB.select(conn, playerId, name);
+            resultSet = DatabaseManager.selectAll(conn, playerId, DatabaseCategory.SHOPDATA, name);
 
             boolean foundUnique;
             UUID otherId;
@@ -101,7 +100,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
                 foundUnique = true;
                 while (resultSet.next()) {
 
-                    otherId = (UUID) resultSet.getObject("instance");
+                    otherId = (UUID) resultSet.getObject(DatabaseQuery.NAME.v);
 
                     if (instance.equals(otherId)) {
                         foundUnique = false;
@@ -116,11 +115,11 @@ public class FmShopCreateExecutor extends FmExecutorBase {
             // =====
 
             ShopReferenceDataManipulatorBuilder builder = (ShopReferenceDataManipulatorBuilder) Sponge.getDataManager().getManipulatorBuilder(ShopReferenceData.class).get();
-            ShopReferenceData data = builder.createFrom(new ShopReference(playerId, name, instance));
+            ShopReferenceData data = builder.createFrom(new ShopReference(opt_ownerId.orElse(null), instance));
             DataTransactionResult dtr = sign.offer(data);
 
             if(dtr.isSuccessful()) {
-                DatabaseManager.shopDataDB.insert(conn, playerId, name, instance, new SerializedShopData(tradeformData, ShopModifier.NONE, sign.getLocation().getPosition(), sign.getLocation().getExtent().getUniqueId(), isServerOwned));
+                DatabaseManager.insert(conn, playerId, DatabaseCategory.SHOPDATA, instance, new SerializedShopData(tradeformData, ShopModifier.NONE, sign.getLocation().getPosition(), sign.getLocation().getExtent().getUniqueId(), opt_ownerId));
                 msg(player, "Made the " + ((isServerOwned) ? "server-" : "")+ "shop!");
             } else {
                 error(player, "Could not pass data to sign!");
@@ -136,7 +135,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player))
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
 
         UUID playerId = ((Player) src).getUniqueId();
 
@@ -145,7 +144,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.tradeFormDB.selectWithMore(conn, playerId, name, "LIMIT 1");
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, playerId, DatabaseCategory.TRADEFORM, name);
 
             if(!resultSet.next()) {
                 error(src,"Didn't find anything :o");

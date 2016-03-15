@@ -2,7 +2,9 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -42,19 +44,19 @@ public class FmTradeFormListExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
 
         try(Connection conn = DatabaseManager.getConnection()) {
-            ResultSet resultSet = DatabaseManager.tradeFormDB.select(conn, player.getUniqueId());
+            ResultSet resultSet = DatabaseManager.selectAll(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM);
 
             src.sendMessage(FmUtil.makeMessage("All Transactions (for your id);"));
 
             Text.Builder tb = Text.builder();
             while(resultSet.next()) {
-                tb.append(Text.of(TextColors.BLUE, "[", TextColors.WHITE, resultSet.getString("name"), TextColors.BLUE, "]"));
+                tb.append(Text.of(TextColors.BLUE, "[", TextColors.WHITE, resultSet.getString(DatabaseQuery.NAME.v), TextColors.BLUE, "]"));
                 if(!resultSet.isLast()) {
                     tb.append(Text.of(TextColors.GRAY, ", "));
                 }

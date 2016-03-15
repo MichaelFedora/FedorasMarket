@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -42,7 +43,7 @@ public class FmTradeFormDeleteExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if(!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
@@ -51,7 +52,7 @@ public class FmTradeFormDeleteExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            DatabaseManager.tradeFormDB.delete(conn, player.getUniqueId(), name);
+            DatabaseManager.delete(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);

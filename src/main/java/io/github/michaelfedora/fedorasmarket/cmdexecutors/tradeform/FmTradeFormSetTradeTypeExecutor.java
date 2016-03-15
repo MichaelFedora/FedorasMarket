@@ -2,8 +2,10 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.enumtype.TradeType;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
+import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import org.spongepowered.api.command.CommandException;
@@ -47,7 +49,7 @@ public class FmTradeFormSetTradeTypeExecutor extends FmExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
         if (!(src instanceof Player)) {
-            throw sourceNotPlayerException;
+            throw makeSourceNotPlayerException();
         }
 
         Player player = (Player) src;
@@ -58,15 +60,15 @@ public class FmTradeFormSetTradeTypeExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.tradeFormDB.selectWithMore(conn, player.getUniqueId(), name, "LIMIT 1");
+            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
             TradeForm tradeForm;
             if(resultSet.next()) {
-                tradeForm = ((SerializedTradeForm) resultSet.getObject("data")).safeDeserialize().get();
+                tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
 
                 tradeForm.setTradeType(tradeType); // TODO: Why is this not going through very well?
 
-                DatabaseManager.tradeFormDB.update(conn, tradeForm.serialize(), player.getUniqueId(), name);
+                DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
             }
 
         } catch(SQLException e) {
