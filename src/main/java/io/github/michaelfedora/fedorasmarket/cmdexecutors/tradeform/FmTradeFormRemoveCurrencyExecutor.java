@@ -9,6 +9,7 @@ import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.trade.PartyType;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
+import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -51,9 +52,8 @@ public class FmTradeFormRemoveCurrencyExecutor extends FmExecutorBase {
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        if(!(src instanceof Player)) {
+        if(!(src instanceof Player))
             throw makeSourceNotPlayerException();
-        }
 
         Player player = (Player) src;
 
@@ -61,7 +61,8 @@ public class FmTradeFormRemoveCurrencyExecutor extends FmExecutorBase {
 
         PartyType partyType = ctx.<PartyType>getOne("party").orElseThrow(makeParamExceptionSupplier("party"));
 
-        Currency currency = ctx.<Currency>getOne("currency").orElse(FedorasMarket.getEconomyService().getDefaultCurrency());
+        String currencyName = ctx.<String>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
+        Currency currency = FmUtil.getCurrency(currencyName).orElseThrow(makeParamExceptionSupplier("currency"));
 
         try(Connection conn = DatabaseManager.getConnection()) {
 

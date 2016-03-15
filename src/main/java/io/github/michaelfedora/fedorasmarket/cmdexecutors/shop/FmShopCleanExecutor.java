@@ -44,7 +44,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 UUID instance = (UUID) resultSet.getObject(DatabaseQuery.NAME.v);
                 Optional<ShopData> opt_data = Optional.empty();
                 try {
-                    opt_data = Optional.of(((SerializedShopData) resultSet.getObject("data")).deserialize());
+                    opt_data = Optional.of(((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
                 } catch (BadDataException e) {
                     failed = true;
                     //logWarn("Found bad database entry!");
@@ -119,14 +119,13 @@ public class FmShopCleanExecutor extends FmExecutorBase {
         try(Connection conn = DatabaseManager.getConnection()) {
 
             ResultSet resultSet = DatabaseManager.selectAll(conn, playerId, DatabaseCategory.SHOPDATA);
-            List<Tuple<Tuple<String,UUID>,ShopData>> results = new ArrayList<>();
+            List<Tuple<UUID,ShopData>> results = new ArrayList<>();
             while(resultSet.next()) {
 
-                String name = resultSet.getString("name");
-                UUID instance = (UUID) resultSet.getObject("instance");
+                UUID instance = (UUID) resultSet.getObject(DatabaseQuery.NAME.v);
                 Optional<ShopData> opt_data = Optional.empty();
                 try {
-                    opt_data = Optional.of(((SerializedShopData) resultSet.getObject("data")).deserialize());
+                    opt_data = Optional.of(((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
                 } catch (BadDataException e) {
                     failed = true;
                     warn(src, "Found bad database entry!");
@@ -134,7 +133,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
 
                 if(opt_data.isPresent() && !failed) {
 
-                    results.add(new Tuple<>(new Tuple<>(name, instance), opt_data.get()));
+                    results.add(new Tuple<>(instance, opt_data.get()));
 
                 } else {
 
@@ -144,13 +143,12 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 }
             }
 
-            for(Tuple<Tuple<String,UUID>,ShopData> result : results) {
+            for(Tuple<UUID,ShopData> result : results) {
                 //msg(src, "Looking at shop [" + resultSet.getString("name") + "::" + resultSet.getObject("instance") + "]");
-                String name = result.getFirst().getFirst();
-                UUID instance = result.getFirst().getSecond();
+                UUID instance = result.getFirst();
                 ShopData data = result.getSecond();
 
-                String prefix = "[" + name + "::" + instance + "]" + ": ";
+                String prefix = "[" + instance + "]" + ": ";
                 Optional<TileEntity> opt_te = data.location.getTileEntity();
                 Sign sign;
                 if(!opt_te.isPresent()) {

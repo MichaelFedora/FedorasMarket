@@ -65,7 +65,7 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
         // FIX-ME: 2/27/2016 ; actually use optionals pls FIXED?
         Sign sign;
         {
-            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(event.getTargetBlock());
+            Optional<Sign> opt_sign = FmUtil.getShopSignFromBlockSnapshot(event.getTargetBlock());
             if(!opt_sign.isPresent()) {
                 error(player, "No sign present?");
                 return;
