@@ -184,7 +184,7 @@ public class Shop {
 
         Sign sign;
         {
-            Optional<Sign> opt_sign = FmUtil.getSignFromLocation(location);
+            Optional<Sign> opt_sign = FmUtil.getShopSignFromLocation(location);
             if(opt_sign.isPresent())
                 return Optional.empty();
 

@@ -5,6 +5,7 @@ import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeParty;
+import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -59,13 +60,15 @@ public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateBas
         UUID playerId = ((Player) src).getUniqueId();
 
         double currencyAmount = ctx.<Double>getOne("currency_amt").orElseThrow(makeParamExceptionSupplier("currency_amt"));
-        Currency currency = ctx.<Currency>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
+        String currencyName = ctx.<String>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
+        Currency currency = FmUtil.getCurrency(currencyName).orElseThrow(makeParamExceptionSupplier("currency"));
 
         TradeParty owner = new TradeParty();
         owner.addCurrency(currency,  BigDecimal.valueOf(currencyAmount));
 
         double currencyAmount2 = ctx.<Double>getOne("currency_amt2").orElseThrow(makeParamExceptionSupplier("currency_amt2"));
-        Currency currency2 = ctx.<Currency>getOne("currency2").orElseThrow(makeParamExceptionSupplier("currency2"));
+        String currencyName2 = ctx.<String>getOne("currency2").orElseThrow(makeParamExceptionSupplier("currency2"));
+        Currency currency2 = FmUtil.getCurrency(currencyName).orElseThrow(makeParamExceptionSupplier("currency2"));
 
         TradeParty customer = new TradeParty();
         customer.addCurrency(currency2, BigDecimal.valueOf(currencyAmount2));

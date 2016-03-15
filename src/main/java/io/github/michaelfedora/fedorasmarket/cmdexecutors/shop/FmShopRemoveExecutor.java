@@ -47,7 +47,7 @@ public class FmShopRemoveExecutor extends FmExecutorBase {
 
         Sign sign;
         {
-            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(event.getTargetBlock());
+            Optional<Sign> opt_sign = FmUtil.getShopSignFromBlockSnapshot(event.getTargetBlock());
             if(!opt_sign.isPresent())
                 return;
             sign = opt_sign.get();

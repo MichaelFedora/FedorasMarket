@@ -35,21 +35,19 @@ public abstract class FmShopQuickCreateBase extends FmExecutorBase {
         boolean isServerOwned = as_server.contains(playerId);
         as_server.remove(playerId);
 
-
-        BlockSnapshot blockSnapshot = event.getTargetBlock();
-        if(blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN) {
-            error(player, "Bad block :c . I need a wall-sign!");
-            return;
-        }
-
+        BlockSnapshot blockSnapshot;
         Sign sign;
-        {
-            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(blockSnapshot);
-            if(!opt_sign.isPresent()) {
-                error(player, "Bad block :c . I need a sign! (but should've already been checked?)");
-                return;
-            }
-            sign = opt_sign.get();
+        try {
+
+            blockSnapshot = event.getTargetBlock();
+            if (blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN)
+                throw new Exception("Bad block :c . I need a wall-sign!");
+
+            sign = FmUtil.getShopSignFromBlockSnapshot(blockSnapshot).orElseThrow(() -> new Exception("Bad block :c . I need a sign! (but should've already been checked?)"));
+
+        } catch (Exception e) {
+            error(player, e.getMessage());
+            return;
         }
 
         ShopData shopData = new ShopData(tradeForm, ShopModifier.NONE, sign.getLocation(), (isServerOwned) ? Optional.empty() : Optional.of(playerId));

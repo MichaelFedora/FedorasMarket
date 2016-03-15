@@ -35,7 +35,7 @@ public class PlayerInteractListener {
 
         Sign sign;
         {
-            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(sign_bsnap);
+            Optional<Sign> opt_sign = FmUtil.getShopSignFromBlockSnapshot(sign_bsnap);
             if(!opt_sign.isPresent())
                 return;
             sign = opt_sign.get();
@@ -77,7 +77,7 @@ public class PlayerInteractListener {
 
         Sign sign;
         {
-            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(sign_bsnap);
+            Optional<Sign> opt_sign = FmUtil.getShopSignFromBlockSnapshot(sign_bsnap);
             if(!opt_sign.isPresent())
                 return;
             sign = opt_sign.get();

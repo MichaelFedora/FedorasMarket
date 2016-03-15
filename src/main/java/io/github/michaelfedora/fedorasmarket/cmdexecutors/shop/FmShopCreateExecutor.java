@@ -65,7 +65,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         Sign sign;
         {
-            Optional<Sign> opt_sign = FmUtil.getSignFromBlockSnapshot(blockSnapshot);
+            Optional<Sign> opt_sign = FmUtil.getShopSignFromBlockSnapshot(blockSnapshot);
             if(!opt_sign.isPresent()) {
                 error(player, "Bad block :c . I need a sign! (but should've already been checked?)");
                 return;
@@ -146,10 +146,8 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
             ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, playerId, DatabaseCategory.TRADEFORM, name);
 
-            if(!resultSet.next()) {
-                error(src,"Didn't find anything :o");
-                return CommandResult.empty();
-            }
+            if(!resultSet.next())
+                throw makeException("Bad tradeform name!", src);
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);

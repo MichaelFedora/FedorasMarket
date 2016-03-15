@@ -5,6 +5,7 @@ import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeParty;
+import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -66,7 +67,8 @@ public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateBase {
         owner.addItem(itemType, itemAmount);
 
         double currencyAmount = ctx.<Double>getOne("currency_amt").orElseThrow(makeParamExceptionSupplier("currency_amt"));
-        Currency currency = ctx.<Currency>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
+        String currencyName = ctx.<String>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
+        Currency currency = FmUtil.getCurrency(currencyName).orElseThrow(makeParamExceptionSupplier("currency"));
 
         TradeParty customer = new TradeParty();
         customer.addCurrency(currency, BigDecimal.valueOf(currencyAmount));
