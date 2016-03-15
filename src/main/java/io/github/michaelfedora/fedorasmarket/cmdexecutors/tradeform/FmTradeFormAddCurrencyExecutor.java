@@ -5,6 +5,7 @@ import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
+import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.trade.PartyType;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
@@ -71,7 +72,7 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
             ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
             if(resultSet.next()) {
-                TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject("data")).safeDeserialize().get();
+                TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
 
                 BigDecimal old_val;
                 switch (partyType) {
