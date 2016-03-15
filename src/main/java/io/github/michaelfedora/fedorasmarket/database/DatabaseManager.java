@@ -42,7 +42,7 @@ public final class DatabaseManager {
         PARAMS = p;
     }
 
-    public static void initialize() throws SQLException {
+    public static void initialize() {
 
         StringBuilder constructor = new StringBuilder("(");
         int count = 0;
@@ -61,7 +61,7 @@ public final class DatabaseManager {
             ResultSetMetaData metaData = resultSet.getMetaData();
 
             FedorasMarket.getLogger().info("Table [" + DB_TABLE + "]: ");
-            FedorasMarket.getLogger().info(resultSet.toString()); // FIXME: resultset thing
+            FedorasMarket.getLogger().info(resultSet.toString());
 
             StringBuilder sb = new StringBuilder();
 
@@ -85,6 +85,8 @@ public final class DatabaseManager {
                 FedorasMarket.getLogger().info(sb.toString());
             }
 
+        } catch(SQLException e) {
+            FedorasMarket.getLogger().error("SQL Error", e);
         }
     }
 
@@ -100,7 +102,7 @@ public final class DatabaseManager {
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet selectWithMore(Connection conn, String amt, UUID author, DatabaseCategory category, String name, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, Object amt, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
 
         String statement = "SELECT " + amt + " FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=? " + more;
 
@@ -108,12 +110,15 @@ public final class DatabaseManager {
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        preparedStatement.setString(++i, name);
+        if(name instanceof String)
+            preparedStatement.setString(++i, (String) name);
+        else
+            preparedStatement.setObject(++i, name);
 
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, String amt, UUID author, DatabaseCategory category, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, Object amt, UUID author, DatabaseCategory category, String more) throws SQLException {
 
         String statement = "SELECT " + amt + " FROM " + DB_TABLE + " WHERE author=? AND category=? " + more;
 
@@ -125,7 +130,7 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, String amt, UUID author, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, Object amt, UUID author, String more) throws SQLException {
 
         String statement = "SELECT " + amt + " FROM " + DB_TABLE + " WHERE author=? " + more;
 
@@ -136,7 +141,7 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, String amt, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, Object amt, String more) throws SQLException {
 
         String statement = "SELECT " + amt + " FROM " + DB_TABLE + " " + more;
 
@@ -154,20 +159,20 @@ public final class DatabaseManager {
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet select(Connection conn, String amt, UUID author, DatabaseCategory category, String name) throws SQLException {
+    public static ResultSet select(Connection conn, Object amt, UUID author, DatabaseCategory category, Object name) throws SQLException {
         return selectWithMore(conn, amt, author, category, name, "");
     }
 
-    public static ResultSet select(Connection conn, String amt, UUID author, DatabaseCategory category) throws SQLException {
+    public static ResultSet select(Connection conn, Object amt, UUID author, DatabaseCategory category) throws SQLException {
         return selectWithMore(conn, amt, author, category, "");
     }
 
 
-    public static ResultSet select(Connection conn, String amt, UUID author) throws SQLException {
+    public static ResultSet select(Connection conn, Object amt, UUID author) throws SQLException {
         return selectWithMore(conn, amt, author, "");
     }
 
-    public static ResultSet select(Connection conn, String amt) throws SQLException {
+    public static ResultSet select(Connection conn, Object amt) throws SQLException {
         return selectWithMore(conn, amt, "");
     }
 
@@ -182,7 +187,7 @@ public final class DatabaseManager {
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, String name, String more) throws SQLException {
+    public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
         return selectWithMore(conn, "*", author, category, name, more);
     }
 
@@ -207,7 +212,7 @@ public final class DatabaseManager {
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category, String name) throws SQLException {
+    public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category, Object name) throws SQLException {
         return select(conn, "*", author, category, name);
     }
 
@@ -223,7 +228,7 @@ public final class DatabaseManager {
         return select(conn, "*");
     }
 
-    public static boolean update(Connection conn, Object data, UUID author, DatabaseCategory category, String name) throws SQLException {
+    public static boolean update(Connection conn, Object data, UUID author, DatabaseCategory category, Object name) throws SQLException {
 
         String statement = "UPDATE " + DB_TABLE + " SET data=? WHERE author=? AND category=? AND name=?";
 
@@ -232,11 +237,15 @@ public final class DatabaseManager {
         preparedStatement.setObject(++i, data);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        preparedStatement.setString(++i, name);
+        if(name instanceof String)
+            preparedStatement.setString(++i, (String) name);
+        else
+            preparedStatement.setObject(++i, name);
+
         return preparedStatement.execute();
     }
 
-    public static boolean delete(Connection conn, UUID author, DatabaseCategory category, String name) throws SQLException {
+    public static boolean delete(Connection conn, UUID author, DatabaseCategory category, Object name) throws SQLException {
 
         int i = 0;
         String statement = "DELETE FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=?";
@@ -244,11 +253,15 @@ public final class DatabaseManager {
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        preparedStatement.setString(++i, name);
+        if(name instanceof String)
+            preparedStatement.setString(++i, (String) name);
+        else
+            preparedStatement.setObject(++i, name);
+
         return preparedStatement.execute();
     }
 
-    public static boolean insert(Connection conn, UUID author, String name, DatabaseCategory category, Object data) throws SQLException {
+    public static boolean insert(Connection conn, UUID author, Object name, DatabaseCategory category, Object data) throws SQLException {
 
         int i = 0;
         String statement = "INSERT INTO " + DB_TABLE + "(author, category, name, data) values (?, ?, ?, ?)";
@@ -256,8 +269,14 @@ public final class DatabaseManager {
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        preparedStatement.setString(++i, name);
+
+        if(name instanceof String)
+            preparedStatement.setString(++i, (String) name);
+        else
+            preparedStatement.setObject(++i, name);
+
         preparedStatement.setObject(++i, data);
+
         return preparedStatement.execute();
     }
 

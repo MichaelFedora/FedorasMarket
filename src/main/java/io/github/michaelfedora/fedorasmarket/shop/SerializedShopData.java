@@ -5,6 +5,7 @@ import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,22 +18,22 @@ public class SerializedShopData implements FmSerializedData<ShopData> {
     public ShopModifier modifier;
     public Vector3d position;
     public UUID worldId;
-    public boolean isServerShop;
+    @Nullable public UUID playerId;
 
-    public SerializedShopData(SerializedTradeForm tradeFormData, ShopModifier modifier, Vector3d position, UUID worldId, boolean isServerShop) {
+    public SerializedShopData(SerializedTradeForm tradeFormData, ShopModifier modifier, Vector3d position, UUID worldId, UUID playerId) {
         this.tradeFormData = tradeFormData;
         this.modifier = modifier;
         this.position = position;
         this.worldId = worldId;
-        this.isServerShop = isServerShop;
+        this.playerId = playerId;
     }
 
-    public SerializedShopData(SerializedTradeForm tradeFormData, ShopModifier modifier, Vector3d position, UUID worldId) {
+    public SerializedShopData(SerializedTradeForm tradeFormData, ShopModifier modifier, Vector3d position, UUID worldId, Optional<UUID> playerId) {
         this.tradeFormData = tradeFormData;
         this.modifier = modifier;
         this.position = position;
         this.worldId = worldId;
-        this.isServerShop = false;
+        this.playerId = playerId.orElse(null);
     }
 
     @Override

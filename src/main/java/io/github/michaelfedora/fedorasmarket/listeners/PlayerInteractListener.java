@@ -74,9 +74,11 @@ public class PlayerInteractListener {
         if(player == null)
             return;
 
-        if(toRun.containsKey(player.getUniqueId())) {
-            toRun.get(player.getUniqueId()).accept(event, player);
-            toRun.remove(player.getUniqueId());
+        UUID playerId = player.getUniqueId();
+
+        if(toRun.containsKey(playerId)) {
+            toRun.get(playerId).accept(event, player);
+            toRun.remove(playerId);
             return;
         }
 

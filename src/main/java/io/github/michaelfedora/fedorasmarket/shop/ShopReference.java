@@ -7,6 +7,7 @@ import org.spongepowered.api.data.MemoryDataContainer;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -15,24 +16,23 @@ import java.util.UUID;
 public class ShopReference implements DataSerializable {
 
     public UUID author;
-    public String name;
     public UUID instance;
 
     public ShopReference() {
         author = null;
-        name = null;
         instance = null;
     }
 
-    public ShopReference(UUID author, String name, UUID instance) {
+    public ShopReference(UUID author, UUID instance) {
         this.author = author;
-        this.name = name;
         this.instance = instance;
     }
 
-    public ShopReference(String author, String name, String instance) {
-        this.author = UUID.fromString(author);
-        this.name = name;
+    public ShopReference(String author, String instance) {
+        if(author != null)
+            this.author = UUID.fromString(author);
+        else
+            this.author = null;
         this.instance = UUID.fromString(instance);
     }
 
@@ -45,7 +45,6 @@ public class ShopReference implements DataSerializable {
     public DataContainer toContainer() {
         return new MemoryDataContainer()
                 .set(ShopReferenceDataQueries.AUTHOR, this.author.toString())
-                .set(ShopReferenceDataQueries.NAME, this.name)
                 .set(ShopReferenceDataQueries.INSTANCE, this.instance.toString());
     }
 }

@@ -3,6 +3,7 @@ package io.github.michaelfedora.fedorasmarket.util;
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.tileentity.Comparator;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.command.CommandException;
@@ -16,7 +17,9 @@ import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * Created by Michael on 2/23/2016.
@@ -25,10 +28,6 @@ public class FmUtil {
 
     public static Currency getDefaultCurrency() {
         return FedorasMarket.getEconomyService().getDefaultCurrency();
-    }
-
-    public static Text makeMessageError(String s) {
-        return Text.of(TextStyles.BOLD, TextColors.DARK_RED, "[" + PluginInfo.NAME + "][ERROR]: ", TextColors.RED, TextStyles.RESET, s);
     }
 
     public static Text makeErrorPrefix(String cause) {
@@ -45,12 +44,12 @@ public class FmUtil {
                 TextColors.BLUE, "[" + cause + "]", TextColors.GRAY, ": ");
     }
 
-    public static Text makeInfoPrefix() {
-        return Text.of(TextStyles.BOLD, TextColors.DARK_GRAY, "[" + PluginInfo.NAME + "]", TextStyles.RESET, "[INFO]: ");
+    public static Text makeInfoPrefix(String cause) {
+        return Text.of(TextStyles.BOLD, TextColors.GRAY, "[" + PluginInfo.NAME + "]", TextStyles.RESET, TextColors.DARK_GRAY, "[" + cause + "]", TextColors.GRAY, ": ");
     }
 
-    public static Text makeWarnPrefix() {
-        return Text.of(TextStyles.BOLD, TextColors.GOLD, "[" + PluginInfo.NAME + "]", TextStyles.RESET, "[WARN]: ");
+    public static Text makeWarnPrefix(String cause) {
+        return Text.of(TextStyles.BOLD, TextColors.YELLOW, "[" + PluginInfo.NAME + "]", TextStyles.RESET, TextColors.GOLD, "[" + cause + "]", TextColors.GRAY, ": ");
     }
 
     public static Text makeMessageError(String cause, String message) {
@@ -65,12 +64,12 @@ public class FmUtil {
         return Text.of(makeCausePrefix(cause), TextColors.WHITE, message);
     }
 
-    public static Text makeMessageInfo(String s) {
-        return Text.of(makeInfoPrefix(), TextColors.GRAY, s);
+    public static Text makeMessageInfo(String cause, String message) {
+        return Text.of(makeInfoPrefix(cause), TextColors.GRAY, message);
     }
 
-    public static Text makeMessageWarn(String s) {
-        return Text.of(makeWarnPrefix(), TextColors.YELLOW, TextStyles.RESET, s);
+    public static Text makeMessageWarn(String cause, String s) {
+        return Text.of(makeWarnPrefix(cause), TextColors.YELLOW, TextStyles.RESET, s);
     }
 
     public static Optional<Sign> getSignFromLocation(Location<World> loc) {
@@ -90,5 +89,15 @@ public class FmUtil {
             return getSignFromLocation(opt_loc.get());
 
         return Optional.empty();
+    }
+
+    public static Map<String, Currency> getCurrenciesByName() {
+
+        Map<String, Currency> currencies = new TreeMap<>();
+        for(Currency c : FedorasMarket.getEconomyService().getCurrencies()) {
+            currencies.put(c.getName(), c);
+        }
+
+        return currencies;
     }
 }

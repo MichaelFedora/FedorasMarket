@@ -58,9 +58,9 @@ import java.util.*;
 @Plugin(id = PluginInfo.ID, name = PluginInfo.NAME, version = PluginInfo.VERSION,description = PluginInfo.DESCRIPTION, authors = PluginInfo.AUTHORS)
 public class FedorasMarket {
 
-    private static FedorasMarket instance; // TODO: Set to an optional ;3
+    private static FedorasMarket instance;
 
-    public static final String ACCOUNT_VIRTUAL_OWNER_PREFIX = "fedorasmarket:v_o_acc_"; //TODO: Read up to see if these are too big
+    public static final String ACCOUNT_VIRTUAL_OWNER_PREFIX = "fedorasmarket:v_o_acc_";
     public static final String ACCOUNT_VIRTUAL_CUSTOMER_PREFIX = "fedorasmarket:v_c_acc_";
 
     public static Set<Class> toRegister = new HashSet<>();
@@ -141,141 +141,36 @@ public class FedorasMarket {
         subCommands = new HashMap<>();
         grandChildCommands = new HashMap<>();
 
-        subCommands.put(Arrays.asList("help", "?"), FmHelpExecutor.create());
+        subCommands.put(FmHelpExecutor.aliases, FmHelpExecutor.create());
+        subCommands.put(FmTipsExecutor.aliases, FmTipsExecutor.create());
+        subCommands.put(FmSetAliasExecutor.aliases, FmSetAliasExecutor.create());
 
-        HashMap<List<String>, CommandSpec> tradeformSubCommands = new HashMap<>();
+        HashMap<List<String>, CommandSpec> tradeFormSubCommands = new HashMap<>();
 
-        tradeformSubCommands.put(Arrays.asList("help", "?"), FmTradeFormHelpExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormHelpExecutor.aliases, FmTradeFormHelpExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormCreateExecutor.aliases, FmTradeFormCreateExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormDeleteExecutor.aliases, FmTradeFormDeleteExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormDeleteManyExecutor.aliases, FmTradeFormDeleteManyExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormListExecutor.aliases, FmTradeFormListExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormDetailsExecutor.aliases, FmTradeFormDetailsExecutor.create());
 
-        tradeformSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
-                .description(Text.of("Create a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.create")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.optional(GenericArguments.enumValue(Text.of("type"), TradeType.class)))
-                .executor(new FmTradeFormCreateExecutor())
-                .build());
+        tradeFormSubCommands.put(FmTradeFormSetTradeTypeExecutor.aliases, FmTradeFormSetTradeTypeExecutor.create());
 
-        tradeformSubCommands.put(Arrays.asList("delete", "del"), CommandSpec.builder()
-                .description(Text.of("Delete a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.delete")
-                .arguments(GenericArguments.string(Text.of("name")))
-                .executor(new FmTradeFormDeleteExecutor())
-                .build());
+        tradeFormSubCommands.put(FmTradeFormAddItemExecutor.aliases, FmTradeFormAddItemExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormSetItemExecutor.aliases, FmTradeFormSetItemExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormRemoveItemExecutor.aliases, FmTradeFormRemoveItemExecutor.create());
 
-        tradeformSubCommands.put(Arrays.asList("deletemany", "delm"), CommandSpec.builder()
-                .description(Text.of("Delete many trade forms"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.deletemany")
-                .arguments(GenericArguments.allOf(GenericArguments.string(Text.of("names"))))
-                .executor(new FmTradeFormDeleteManyExecutor())
-                .build());
+        tradeFormSubCommands.put(FmTradeFormAddCurrencyExecutor.aliases, FmTradeFormAddCurrencyExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormSetCurrencyExecutor.aliases, FmTradeFormSetCurrencyExecutor.create());
+        tradeFormSubCommands.put(FmTradeFormRemoveCurrencyExecutor.aliases, FmTradeFormRemoveCurrencyExecutor.create());
 
-        tradeformSubCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
-                .description(Text.of("Lists all trade forms"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.list")
-                .executor(new FmTradeFormListExecutor())
-                .build());
+        subCommands.put(FmTradeFormExecutor.aliases, FmTradeFormExecutor.create(tradeFormSubCommands));
 
-        tradeformSubCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
-                .description(Text.of("Lists the details about a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.details")
-                .arguments(GenericArguments.string(Text.of("name")))
-                .executor(new FmTradeFormDetailsExecutor())
-                .build());
-
-        tradeformSubCommands.put(Arrays.asList("settradetype", "settype"), CommandSpec.builder()
-                .description(Text.of("Set the TradeType of the trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.settradetype")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("type"), TradeType.class))
-                .executor(new FmTradeFormSetTradeTypeExecutor())
-                .build());
-
-        tradeformSubCommands.put(Arrays.asList("additem", "addi"), CommandSpec.builder()
-                .description(Text.of("Add an item amount to a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.additem")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
-                        GenericArguments.integer(Text.of("amount")))
-                .executor(new FmTradeFormAddItemExecutor())
-                .build());
-
-        tradeformSubCommands.put(Arrays.asList("setitem", "seti"), CommandSpec.builder()
-                .description(Text.of("Set an item entry in a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.setitem")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.integer(Text.of("amount")),
-                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class))
-
-                .executor(new FmTradeFormSetItemExecutor())
-                .build());
-
-        tradeformSubCommands.put(Arrays.asList("removeitem", "remi"), CommandSpec.builder()
-                .description(Text.of("Remove an item entry from a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.removeitem")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class))
-                .executor(new FmTradeFormRemoveItemExecutor())
-                .build());
-
-        // Get Currencies By Name
-        Map<String, Currency> currencies = new TreeMap<>();
-        for(Currency c : this.economyService.getCurrencies()) {
-            currencies.put(c.getDisplayName().toPlain(), c);
-        }
-
-        tradeformSubCommands.put(Arrays.asList("addcurrency", "addc"), CommandSpec.builder()
-                .description(Text.of("Add a currency amount to a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.addcurrency")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.doubleNum(Text.of("amount")),
-                        GenericArguments.optional(GenericArguments.choices(Text.of("currency"), currencies, true)))
-                .executor(new FmTradeFormAddCurrencyExecutor())
-                .build());
-
-        tradeformSubCommands.put(Arrays.asList("setcurrency", "setc"), CommandSpec.builder()
-                .description(Text.of("Sets a currency entry in a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.setcurrency")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.doubleNum(Text.of("amount")),
-                        GenericArguments.optional(GenericArguments.choices(Text.of("currency"), currencies, true)))
-                .executor(new FmTradeFormSetCurrencyExecutor())
-                .build());
-
-        tradeformSubCommands.put(Arrays.asList("removecurrency", "remc"), CommandSpec.builder()
-                .description(Text.of("Remove a currency from a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.removecurrency")
-                .arguments(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.optional(GenericArguments.choices(Text.of("currency"), currencies, true)))
-                .executor(new FmTradeFormRemoveCurrencyExecutor())
-                .build());
-
-
-        subCommands.put(Arrays.asList("tradeform", "tform", "tf"), CommandSpec.builder()
-                .description(Text.of("Do tradeform things (lists sub commands)"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform")
-                .executor(new FmTradeFormExecutor())
-                .children(tradeformSubCommands)
-                .build());
-
-        grandChildCommands.put("tradeform", tradeformSubCommands);
+        grandChildCommands.put("tradeform", tradeFormSubCommands);
 
         HashMap<List<String>,CommandSpec> shopSubCommands = new HashMap<>();
 
-        shopSubCommands.put(Arrays.asList("help", "?"), FmShopHelpExecutor.create());
+        shopSubCommands.put(FmShopHelpExecutor.aliases, FmShopHelpExecutor.create());
 
         shopSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
                 .description(Text.of("Create a new shop"))
@@ -310,7 +205,7 @@ public class FedorasMarket {
                 .executor(new FmShopRemoveExecutor())
                 .build());
 
-        shopSubCommands.put(Arrays.asList("clean"), CommandSpec.builder()
+        shopSubCommands.put(Collections.singletonList("tips"), CommandSpec.builder()
                 .description(Text.of("Cleans up shop \"references\" in the database"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.clean")
                 .executor(new FmShopCleanExecutor())
@@ -375,7 +270,8 @@ public class FedorasMarket {
         getLogger().info("== " + PluginInfo.NAME + " - GameLoadComplete ==");
 
         DatabaseManager.initialize();
-        // TODO: Clean the shops
+
+        FmShopCleanExecutor.cleanAll();
 
         getLogger().info("== == FIN == ==");
     }

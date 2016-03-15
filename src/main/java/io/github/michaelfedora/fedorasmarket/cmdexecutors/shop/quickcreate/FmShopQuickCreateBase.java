@@ -1,21 +1,28 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate;
 
+import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.shop.SerializedShopData;
-import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
-import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
+import io.github.michaelfedora.fedorasmarket.enumtype.GoodType;
+import io.github.michaelfedora.fedorasmarket.shop.*;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
+import org.spongepowered.api.block.tileentity.TileEntity;
+import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
 import org.spongepowered.api.data.DataTransactionResult;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
+import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.Tuple;
 
 import java.sql.Connection;
@@ -59,46 +66,11 @@ public abstract class FmShopQuickCreateBase extends FmExecutorBase {
             sign = opt_sign.get();
         }
 
-        UUID instance;
-
+        ShopData shopData = new ShopData(tradeForm, ShopModifier.NONE, sign.getLocation(), (isServerOwned) ? Optional.empty() : Optional.of(playerId));
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.shopDataDB.select(conn, playerId, name);
-
-            boolean foundUnique;
-            UUID otherId;
-            while(true) { // find a unique uuid;
-
-                instance = UUID.randomUUID();
-
-                foundUnique = true;
-                while (resultSet.next()) {
-
-                    otherId = (UUID) resultSet.getObject("instance");
-
-                    if (instance.equals(otherId)) {
-                        foundUnique = false;
-                        break;
-                    }
-                }
-
-                if (foundUnique)
-                    break;
-            }
-
-            // =====
-
-            ShopReferenceDataManipulatorBuilder builder = (ShopReferenceDataManipulatorBuilder) Sponge.getDataManager().getManipulatorBuilder(ShopReferenceData.class).get();
-            ShopReferenceData data = builder.createFrom(new ShopReference(playerId, name, instance));
-            DataTransactionResult dtr = sign.offer(data);
-
-            if(dtr.isSuccessful()) {
-                DatabaseManager.shopDataDB.insert(conn, playerId, name, instance, new SerializedShopData(tradeForm.serialize(), ShopModifier.NONE, sign.getLocation().getPosition(), sign.getLocation().getExtent().getUniqueId(), isServerOwned));
-                msg(player, "Made the " + ((isServerOwned) ? "server-" : "")+ "shop!");
-            } else {
-                error(player, "Could not pass data to sign!");
-                return;
-            }
+            Shop shop = new Shop(sign, shopData);
+            shop.initialize(conn);
 
         } catch(SQLException e) {
             throwSafeException("SQL Error", e, player);

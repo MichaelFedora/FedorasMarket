@@ -9,6 +9,5 @@ import org.spongepowered.api.data.DataQuery;
  */
 public class ShopReferenceDataQueries {
     public static final DataQuery AUTHOR = of("author");
-    public static final DataQuery NAME = of("name");
     public static final DataQuery INSTANCE = of("instance");
 }

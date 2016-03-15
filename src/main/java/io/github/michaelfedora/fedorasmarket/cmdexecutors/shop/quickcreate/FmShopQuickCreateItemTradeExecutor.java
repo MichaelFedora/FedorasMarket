@@ -34,7 +34,6 @@ public class FmShopQuickCreateItemTradeExecutor extends FmShopQuickCreateBase {
                 .description(Text.of("Create an ItemTrade shop"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.quickcreate.itemtrade")
                 .arguments(
-                        GenericArguments.string(Text.of("name")),
                         GenericArguments.integer(Text.of("item_amt")),
                         GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
                         GenericArguments.integer(Text.of("item_amt2")),
@@ -79,7 +78,7 @@ public class FmShopQuickCreateItemTradeExecutor extends FmShopQuickCreateBase {
         if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
             as_server.add(playerId);
 
-        to_apply.put(playerId, new Tuple<>(name, tf));
+        to_apply.put(playerId, new Tuple<>("ItemTrade", tf));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");

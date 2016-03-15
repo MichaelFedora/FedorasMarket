@@ -35,7 +35,6 @@ public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateBase {
                 .description(Text.of("Create an ItemBuy shop"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.quickcreate.itembuy")
                 .arguments(
-                        GenericArguments.string(Text.of("name")),
                         GenericArguments.integer(Text.of("item_amt")),
                         GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
                         GenericArguments.doubleNum(Text.of("currency_amt")),
@@ -61,8 +60,6 @@ public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateBase {
 
         UUID playerId = ((Player) src).getUniqueId();
 
-        String name = ctx.<String>getOne("name").orElseThrow(makeParamExceptionSupplier("name"));
-
         int itemAmount = ctx.<Integer>getOne("item_amt").orElseThrow(makeParamExceptionSupplier("item_amt"));
         ItemType itemType = ctx.<ItemType>getOne("item").orElseThrow(makeParamExceptionSupplier("item"));
 
@@ -80,7 +77,7 @@ public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateBase {
         if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
             as_server.add(playerId);
 
-        to_apply.put(playerId, new Tuple<>(name, tf));
+        to_apply.put(playerId, new Tuple<>("ItemBuy", tf));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");

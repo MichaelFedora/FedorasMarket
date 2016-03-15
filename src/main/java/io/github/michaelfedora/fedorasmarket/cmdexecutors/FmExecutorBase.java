@@ -8,6 +8,7 @@ import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -18,8 +19,11 @@ public abstract class FmExecutorBase implements CommandExecutor {
     protected abstract String getName();
 
     public void error(MessageReceiver src, String msg) {
-
         src.sendMessage(FmUtil.makeMessageError(getName(), msg));
+    }
+
+    public void warn(MessageReceiver src, String msg) {
+        src.sendMessage(FmUtil.makeMessageWarn(getName(), msg));
     }
 
     public void exception(MessageReceiver src, String msg, Exception e) {
@@ -36,6 +40,10 @@ public abstract class FmExecutorBase implements CommandExecutor {
     public void msgf(MessageReceiver src, Text text) {
         src.sendMessage(Text.of(FmUtil.makePrefix(), text));
     }
+
+    public static void log(String msg, Object... objs) { FedorasMarket.getLogger().info(msg, objs); }
+    public static void logError(String msg, Object... objs) { FedorasMarket.getLogger().error(msg, objs); }
+    public static void logWarn(String msg, Object... objs) { FedorasMarket.getLogger().warn(msg, objs);}
 
     public void throwSafeException(String msg, Throwable cause, CommandSource src) {
         FedorasMarket.getLogger().error(msg + " by " + src + " with [" + getName() + "]", cause);

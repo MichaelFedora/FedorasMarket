@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.enumtype.DatabaseCategory;
@@ -11,6 +12,8 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.text.Text;
@@ -19,11 +22,29 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Michael on 2/25/2016.
  */
 public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
+
+    public static final List<String> aliases = Arrays.asList("addcurrency", "addc");
+
+    public static CommandSpec create() {
+        return CommandSpec.builder()
+                .description(Text.of("Add a currency amount to a trade form"))
+                .permission(PluginInfo.DATA_ROOT + ".tradeform.addcurrency")
+                .arguments(
+                        GenericArguments.string(Text.of("name")),
+                        GenericArguments.choices(Text.of("party"), PartyType.choices, true),
+                        GenericArguments.doubleNum(Text.of("amount")),
+                        GenericArguments.string(Text.of("currency")))
+                .executor(new FmTradeFormAddCurrencyExecutor())
+                .build();
+    }
 
     @Override
     protected String getName() {

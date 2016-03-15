@@ -1,7 +1,6 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -12,51 +11,51 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
+import javax.xml.crypto.Data;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Created by Michael on 2/26/2016.
+ * Created by Michael on 3/14/2016.
  */
-public class FmTradeFormDeleteManyExecutor extends FmExecutorBase {
+public class FmSetAliasExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("deletemany", "delm");
+    public static final List<String> aliases = Arrays.asList("setalias", "setname", "seta");
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Delete many trade forms"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.deletemany")
-                .arguments(GenericArguments.allOf(GenericArguments.string(Text.of("names"))))
-                .executor(new FmTradeFormDeleteManyExecutor())
+                .arguments(GenericArguments.string(Text.of("alias")))
+                .description(Text.of("Set your alias that is displayed on your shops"))
+                .extendedDescription(Text.of("Set your alias that is displayed on your shops. I.e. [FM Shop: Steve]"))
+                .permission(PluginInfo.DATA_ROOT + ".setalias")
+                .executor(new FmSetAliasExecutor())
                 .build();
     }
 
     @Override
     protected String getName() {
-        return "tradeform deletemany";
+        return "setalias";
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        if(!(src instanceof Player)) {
+        if(!(src instanceof Player))
             throw sourceNotPlayerException;
-        }
 
-        Player player = (Player) src;
+        UUID playerId = ((Player) src).getUniqueId();
 
-        Collection<String> names = ctx.getAll("names");
+        String alias = ctx.<String>getOne("alias").orElseThrow(makeParamExceptionSupplier("alias"));
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            for(String name : names) {
-                DatabaseManager.tradeFormDB.delete(conn, player.getUniqueId(), name);
-            }
+            DatabaseManager.userDataDB.insert(conn, playerId, "alias", alias);
 
-        } catch(SQLException e) {
+        } catch (SQLException e) {
+
             throw makeException("SQL Error", e, src);
         }
 

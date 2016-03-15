@@ -12,10 +12,14 @@ import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.text.Text;
 
+import java.util.List;
+
 /**
  * Created by Michael on 2/29/2016.
  */
 public class FmShopHelpExecutor extends FmExecutorBase {
+
+    public static final List<String> aliases = FmHelpExecutor.aliases;
 
     public static CommandSpec create() {
         return CommandSpec.builder()

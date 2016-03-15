@@ -34,7 +34,6 @@ public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateBas
                 .description(Text.of("Create an CurrencyTrade shop"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.quickcreate.currencytrade")
                 .arguments(
-                        GenericArguments.string(Text.of("name")),
                         GenericArguments.doubleNum(Text.of("currency_amt")),
                         GenericArguments.string(Text.of("currency")),
                         GenericArguments.doubleNum(Text.of("currency_amt2")),
@@ -43,7 +42,7 @@ public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateBas
                                 .flag("s", "-server")
                                 .buildWith(GenericArguments.none())
                 )
-                .executor(new FmShopQuickCreateItemBuyExecutor())
+                .executor(new FmShopQuickCreateCurrencyTradeExecutor())
                 .build();
     }
 
@@ -59,8 +58,6 @@ public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateBas
             throw sourceNotPlayerException;
 
         UUID playerId = ((Player) src).getUniqueId();
-
-        String name = ctx.<String>getOne("name").orElseThrow(makeParamExceptionSupplier("name"));
 
         double currencyAmount = ctx.<Double>getOne("currency_amt").orElseThrow(makeParamExceptionSupplier("currency_amt"));
         Currency currency = ctx.<Currency>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
@@ -79,7 +76,7 @@ public class FmShopQuickCreateCurrencyTradeExecutor extends FmShopQuickCreateBas
         if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
             as_server.add(playerId);
 
-        to_apply.put(playerId, new Tuple<>(name, tf));
+        to_apply.put(playerId, new Tuple<>("CurrencyTrade", tf));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");
