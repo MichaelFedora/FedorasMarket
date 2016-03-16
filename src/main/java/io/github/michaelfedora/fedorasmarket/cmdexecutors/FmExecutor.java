@@ -1,6 +1,8 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -11,6 +13,7 @@ import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +21,17 @@ import java.util.Map;
  * Get Version info
  */
 public class FmExecutor extends FmExecutorBase {
+
+    public static List<String> aliases = Arrays.asList("fedorasmarket", "fm");
+
+    public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
+        return CommandSpec.builder()
+                .description(Text.of(PluginInfo.NAME + " base command (displays plugin info)"))
+                .permission(PluginInfo.DATA_ROOT + ".use")
+                .children(children)
+                .executor(new FmExecutor())
+                .build();
+    }
 
     public static void listSubCommandsFunc(CommandSource src, Map<List<String>, CommandSpec> subCommands, String parentCmd) {
         Text.Builder tb = Text.builder();

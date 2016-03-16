@@ -19,13 +19,14 @@ import java.util.List;
  */
 public class FmDepotHelpExecutor extends FmExecutorBase {
 
-    public static List<String> aliases = FmHelpExecutor.aliases;
+    public static final List<String> aliases = FmHelpExecutor.aliases;
+    public static final String base = FmDepotExecutor.aliases.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of(FmHelpExecutor.desc))
                 .extendedDescription(Text.of(FmHelpExecutor.exDesc))
-                .permission(PluginInfo.DATA_ROOT + ".depot.help")
+                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
                 .executor(new FmDepotHelpExecutor())
                 .build();
@@ -33,7 +34,7 @@ public class FmDepotHelpExecutor extends FmExecutorBase {
 
     @Override
     protected String getName() {
-        return "depot help";
+        return base + ' ' + aliases.get(0);
     }
 
     @Override

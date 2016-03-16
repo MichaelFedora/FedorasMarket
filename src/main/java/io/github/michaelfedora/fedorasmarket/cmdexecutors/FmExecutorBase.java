@@ -18,7 +18,7 @@ import java.util.function.Supplier;
  */
 public abstract class FmExecutorBase implements CommandExecutor {
 
-    public static CommandElement makeServerFlag() {
+    public static CommandElement makeServerFlagArg() {
         return GenericArguments.flags().flag("s", "-server").buildWith(GenericArguments.none());
     }
 

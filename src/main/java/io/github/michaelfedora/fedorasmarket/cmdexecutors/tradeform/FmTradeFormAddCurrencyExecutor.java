@@ -71,7 +71,7 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
         boolean success = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             if(resultSet.next()) {
                 TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();

@@ -34,10 +34,11 @@ public class FmTipsExecutor extends FmExecutorBase {
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        msg(src, "Welcome to " + PluginInfo.NAME + " plugin!");
+        msg(src, "Welcome to the [" + PluginInfo.NAME + "] plugin!");
         msg(src, "I know things can get a little complicated, so here are a couple of tips.");
         msg(src, "1) When inputting a currency name, you can use 'def' or 'default' to use the default currency.");
-        msg(src, "2) You can quickly create a shop using the '/fm shop quickcreate' command");
+        msg(src, "2) You can quickly create a shop using the '/fm quickshop' command");
+        msg(src, " - - and quickly create a trade using the /fm 'quicktrade' command!");
         msg(src, "3) There are many aliases, i.e. 'sh' for shop, 'tf' for tradeform, 'qc' for quickcreate.");
         msg(src, "4) Every sub command with more subcommands(tf, sh, sh qc) has a help command...");
         msg(src, " - - Hover over an entry for a description, and click to put it into your chat bar!");

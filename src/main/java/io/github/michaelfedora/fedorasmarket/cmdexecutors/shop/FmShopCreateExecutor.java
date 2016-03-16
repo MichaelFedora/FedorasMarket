@@ -21,9 +21,12 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.Tuple;
 
 import java.sql.Connection;
@@ -36,12 +39,27 @@ import java.util.*;
  */
 public class FmShopCreateExecutor extends FmExecutorBase {
 
+    public static final List<String> aliases = Arrays.asList("create", "new");
+    public static final String base = FmShopExecutor.aliases.get(0);
+
+    public static CommandSpec create() {
+        return CommandSpec.builder()
+                .description(Text.of("Create a new shop"))
+                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
+                .arguments(
+                        GenericArguments.string(Text.of("formname")),
+                        GenericArguments.optional(GenericArguments.string(Text.of("modifiername"))),
+                        makeServerFlagArg())
+                .executor(new FmShopCreateExecutor())
+                .build();
+    }
+
     public static Map<UUID,Tuple<String,String>> to_apply = new HashMap<>();
     public static Set<UUID> as_server = new HashSet<>();
 
     @Override
     protected String getName() {
-        return "shop create";
+        return base + aliases.get(0);
     }
 
     public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
@@ -78,7 +96,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, playerId, DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, playerId, DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             if(!resultSet.next()) {
                 error(player,"Bad name! :c");
@@ -144,7 +162,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, playerId, DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, "1", playerId, DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             if(!resultSet.next())
                 throw makeException("Bad tradeform name!", src);
@@ -155,7 +173,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         to_apply.put(playerId, new Tuple<>(name, modifier_name));
 
-        if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
+        if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + '.' + base + ".server")) // todo: make roight perm (shop.server)?
             as_server.add(playerId);
 
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);

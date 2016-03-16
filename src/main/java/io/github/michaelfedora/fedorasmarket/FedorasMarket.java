@@ -9,9 +9,13 @@ package io.github.michaelfedora.fedorasmarket;
 import com.google.inject.Inject;
 
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionBidExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.depot.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.FmTradeExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
@@ -121,20 +125,25 @@ public class FedorasMarket {
 
     @Listener
     public void onPostInit(GamePostInitializationEvent gpie) {
+
         getLogger().info("== " + PluginInfo.NAME + " - GamePostInitialization ==");
+
         subCommands = new LinkedHashMap<>();
         grandChildCommands = new LinkedHashMap<>();
 
+        /// === Sub Commands
+
         subCommands.put(FmHelpExecutor.aliases, FmHelpExecutor.create());
-        subCommands.put(FmTipsExecutor.aliases, FmTipsExecutor.create());
         subCommands.put(FmSetAliasExecutor.aliases, FmSetAliasExecutor.create());
+        subCommands.put(FmTipsExecutor.aliases, FmTipsExecutor.create());
+
+        /// === TradeForm Commands
 
         LinkedHashMap<List<String>, CommandSpec> tradeFormCommands = new LinkedHashMap<>();
 
         tradeFormCommands.put(FmTradeFormHelpExecutor.aliases, FmTradeFormHelpExecutor.create());
         tradeFormCommands.put(FmTradeFormCreateExecutor.aliases, FmTradeFormCreateExecutor.create());
         tradeFormCommands.put(FmTradeFormDeleteExecutor.aliases, FmTradeFormDeleteExecutor.create());
-        tradeFormCommands.put(FmTradeFormDeleteManyExecutor.aliases, FmTradeFormDeleteManyExecutor.create());
         tradeFormCommands.put(FmTradeFormListExecutor.aliases, FmTradeFormListExecutor.create());
         tradeFormCommands.put(FmTradeFormDetailsExecutor.aliases, FmTradeFormDetailsExecutor.create());
 
@@ -152,21 +161,12 @@ public class FedorasMarket {
 
         grandChildCommands.put(FmTradeFormExecutor.aliases.get(0), tradeFormCommands);
 
+        /// === Shop Commands
+
         LinkedHashMap<List<String>,CommandSpec> shopCommands = new LinkedHashMap<>();
 
         shopCommands.put(FmShopHelpExecutor.aliases, FmShopHelpExecutor.create());
-
-        shopCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
-                .description(Text.of("Create a new shop"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.create")
-                .arguments(
-                        GenericArguments.string(Text.of("formname")),
-                        GenericArguments.optional(GenericArguments.string(Text.of("modifiername"))),
-                        GenericArguments.flags()
-                                .flag("s", "-server")
-                                .buildWith(GenericArguments.none()))
-                .executor(new FmShopCreateExecutor())
-                .build());
+        shopCommands.put(FmShopCreateExecutor.aliases, FmShopCreateExecutor.create());
 
         shopCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
                 .description(Text.of("Get details about a shop"))
@@ -189,19 +189,30 @@ public class FedorasMarket {
                 .executor(new FmShopRemoveExecutor())
                 .build());
 
-        shopCommands.put(FmShopSetTradeFormExecutor.aliases, FmShopSetTradeFormExecutor.create());
 
-        shopCommands.put(Collections.singletonList("tips"), CommandSpec.builder()
+        shopCommands.put(Collections.singletonList("clean"), CommandSpec.builder()
                 .description(Text.of("Cleans up shop \"references\" in the database"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.clean")
                 .executor(new FmShopCleanExecutor())
                 .build());
 
+        shopCommands.put(FmShopSetTradeFormExecutor.aliases, FmShopSetTradeFormExecutor.create());
+
         subCommands.put(FmShopExecutor.aliases, FmShopExecutor.create(shopCommands));
 
         grandChildCommands.put(FmShopExecutor.aliases.get(0), shopCommands);
 
-        LinkedHashMap<List<String>,CommandSpec> quickShopCommands = new LinkedHashMap<>();
+        /// === Trade Commands
+
+        LinkedHashMap<List<String>, CommandSpec> tradeCommands = new LinkedHashMap<>();
+
+        subCommands.put(FmTradeExecutor.aliases, FmTradeExecutor.create(tradeCommands));
+
+        grandChildCommands.put(FmTradeExecutor.aliases.get(0), tradeCommands);
+
+        /// === QuickShop Commands
+
+        LinkedHashMap<List<String>, CommandSpec> quickShopCommands = new LinkedHashMap<>();
 
         quickShopCommands.put(FmQuickShopHelpExecutor.aliases, FmQuickShopHelpExecutor.create());
         quickShopCommands.put(FmQuickShopCreateItemBuyExecutor.aliases, FmQuickShopCreateItemBuyExecutor.create());
@@ -213,9 +224,11 @@ public class FedorasMarket {
 
         grandChildCommands.put(FmQuickShopExecutor.aliases.get(0), quickShopCommands);
 
+        /// === QuickTrade Commands
+
         LinkedHashMap<List<String>,CommandSpec> quickTradeCommands = new LinkedHashMap<>();
 
-        /*quickTradeCommands.put(FmQuickTradHelpeExecutor.aliases, FmQuickTradeHelpExecutor.create());
+        /*quickTradeCommands.put(FmQuickTradHelpExecutor.aliases, FmQuickTradeHelpExecutor.create());
         quickTradeCommands.put(FmQuickTradeCreateItemBuyExecutor.aliases, FmQuickTradeCreateItemBuyExecutor.create());
         quickTradeCommands.put(FmQuickTradeCreateItemSellExecutor.aliases, FmQuickTradeCreateItemSellExecutor.create());
         quickTradeCommands.put(FmQuickTradeCreateItemTradeExecutor.aliases, FmQuickTradeCreateItemTradeExecutor.create());
@@ -225,35 +238,30 @@ public class FedorasMarket {
 
         grandChildCommands.put(FmQuickShopExecutor.aliases.get(0), quickShopCommands);
 
-        /*subCommands.put(Arrays.asList("offertrade", "otrade"), CommandSpec.builder()
-                .description(Text.of("Offer to Trade to another player the item in your hand"))
-                .permission(PluginInfo.DATA_ROOT + ".offertrade")
-                .arguments(
-                        GenericArguments.player(Text.of("player")),
-                        GenericArguments.catalogedElement(Text.of("itemname"), ItemType.class),
-                        GenericArguments.integer(Text.of("amount")))
-                .executor(new FmTradeExecutor())
-                .build());
+        /// === Auction Commands
 
-        subCommands.put(Arrays.asList("offersell", "osell"), CommandSpec.builder()
-                .description(Text.of("Offer to Trade to another player the item in your hand"))
-                .permission(PluginInfo.DATA_ROOT + ".offersell")
-                .arguments(
-                        GenericArguments.player(Text.of("player")),
-                        GenericArguments.catalogedElement(Text.of("itemname"), ItemType.class),
-                        GenericArguments.integer(Text.of("amount")))
-                .executor(new FmSellExecutor())
-                .build());*/
+        LinkedHashMap<List<String>, CommandSpec> auctionCommands = new LinkedHashMap<>();
 
+        subCommands.put(FmAuctionExecutor.aliases, FmAuctionExecutor.create(auctionCommands));
 
-        CommandSpec fmCommandSpec = CommandSpec.builder()
-                .description(Text.of("FedorasMarket Command"))
-                .permission(PluginInfo.DATA_ROOT + ".use")
-                .children(subCommands)
-                .executor(new FmExecutor())
-                .build();
+        grandChildCommands.put(FmAuctionExecutor.aliases.get(0), auctionCommands);
 
-        Sponge.getCommandManager().register(this, fmCommandSpec, "fedmarket", "fm");
+        /// === Depot Commands
+
+        LinkedHashMap<List<String>, CommandSpec> depotCommands = new LinkedHashMap<>();
+
+        depotCommands.put(FmDepotHelpExecutor.aliases, FmDepotHelpExecutor.create());
+        depotCommands.put(FmDepotListExecutor.aliases, FmDepotListExecutor.create());
+        depotCommands.put(FmDepotClaimExecutor.aliases, FmDepotClaimExecutor.create());
+        depotCommands.put(FmDepotTossExecutor.aliases, FmDepotTossExecutor.create());
+
+        subCommands.put(FmDepotExecutor.aliases, FmDepotExecutor.create(depotCommands));
+
+        grandChildCommands.put(FmDepotExecutor.aliases.get(0), depotCommands);
+
+        /// === Main Command
+
+        Sponge.getCommandManager().register(this, FmExecutor.create(subCommands), FmExecutor.aliases);
 
         getLogger().info("== == FIN == ==");
     }

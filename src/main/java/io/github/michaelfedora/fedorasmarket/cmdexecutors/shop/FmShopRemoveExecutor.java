@@ -13,6 +13,7 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
@@ -30,6 +31,8 @@ import org.spongepowered.api.world.World;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,9 +41,16 @@ import java.util.UUID;
  */
 public class FmShopRemoveExecutor extends FmExecutorBase {
 
+    public static final List<String> aliases = Arrays.asList("remove", "rem");
+    public static final String base = "shop";
+
+    public static CommandSpec create() {
+        return CommandSpec.builder().build();
+    }
+
     @Override
     protected String getName() {
-        return "shop remove";
+        return base + aliases.get(0);
     }
 
     public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
@@ -78,20 +88,8 @@ public class FmShopRemoveExecutor extends FmExecutorBase {
 
         ItemStack SignIStack = ItemStack.of(ItemTypes.SIGN, 1);
         sign.getLocation().removeBlock();
-        InventoryTransactionResult itr = player.getInventory().offer(SignIStack);
-        switch(itr.getType()) {
-            case FAILURE:
-            case CANCELLED:
-                Location<World> location = player.getLocation();
-                World world = location.getExtent();
-                Optional<Entity> opt_entity = world.createEntity(EntityTypes.ITEM, location.getPosition());
-                if(opt_entity.isPresent()) {
-                    Entity entity = opt_entity.get();
-                    entity.offer(Keys.REPRESENTED_ITEM, SignIStack.createSnapshot());
-                    world.spawnEntity(entity, Cause.of(NamedCause.source(EntitySpawnCause.builder().entity(entity).type(SpawnTypes.PLUGIN).build())));
-                } // else we really done goofed
-                break;
-        }
+        FmUtil.giveItem(SignIStack, player);
+
         msg(player, "Removed shop!");
     }
 

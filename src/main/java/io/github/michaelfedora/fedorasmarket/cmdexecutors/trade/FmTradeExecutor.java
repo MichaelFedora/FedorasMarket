@@ -4,6 +4,7 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -13,6 +14,7 @@ import org.spongepowered.api.text.Text;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Michael on 3/16/2016.
@@ -21,10 +23,11 @@ public class FmTradeExecutor extends FmExecutorBase {
 
     public static List<String> aliases = Arrays.asList("trade", "tr");
 
-    public static CommandSpec create() {
+    public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
                 .description(Text.of("Do trade things! (lists subcommands)"))
-                .permission(PluginInfo.DATA_ROOT + ".trade")
+                .permission(PluginInfo.DATA_ROOT + ".trade.use")
+                .children(children)
                 .executor(new FmTradeExecutor())
                 .build();
     }

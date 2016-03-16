@@ -38,7 +38,7 @@ public class FmShopSetTradeFormExecutor extends FmShopExecutorBase {
                 .permission(PluginInfo.DATA_ROOT + ".shop.settradeform")
                 .arguments(
                         GenericArguments.string(Text.of("tradeform")),
-                       FmExecutorBase.makeServerFlag())
+                       FmExecutorBase.makeServerFlagArg())
                 .executor(new FmShopSetTradeFormExecutor())
                 .build();
     }
@@ -62,12 +62,12 @@ public class FmShopSetTradeFormExecutor extends FmShopExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, playerId, DatabaseCategory.TRADEFORM, tradeFormName);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, playerId, DatabaseCategory.TRADEFORM, tradeFormName, "LIMIT 1");
 
             if(!resultSet.next())
                 throw makeException("Bad tradeform name!", src);
 
-            tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Tradeform couldn't deserialize! ",src));
+            tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Tradeform couldn't deserialize! ", src));
 
         } catch (SQLException e) {
             throw makeException("SQLException", e, src);

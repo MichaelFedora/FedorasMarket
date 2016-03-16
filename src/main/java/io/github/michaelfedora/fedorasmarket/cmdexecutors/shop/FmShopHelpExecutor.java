@@ -20,6 +20,7 @@ import java.util.List;
 public class FmShopHelpExecutor extends FmExecutorBase {
 
     public static final List<String> aliases = FmHelpExecutor.aliases;
+    public static final String base = "shop";
 
     public static CommandSpec create() {
         return CommandSpec.builder()

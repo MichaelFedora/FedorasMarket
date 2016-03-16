@@ -7,6 +7,15 @@ import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntityTypes;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
@@ -114,5 +123,22 @@ public class FmUtil {
                 return Optional.of(c);
 
         return Optional.empty();
+    }
+
+    public static void giveItem(ItemStack itemStack, Player player) {
+        InventoryTransactionResult itr = player.getInventory().offer(itemStack);
+        switch(itr.getType()) {
+            case FAILURE:
+            case CANCELLED:
+                Location<World> location = player.getLocation();
+                World world = location.getExtent();
+                Optional<Entity> opt_entity = world.createEntity(EntityTypes.ITEM, location.getPosition());
+                if(opt_entity.isPresent()) {
+                    Entity entity = opt_entity.get();
+                    entity.offer(Keys.REPRESENTED_ITEM, itemStack.createSnapshot());
+                    world.spawnEntity(entity, Cause.of(NamedCause.source(EntitySpawnCause.builder().entity(entity).type(SpawnTypes.PLUGIN).build())));
+                } // else we really done goofed
+                break;
+        }
     }
 }

@@ -23,7 +23,7 @@ import java.util.UUID;
  */
 public class FmSetAliasExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("setalias", "setname", "seta");
+    public static final List<String> aliases = Arrays.asList("setalias", "setname", "nick");
 
     public static CommandSpec create() {
         return CommandSpec.builder()

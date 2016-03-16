@@ -16,6 +16,7 @@ import org.spongepowered.api.text.Text;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,9 +28,9 @@ public class FmTradeFormDeleteExecutor extends FmExecutorBase {
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Delete a trade form"))
+                .description(Text.of("Delete a trade form (or many)"))
                 .permission(PluginInfo.DATA_ROOT + ".tradeform.delete")
-                .arguments(GenericArguments.string(Text.of("name")))
+                .arguments(GenericArguments.allOf(GenericArguments.string(Text.of("names"))))
                 .executor(new FmTradeFormDeleteExecutor())
                 .build();
     }
@@ -48,11 +49,14 @@ public class FmTradeFormDeleteExecutor extends FmExecutorBase {
 
         Player player = (Player) src;
 
-        String name = ctx.<String>getOne("name").orElseThrow(makeParamExceptionSupplier("name"));
+        Collection<String> names = ctx.<String>getAll("name");
+        if(names.size() <= 0)
+            throw makeException("No names given!", src);
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            DatabaseManager.delete(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            for(String name : names)
+                DatabaseManager.delete(conn, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);

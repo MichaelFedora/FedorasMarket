@@ -18,12 +18,12 @@ import java.util.*;
  */
 public class FmTradeFormExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("tradeform", "tform", "tf");
+    public static final List<String> aliases = Arrays.asList("tradeform", "tf");
 
     public static CommandSpec create(HashMap<List<String>, CommandSpec> children) {
         return CommandSpec.builder()
                 .description(Text.of("Do tradeform things (lists sub commands)"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform")
+                .permission(PluginInfo.DATA_ROOT + "." + aliases.get(0) + ".use")
                 .executor(new FmTradeFormExecutor())
                 .children(children)
                 .build();
@@ -31,13 +31,13 @@ public class FmTradeFormExecutor extends FmExecutorBase {
 
     @Override
     protected String getName() {
-        return "tradeform";
+        return aliases.get(0);
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("tradeform").orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), "tradeform");
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(aliases.get(0)).orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), aliases.get(0));
 
         return CommandResult.success();
     }
