@@ -9,8 +9,9 @@ package io.github.michaelfedora.fedorasmarket;
 import com.google.inject.Inject;
 
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
@@ -50,8 +51,6 @@ public class FedorasMarket {
     public static final String ACCOUNT_VIRTUAL_OWNER_PREFIX = "fedorasmarket:v_o_acc_";
     public static final String ACCOUNT_VIRTUAL_CUSTOMER_PREFIX = "fedorasmarket:v_c_acc_";
 
-    public static Set<Class> toRegister = new HashSet<>();
-
     @Inject
     private Logger logger;
     public static Logger getLogger() { return instance.logger; }
@@ -74,17 +73,15 @@ public class FedorasMarket {
         } else if(event.getService().equals(UserStorageService.class)) {
             userStorageService = (UserStorageService) event.getNewProviderRegistration().getProvider();
         }
-
-        Path file = null;
     }
 
     private Game game;
     public static Game getGame() { return instance.game; }
 
-    private HashMap<List<String>, CommandSpec> subCommands;
-    public static HashMap<List<String>, CommandSpec> getSubCommands() { return instance.subCommands; }
-    private HashMap<String, HashMap<List<String>, CommandSpec>> grandChildCommands;
-    public static Optional<HashMap<List<String>, CommandSpec>> getGrandChildCommands(String key) {
+    private LinkedHashMap<List<String>, CommandSpec> subCommands;
+    public static LinkedHashMap<List<String>, CommandSpec> getSubCommands() { return instance.subCommands; }
+    private HashMap<String, LinkedHashMap<List<String>, CommandSpec>> grandChildCommands;
+    public static Optional<LinkedHashMap<List<String>, CommandSpec>> getGrandChildCommands(String key) {
 
         if(instance.grandChildCommands.containsKey(key))
             return Optional.of(instance.grandChildCommands.get(key));
@@ -125,41 +122,41 @@ public class FedorasMarket {
     @Listener
     public void onPostInit(GamePostInitializationEvent gpie) {
         getLogger().info("== " + PluginInfo.NAME + " - GamePostInitialization ==");
-        subCommands = new HashMap<>();
-        grandChildCommands = new HashMap<>();
+        subCommands = new LinkedHashMap<>();
+        grandChildCommands = new LinkedHashMap<>();
 
         subCommands.put(FmHelpExecutor.aliases, FmHelpExecutor.create());
         subCommands.put(FmTipsExecutor.aliases, FmTipsExecutor.create());
         subCommands.put(FmSetAliasExecutor.aliases, FmSetAliasExecutor.create());
 
-        HashMap<List<String>, CommandSpec> tradeFormSubCommands = new HashMap<>();
+        LinkedHashMap<List<String>, CommandSpec> tradeFormCommands = new LinkedHashMap<>();
 
-        tradeFormSubCommands.put(FmTradeFormHelpExecutor.aliases, FmTradeFormHelpExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormCreateExecutor.aliases, FmTradeFormCreateExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormDeleteExecutor.aliases, FmTradeFormDeleteExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormDeleteManyExecutor.aliases, FmTradeFormDeleteManyExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormListExecutor.aliases, FmTradeFormListExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormDetailsExecutor.aliases, FmTradeFormDetailsExecutor.create());
+        tradeFormCommands.put(FmTradeFormHelpExecutor.aliases, FmTradeFormHelpExecutor.create());
+        tradeFormCommands.put(FmTradeFormCreateExecutor.aliases, FmTradeFormCreateExecutor.create());
+        tradeFormCommands.put(FmTradeFormDeleteExecutor.aliases, FmTradeFormDeleteExecutor.create());
+        tradeFormCommands.put(FmTradeFormDeleteManyExecutor.aliases, FmTradeFormDeleteManyExecutor.create());
+        tradeFormCommands.put(FmTradeFormListExecutor.aliases, FmTradeFormListExecutor.create());
+        tradeFormCommands.put(FmTradeFormDetailsExecutor.aliases, FmTradeFormDetailsExecutor.create());
 
-        tradeFormSubCommands.put(FmTradeFormSetTradeTypeExecutor.aliases, FmTradeFormSetTradeTypeExecutor.create());
+        tradeFormCommands.put(FmTradeFormSetTradeTypeExecutor.aliases, FmTradeFormSetTradeTypeExecutor.create());
 
-        tradeFormSubCommands.put(FmTradeFormAddItemExecutor.aliases, FmTradeFormAddItemExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormSetItemExecutor.aliases, FmTradeFormSetItemExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormRemoveItemExecutor.aliases, FmTradeFormRemoveItemExecutor.create());
+        tradeFormCommands.put(FmTradeFormAddItemExecutor.aliases, FmTradeFormAddItemExecutor.create());
+        tradeFormCommands.put(FmTradeFormSetItemExecutor.aliases, FmTradeFormSetItemExecutor.create());
+        tradeFormCommands.put(FmTradeFormRemoveItemExecutor.aliases, FmTradeFormRemoveItemExecutor.create());
 
-        tradeFormSubCommands.put(FmTradeFormAddCurrencyExecutor.aliases, FmTradeFormAddCurrencyExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormSetCurrencyExecutor.aliases, FmTradeFormSetCurrencyExecutor.create());
-        tradeFormSubCommands.put(FmTradeFormRemoveCurrencyExecutor.aliases, FmTradeFormRemoveCurrencyExecutor.create());
+        tradeFormCommands.put(FmTradeFormAddCurrencyExecutor.aliases, FmTradeFormAddCurrencyExecutor.create());
+        tradeFormCommands.put(FmTradeFormSetCurrencyExecutor.aliases, FmTradeFormSetCurrencyExecutor.create());
+        tradeFormCommands.put(FmTradeFormRemoveCurrencyExecutor.aliases, FmTradeFormRemoveCurrencyExecutor.create());
 
-        subCommands.put(FmTradeFormExecutor.aliases, FmTradeFormExecutor.create(tradeFormSubCommands));
+        subCommands.put(FmTradeFormExecutor.aliases, FmTradeFormExecutor.create(tradeFormCommands));
 
-        grandChildCommands.put("tradeform", tradeFormSubCommands);
+        grandChildCommands.put(FmTradeFormExecutor.aliases.get(0), tradeFormCommands);
 
-        HashMap<List<String>,CommandSpec> shopSubCommands = new HashMap<>();
+        LinkedHashMap<List<String>,CommandSpec> shopCommands = new LinkedHashMap<>();
 
-        shopSubCommands.put(FmShopHelpExecutor.aliases, FmShopHelpExecutor.create());
+        shopCommands.put(FmShopHelpExecutor.aliases, FmShopHelpExecutor.create());
 
-        shopSubCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
+        shopCommands.put(Arrays.asList("create", "new"), CommandSpec.builder()
                 .description(Text.of("Create a new shop"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.create")
                 .arguments(
@@ -171,7 +168,7 @@ public class FedorasMarket {
                 .executor(new FmShopCreateExecutor())
                 .build());
 
-        shopSubCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
+        shopCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
                 .description(Text.of("Get details about a shop"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.details")
                 .arguments(GenericArguments.optional(GenericArguments.seq(
@@ -180,46 +177,53 @@ public class FedorasMarket {
                 .executor(new FmShopDetailsExecutor())
                 .build());
 
-        shopSubCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
+        shopCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
                 .description(Text.of("List all shops created by you"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.list")
                 .executor(new FmShopListExecutor())
                 .build());
 
-        shopSubCommands.put(Arrays.asList("remove", "rem"), CommandSpec.builder()
+        shopCommands.put(Arrays.asList("remove", "rem"), CommandSpec.builder()
                 .description(Text.of("Removes a shop (sign & reference)"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.remove")
                 .executor(new FmShopRemoveExecutor())
                 .build());
 
-        shopSubCommands.put(FmShopSetTradeFormExecutor.aliases, FmShopSetTradeFormExecutor.create());
+        shopCommands.put(FmShopSetTradeFormExecutor.aliases, FmShopSetTradeFormExecutor.create());
 
-        shopSubCommands.put(Collections.singletonList("tips"), CommandSpec.builder()
+        shopCommands.put(Collections.singletonList("tips"), CommandSpec.builder()
                 .description(Text.of("Cleans up shop \"references\" in the database"))
                 .permission(PluginInfo.DATA_ROOT + ".shop.clean")
                 .executor(new FmShopCleanExecutor())
                 .build());
 
-        HashMap<List<String>,CommandSpec> shopQuickCreateSubCommands = new HashMap<>();
+        subCommands.put(FmShopExecutor.aliases, FmShopExecutor.create(shopCommands));
 
-        shopQuickCreateSubCommands.put(FmShopQuickCreateHelpExecutor.aliases, FmShopQuickCreateHelpExecutor.create());
-        shopQuickCreateSubCommands.put(FmShopQuickCreateItemBuyExecutor.aliases, FmShopQuickCreateItemBuyExecutor.create());
-        shopQuickCreateSubCommands.put(FmShopQuickCreateItemSellExecutor.aliases, FmShopQuickCreateItemSellExecutor.create());
-        shopQuickCreateSubCommands.put(FmShopQuickCreateItemTradeExecutor.aliases, FmShopQuickCreateItemTradeExecutor.create());
-        shopQuickCreateSubCommands.put(FmShopQuickCreateCurrencyTradeExecutor.aliases, FmShopQuickCreateCurrencyTradeExecutor.create());
+        grandChildCommands.put(FmShopExecutor.aliases.get(0), shopCommands);
 
-        shopSubCommands.put(FmShopQuickCreateExecutor.aliases, FmShopQuickCreateExecutor.create(shopQuickCreateSubCommands));
+        LinkedHashMap<List<String>,CommandSpec> quickShopCommands = new LinkedHashMap<>();
 
-        grandChildCommands.put("shop quickcreate", shopQuickCreateSubCommands);
+        quickShopCommands.put(FmQuickShopHelpExecutor.aliases, FmQuickShopHelpExecutor.create());
+        quickShopCommands.put(FmQuickShopCreateItemBuyExecutor.aliases, FmQuickShopCreateItemBuyExecutor.create());
+        quickShopCommands.put(FmQuickShopCreateItemSellExecutor.aliases, FmQuickShopCreateItemSellExecutor.create());
+        quickShopCommands.put(FmQuickShopCreateItemTradeExecutor.aliases, FmQuickShopCreateItemTradeExecutor.create());
+        quickShopCommands.put(FmQuickShopCurrencyTradeExecutor.aliases, FmQuickShopCurrencyTradeExecutor.create());
 
-        subCommands.put(Arrays.asList("shop", "sh"), CommandSpec.builder()
-                .description(Text.of("Do shop things (lists sub commands)"))
-                .permission(PluginInfo.DATA_ROOT + ".shop")
-                .executor(new FmShopExecutor())
-                .children(shopSubCommands)
-                .build());
+        subCommands.put(FmQuickShopExecutor.aliases, FmQuickShopExecutor.create(quickShopCommands));
 
-        grandChildCommands.put("shop", shopSubCommands);
+        grandChildCommands.put(FmQuickShopExecutor.aliases.get(0), quickShopCommands);
+
+        LinkedHashMap<List<String>,CommandSpec> quickTradeCommands = new LinkedHashMap<>();
+
+        /*quickTradeCommands.put(FmQuickTradHelpeExecutor.aliases, FmQuickTradeHelpExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCreateItemBuyExecutor.aliases, FmQuickTradeCreateItemBuyExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCreateItemSellExecutor.aliases, FmQuickTradeCreateItemSellExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCreateItemTradeExecutor.aliases, FmQuickTradeCreateItemTradeExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCurrencyTradeExecutor.aliases, FmQuickTradeCurrencyTradeExecutor.create());*/
+
+        subCommands.put(FmQuickTradeExecutor.aliases, FmQuickTradeExecutor.create(quickShopCommands));
+
+        grandChildCommands.put(FmQuickShopExecutor.aliases.get(0), quickShopCommands);
 
         /*subCommands.put(Arrays.asList("offertrade", "otrade"), CommandSpec.builder()
                 .description(Text.of("Offer to Trade to another player the item in your hand"))

@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.trade.TradeType;
@@ -13,7 +13,6 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.Tuple;
@@ -26,30 +25,30 @@ import java.util.UUID;
 /**
  * Created by Michael on 3/13/2016.
  */
-public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateExecutorBase {
+public class FmQuickShopCurrencyTradeExecutor extends FmQuickShopCreateExecutor {
 
-    public static final List<String> aliases = Arrays.asList("itembuy", "ibuy");
+    public static final List<String> aliases = Arrays.asList("currencytrade", "currt");
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Create an ItemBuy shop"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.quickcreate.itembuy")
+                .description(Text.of("Create an CurrencyTrade shop"))
+                .permission(PluginInfo.DATA_ROOT + ".quickshop.currencytrade")
                 .arguments(
-                        GenericArguments.integer(Text.of("item_amt")),
-                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
                         GenericArguments.doubleNum(Text.of("currency_amt")),
                         GenericArguments.string(Text.of("currency")),
+                        GenericArguments.doubleNum(Text.of("currency_amt2")),
+                        GenericArguments.string(Text.of("currency2")),
                         GenericArguments.flags()
                                 .flag("s", "-server")
                                 .buildWith(GenericArguments.none())
                 )
-                .executor(new FmShopQuickCreateItemBuyExecutor())
+                .executor(new FmQuickShopCurrencyTradeExecutor())
                 .build();
     }
 
     @Override
     protected String getName() {
-        return "shop quickcreate itembuy";
+        return "quickshop currencytrade";
     }
 
     @Override
@@ -60,25 +59,26 @@ public class FmShopQuickCreateItemBuyExecutor extends FmShopQuickCreateExecutorB
 
         UUID playerId = ((Player) src).getUniqueId();
 
-        int itemAmount = ctx.<Integer>getOne("item_amt").orElseThrow(makeParamExceptionSupplier("item_amt"));
-        ItemType itemType = ctx.<ItemType>getOne("item").orElseThrow(makeParamExceptionSupplier("item"));
-
-        TradeParty owner = new TradeParty();
-        owner.addItem(itemType, itemAmount);
-
         double currencyAmount = ctx.<Double>getOne("currency_amt").orElseThrow(makeParamExceptionSupplier("currency_amt"));
         String currencyName = ctx.<String>getOne("currency").orElseThrow(makeParamExceptionSupplier("currency"));
         Currency currency = FmUtil.getCurrency(currencyName).orElseThrow(makeParamExceptionSupplier("currency"));
 
-        TradeParty customer = new TradeParty();
-        customer.addCurrency(currency, BigDecimal.valueOf(currencyAmount));
+        TradeParty owner = new TradeParty();
+        owner.addCurrency(currency,  BigDecimal.valueOf(currencyAmount));
 
-        TradeForm tf = new TradeForm(TradeType.ITEM_BUY, owner, customer);
+        double currencyAmount2 = ctx.<Double>getOne("currency_amt2").orElseThrow(makeParamExceptionSupplier("currency_amt2"));
+        String currencyName2 = ctx.<String>getOne("currency2").orElseThrow(makeParamExceptionSupplier("currency2"));
+        Currency currency2 = FmUtil.getCurrency(currencyName).orElseThrow(makeParamExceptionSupplier("currency2"));
+
+        TradeParty customer = new TradeParty();
+        customer.addCurrency(currency2, BigDecimal.valueOf(currencyAmount2));
+
+        TradeForm tf = new TradeForm(TradeType.CURRENCY_TRADE, owner, customer);
 
         if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
             as_server.add(playerId);
 
-        to_apply.put(playerId, new Tuple<>("ItemBuy", tf));
+        to_apply.put(playerId, new Tuple<>("CurrencyTrade", tf));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");

@@ -51,7 +51,7 @@ public class FmShopListExecutor extends FmExecutorBase {
                 String shopName = "";
                 Optional<ShopData> opt_shopData = ((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize();
                 if(opt_shopData.isPresent())
-                    shopName = opt_shopData.get().location.toString();
+                    shopName = opt_shopData.get().getLocation().toString();
                 else
                     shopName = resultSet.getString(DatabaseQuery.NAME.v);
 

@@ -69,7 +69,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 ShopData data = result.getSecond();
 
                 //String prefix = "[" + name + "::" + instance + "]" + ": ";
-                Optional<TileEntity> opt_te = data.location.getTileEntity();
+                Optional<TileEntity> opt_te = data.getLocation().getTileEntity();
                 Sign sign;
                 if(!opt_te.isPresent()) {
                     failed = true;
@@ -149,7 +149,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 ShopData data = result.getSecond();
 
                 String prefix = "[" + instance + "]" + ": ";
-                Optional<TileEntity> opt_te = data.location.getTileEntity();
+                Optional<TileEntity> opt_te = data.getLocation().getTileEntity();
                 Sign sign;
                 if(!opt_te.isPresent()) {
                     failed = true;

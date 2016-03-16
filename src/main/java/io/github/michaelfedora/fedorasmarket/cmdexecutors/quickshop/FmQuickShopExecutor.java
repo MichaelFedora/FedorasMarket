@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.quickcreate;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
@@ -16,28 +16,28 @@ import java.util.*;
 /**
  * Created by Michael on 3/13/2016.
  */
-public class FmShopQuickCreateExecutor extends FmExecutorBase {
+public class FmQuickShopExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("quickcreate", "qc");
+    public static final List<String> aliases = Arrays.asList("quickshop", "qc");
 
     public static CommandSpec create(HashMap<List<String>,CommandSpec> children) {
         return CommandSpec.builder()
                 .description(Text.of("Create a shop quickly! (lists sub commands)"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.quickcreate.use")
-                .executor(new FmShopQuickCreateExecutor())
+                .permission(PluginInfo.DATA_ROOT + ".quickshop.use")
+                .executor(new FmQuickShopExecutor())
                 .children(children)
                 .build();
     }
 
     @Override
     protected String getName() {
-        return "shop quickcreate";
+        return "quickshop";
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("shop quickcreate").orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), "shop quickcreate");
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("quickshop").orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), "quickshop");
 
         return CommandResult.success();
     }
