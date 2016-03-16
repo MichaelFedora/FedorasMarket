@@ -6,5 +6,6 @@ package io.github.michaelfedora.fedorasmarket.database;
 public enum DatabaseCategory {
     TRADEFORM,
     SHOPDATA,
+    DEPOTITEM,
     USERDATA
 }

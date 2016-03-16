@@ -72,7 +72,7 @@ public final class DatabaseManager {
      * Selects a number of values which match the given parameters, and has an additional entry if the user wants to specify
      * something more
      * @param conn the connection
-     * @param amt the amount of items to specify (* or number)
+     * @param columns the columns to select
      * @param author the author
      * @param category the category of the data
      * @param name the name of the data
@@ -80,9 +80,9 @@ public final class DatabaseManager {
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet selectWithMore(Connection conn, int amt, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, String columns, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
 
-        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=? " + more;
+        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -96,9 +96,9 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, int amt, UUID author, DatabaseCategory category, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, String columns, UUID author, DatabaseCategory category, String more) throws SQLException {
 
-        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE author=? AND category=? " + more;
+        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE author=? AND category=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -108,9 +108,9 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, int amt, UUID author, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, String columns, UUID author, String more) throws SQLException {
 
-        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE author=? " + more;
+        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE author=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -119,9 +119,9 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, int amt, DatabaseCategory category, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, String columns, DatabaseCategory category, String more) throws SQLException {
 
-        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " WHERE category=? " + more;
+        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE category=? " + more;
 
         int i = 0;
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
@@ -130,9 +130,9 @@ public final class DatabaseManager {
         return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, int amt, String more) throws SQLException {
+    public static ResultSet selectWithMore(Connection conn, String columns, String more) throws SQLException {
 
-        String statement = "SELECT " + ((amt > 0) ? Integer.toString(amt) : "*") + " FROM " + DB_TABLE + " " + more;
+        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " " + more;
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         return preparedStatement.executeQuery();
@@ -150,50 +150,50 @@ public final class DatabaseManager {
      * @throws SQLException
      */
     public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
-        return selectWithMore(conn, -1, author, category, name, more);
+        return selectWithMore(conn, "*", author, category, name, more);
     }
 
     public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, String more) throws SQLException {
-        return selectWithMore(conn, -1, author, category, more);
+        return selectWithMore(conn, "*", author, category, more);
     }
 
     public static ResultSet selectAllWithMore(Connection conn, UUID author, String more) throws SQLException {
-        return selectWithMore(conn, -1, author, more);
+        return selectWithMore(conn, "*", author, more);
     }
 
     public static ResultSet selectAllWithMore(Connection conn, String more) throws SQLException {
-        return selectWithMore(conn, -1, more);
+        return selectWithMore(conn, "*", more);
     }
 
     /**
      * Select the specified amount of values from the given parameters
      * @param conn the connection
-     * @param amt the amount of items to select
+     * @param columns the columns to select
      * @param author the author
      * @param category the category of the data
      * @param name the name of the data
      * @return all the values which match the given criteria
      * @throws SQLException
      */
-    public static ResultSet select(Connection conn, int amt, UUID author, DatabaseCategory category, Object name) throws SQLException {
-        return selectWithMore(conn, amt, author, category, name, "");
+    public static ResultSet select(Connection conn, String columns, UUID author, DatabaseCategory category, Object name) throws SQLException {
+        return selectWithMore(conn, columns, author, category, name, "");
     }
 
-    public static ResultSet select(Connection conn, int amt, UUID author, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, amt, author, category, "");
+    public static ResultSet select(Connection conn, String columns, UUID author, DatabaseCategory category) throws SQLException {
+        return selectWithMore(conn, columns, author, category, "");
     }
 
 
-    public static ResultSet select(Connection conn, int amt, UUID author) throws SQLException {
-        return selectWithMore(conn, amt, author, "");
+    public static ResultSet select(Connection conn, String columns, UUID author) throws SQLException {
+        return selectWithMore(conn, columns, author, "");
     }
 
-    public static ResultSet select(Connection conn, int amt, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, amt, category, "");
+    public static ResultSet select(Connection conn, String columns, DatabaseCategory category) throws SQLException {
+        return selectWithMore(conn, columns, category, "");
     }
 
-    public static ResultSet select(Connection conn, int amt) throws SQLException {
-        return selectWithMore(conn, amt, "");
+    public static ResultSet select(Connection conn, String columns) throws SQLException {
+        return selectWithMore(conn, columns, "");
     }
 
     /**
@@ -206,23 +206,23 @@ public final class DatabaseManager {
      * @throws SQLException
      */
     public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category, Object name) throws SQLException {
-        return select(conn, -1, author, category, name);
+        return selectWithMore(conn, "*", author, category, name, "");
     }
 
     public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category) throws SQLException {
-        return select(conn,-1, author, category);
+        return selectWithMore(conn, "*", author, category, "");
     }
 
     public static ResultSet selectAll(Connection conn, UUID author) throws SQLException {
-        return select(conn, -1, author);
+        return selectWithMore(conn, "*", author, "");
     }
 
     public static ResultSet selectAll(Connection conn, DatabaseCategory category) throws SQLException {
-        return select(conn, -1, category);
+        return selectWithMore(conn, "*", category, "");
     }
 
     public static ResultSet selectAll(Connection conn) throws SQLException {
-        return select(conn, -1);
+        return selectWithMore(conn, "*", "");
     }
 
     public static boolean update(Connection conn, Object data, UUID author, DatabaseCategory category, Object name) throws SQLException {

@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.depot;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
@@ -15,33 +15,32 @@ import org.spongepowered.api.text.Text;
 import java.util.List;
 
 /**
- * Created by Michael on 3/13/2016.
+ * Created by Michael on 3/16/2016.
  */
-public class FmQuickShopHelpExecutor extends FmExecutorBase {
+public class FmDepotHelpExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = FmHelpExecutor.aliases;
+    public static List<String> aliases = FmHelpExecutor.aliases;
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of(FmHelpExecutor.desc))
                 .extendedDescription(Text.of(FmHelpExecutor.exDesc))
-                .permission(PluginInfo.DATA_ROOT + ".quickshop.help")
+                .permission(PluginInfo.DATA_ROOT + ".depot.help")
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
-                .executor(new FmQuickShopHelpExecutor())
+                .executor(new FmDepotHelpExecutor())
                 .build();
     }
 
     @Override
     protected String getName() {
-        return "quickshop help";
+        return "depot help";
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands("quickshop").orElseThrow(makeExceptionSupplier("Can't find the subcommands :o")), "quickshop");
+        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands("depot").orElseThrow(makeExceptionSupplier("Can't find subcommands!?")), "depot");
 
         return CommandResult.success();
     }
-
 }
