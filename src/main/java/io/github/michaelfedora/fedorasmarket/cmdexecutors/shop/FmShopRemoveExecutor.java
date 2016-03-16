@@ -14,20 +14,11 @@ import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandSpec;
-import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.entity.Entity;
-import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.event.cause.NamedCause;
-import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
-import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
+import org.spongepowered.api.text.Text;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -41,16 +32,22 @@ import java.util.UUID;
  */
 public class FmShopRemoveExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("remove", "rem");
-    public static final String base = "shop";
+    public static List<String> ALIASES = Arrays.asList("remove", "rem");
+
+    public static final String NAME = FmShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
-        return CommandSpec.builder().build();
+        return CommandSpec.builder()
+                .description(Text.of("Removes a shop (sign & reference)"))
+                .permission(PERM)
+                .executor(new FmShopRemoveExecutor())
+                .build();
     }
 
     @Override
-    protected String getName() {
-        return base + aliases.get(0);
+    public String getName() {
+        return NAME;
     }
 
     public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {

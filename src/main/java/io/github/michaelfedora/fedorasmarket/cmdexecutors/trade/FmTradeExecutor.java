@@ -21,26 +21,30 @@ import java.util.Map;
  */
 public class FmTradeExecutor extends FmExecutorBase {
 
-    public static List<String> aliases = Arrays.asList("trade", "tr");
+    public static final List<String> ALIASES = Arrays.asList("trade", "tr");
+
+    public static final String NAME = ALIASES.get(0);
+    public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
+
 
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
                 .description(Text.of("Do trade things! (lists subcommands)"))
-                .permission(PluginInfo.DATA_ROOT + ".trade.use")
+                .permission(PERM + ".use")
                 .children(children)
                 .executor(new FmTradeExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "trade";
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("trade").orElseThrow(makeExceptionSupplier("Couldn't find subcommands!?")), "trade");
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(NAME).orElseThrow(makeExceptionSupplier("Couldn't find subcommands!?")), NAME);
 
         return CommandResult.success();
     }

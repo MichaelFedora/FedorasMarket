@@ -1,6 +1,5 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
-import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
@@ -31,12 +30,15 @@ import java.util.List;
  */
 public class FmTradeFormRemoveCurrencyExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("removecurrency", "remc");
+    public static final List<String> ALIASES = Arrays.asList("removecurrency", "remc");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Remove a currency from a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.removecurrency")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.choices(Text.of("party"), PartyType.choices, true),
@@ -46,8 +48,8 @@ public class FmTradeFormRemoveCurrencyExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "tradeform removecurrency";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
@@ -66,7 +68,7 @@ public class FmTradeFormRemoveCurrencyExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             TradeForm tradeForm;
             if(resultSet.next()) {

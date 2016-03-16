@@ -30,21 +30,23 @@ import java.util.UUID;
  */
 public class FmDepotClaimExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("claim", "get");
-    public static final String base = FmDepotExecutor.aliases.get(0);
+    public static final List<String> ALIASES = Arrays.asList("claim", "get");
+
+    public static final String NAME = FmDepotExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmDepotExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Claim an item from your depot"))
-                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
+                .permission(PERM)
                 .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("num"))))
                 .executor(new FmDepotClaimExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return base + ' ' + aliases.get(0);
+    public String getName() {
+        return NAME;
     }
 
     @Override

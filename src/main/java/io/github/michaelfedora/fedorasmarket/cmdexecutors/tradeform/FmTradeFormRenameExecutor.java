@@ -1,7 +1,6 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.FmTradeFormExecutor;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -15,23 +14,21 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by Michael on 2/29/2016.
+ * Created by Michael on 3/16/2016.
  */
-public class FmShopSetModifierExecutor extends FmExecutorBase {
+public class FmTradeFormRenameExecutor extends FmExecutorBase {
 
-    public static final List<String> ALIASES = Arrays.asList("setmodifier", "setmod");
+    public static final List<String> ALIASES = Arrays.asList("rename", "ren");
 
     public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
     public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Set a shop's modifier"))
+                .description(Text.of("Rename a tradeform"))
                 .permission(PERM)
-                .arguments(
-                        GenericArguments.string(Text.of("modifier")),
-                        FmExecutorBase.makeServerFlagArg())
-                .executor(new FmShopSetTradeFormExecutor())
+                .arguments(GenericArguments.string(Text.of("name")))
+                .executor(new FmTradeFormRenameExecutor())
                 .build();
     }
 

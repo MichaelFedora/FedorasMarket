@@ -1,7 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier;
 
 /**
- * Created by Michael on 2/29/2016.
+ * Created by Michael on 3/16/2016.
  */
-public class FmModifierDeleteManyExecutor {
+public class FmModifierListExecutor {
 }

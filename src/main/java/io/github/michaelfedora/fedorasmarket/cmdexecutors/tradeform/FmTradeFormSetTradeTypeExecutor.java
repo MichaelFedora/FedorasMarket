@@ -28,12 +28,15 @@ import java.util.List;
  */
 public class FmTradeFormSetTradeTypeExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("settradetype", "settype");
+    public static final List<String> ALIASES = Arrays.asList("settradetype", "settype");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Set the TradeType of the trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.settradetype")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.enumValue(Text.of("type"), TradeType.class))
@@ -42,8 +45,8 @@ public class FmTradeFormSetTradeTypeExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "tradeform settradetype";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
@@ -60,7 +63,7 @@ public class FmTradeFormSetTradeTypeExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             TradeForm tradeForm;
             if(resultSet.next()) {

@@ -19,26 +19,31 @@ import java.util.*;
  */
 public class FmShopExecutor extends FmExecutorBase {
 
-    public static List<String> aliases = Arrays.asList("shop", "sh");
+    public static final List<String> ALIASES = Arrays.asList("shop", "sh");
+
+    public static final String NAME = ALIASES.get(0);
+    public static final String PERM = FmExecutor.PERM + ALIASES.get(0);
+
+    public static final String SERVER_PERM = PERM + '.' + "server";
 
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
                 .description(Text.of("Do shop things (lists sub commands)"))
-                .permission(PluginInfo.DATA_ROOT + ".shop")
-                .executor(new FmShopExecutor())
+                .permission(PERM)
                 .children(children)
+                .executor(new FmShopExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "shop";
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("shop").orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), "shop");
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(NAME).orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), NAME);
 
         return CommandResult.success();
     }

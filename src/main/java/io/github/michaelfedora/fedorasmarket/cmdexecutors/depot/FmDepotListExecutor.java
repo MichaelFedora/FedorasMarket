@@ -5,8 +5,6 @@ import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
-import io.github.michaelfedora.fedorasmarket.serializeddata.SerializedItemStack;
-import javafx.scene.text.TextBuilder;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -28,20 +26,22 @@ import java.util.UUID;
  */
 public class FmDepotListExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("list", "l");
-    public static final String base = "depot";
+    public static final List<String> ALIASES = Arrays.asList("list", "l");
+
+    public static final String NAME = FmDepotExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmDepotExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("List the items in the depot"))
-                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
+                .permission(PERM)
                 .executor(new FmDepotListExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return base + ' ' + aliases.get(0);
+    public String getName() {
+        return NAME;
     }
 
     @Override

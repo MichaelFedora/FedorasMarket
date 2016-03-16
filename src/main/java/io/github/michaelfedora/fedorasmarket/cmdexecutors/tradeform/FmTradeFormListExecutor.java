@@ -26,19 +26,22 @@ import java.util.List;
  */
 public class FmTradeFormListExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("list", "l");
+    public static final List<String> ALIASES = Arrays.asList("list", "l");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Lists all trade forms"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.list")
+                .permission(PERM)
                 .executor(new FmTradeFormListExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "tradeform list";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {

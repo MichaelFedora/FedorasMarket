@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
@@ -16,6 +17,8 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.block.InteractBlockEvent;
@@ -32,9 +35,25 @@ import java.util.*;
  */
 public class FmShopDetailsExecutor extends FmExecutorBase {
 
+    public static final List<String> ALIASES = Arrays.asList("details", "cat");
+
+    public static final String NAME = FmShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmShopExecutor.PERM + '.' + ALIASES.get(0);
+
+    public static CommandSpec create() {
+        return CommandSpec.builder()
+                .description(Text.of("Get details about a shop"))
+                .permission(PERM)
+                .arguments(GenericArguments.optional(GenericArguments.seq(
+                        GenericArguments.string(Text.of("name")),
+                        GenericArguments.string(Text.of("instance")))))
+                .executor(new FmShopDetailsExecutor())
+                .build();
+    }
+
     @Override
-    protected String getName() {
-        return "shop details";
+    public String getName() {
+        return NAME;
     }
 
     private void printShopReferenceNice(CommandSource src, ShopReference shopReference, Object data) {
@@ -77,7 +96,7 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
             ShopReference shopReference = sign.get(FmDataKeys.SHOP_REFERENCE).get();
 
             try(Connection conn = DatabaseManager.getConnection()) {
-                ResultSet resultSet = DatabaseManager.select(conn, 1, shopReference.author, DatabaseCategory.SHOPDATA, shopReference.instance);
+                ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, shopReference.author, DatabaseCategory.SHOPDATA, shopReference.instance, "LIMIT 1");
                 if(resultSet.next()) {
                     msg(player, "Shop [" + sign + "] details: ");
                     this.printShopReferenceNice(player, shopReference, resultSet.getObject(DatabaseQuery.DATA.v));

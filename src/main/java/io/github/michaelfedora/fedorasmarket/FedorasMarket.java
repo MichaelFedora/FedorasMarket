@@ -9,13 +9,16 @@ package io.github.michaelfedora.fedorasmarket;
 import com.google.inject.Inject;
 
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionBidExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.depot.*;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier.FmModifierExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier.FmModifierHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.FmTradeExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.FmTradeHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
@@ -47,7 +50,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 @Updatifier(repoName = "FedorasMarket", repoOwner = "MichaelFedora", version = PluginInfo.VERSION)
-@Plugin(id = PluginInfo.ID, name = PluginInfo.NAME, version = PluginInfo.VERSION,description = PluginInfo.DESCRIPTION, authors = PluginInfo.AUTHORS)
+@Plugin(id = PluginInfo.ID, name = PluginInfo.NAME, version = PluginInfo.VERSION, description = PluginInfo.DESCRIPTION, authors = PluginInfo.AUTHORS)
 public class FedorasMarket {
 
     private static FedorasMarket instance;
@@ -133,135 +136,128 @@ public class FedorasMarket {
 
         /// === Sub Commands
 
-        subCommands.put(FmHelpExecutor.aliases, FmHelpExecutor.create());
-        subCommands.put(FmSetAliasExecutor.aliases, FmSetAliasExecutor.create());
-        subCommands.put(FmTipsExecutor.aliases, FmTipsExecutor.create());
+        subCommands.put(FmHelpExecutor.ALIASES, FmHelpExecutor.create());
+        subCommands.put(FmSetAliasExecutor.ALIASES, FmSetAliasExecutor.create());
+        subCommands.put(FmTipsExecutor.ALIASES, FmTipsExecutor.create());
 
         /// === TradeForm Commands
 
         LinkedHashMap<List<String>, CommandSpec> tradeFormCommands = new LinkedHashMap<>();
 
-        tradeFormCommands.put(FmTradeFormHelpExecutor.aliases, FmTradeFormHelpExecutor.create());
-        tradeFormCommands.put(FmTradeFormCreateExecutor.aliases, FmTradeFormCreateExecutor.create());
-        tradeFormCommands.put(FmTradeFormDeleteExecutor.aliases, FmTradeFormDeleteExecutor.create());
-        tradeFormCommands.put(FmTradeFormListExecutor.aliases, FmTradeFormListExecutor.create());
-        tradeFormCommands.put(FmTradeFormDetailsExecutor.aliases, FmTradeFormDetailsExecutor.create());
+        tradeFormCommands.put(FmTradeFormHelpExecutor.ALIASES, FmTradeFormHelpExecutor.create());
+        tradeFormCommands.put(FmTradeFormCreateExecutor.ALIASES, FmTradeFormCreateExecutor.create());
+        tradeFormCommands.put(FmTradeFormDeleteExecutor.ALIASES, FmTradeFormDeleteExecutor.create());
+        tradeFormCommands.put(FmTradeFormListExecutor.ALIASES, FmTradeFormListExecutor.create());
+        tradeFormCommands.put(FmTradeFormDetailsExecutor.ALIASES, FmTradeFormDetailsExecutor.create());
 
-        tradeFormCommands.put(FmTradeFormSetTradeTypeExecutor.aliases, FmTradeFormSetTradeTypeExecutor.create());
+        tradeFormCommands.put(FmTradeFormCopyExecutor.ALIASES, FmTradeFormCopyExecutor.create());
+        tradeFormCommands.put(FmTradeFormRenameExecutor.ALIASES, FmTradeFormRenameExecutor.create());
 
-        tradeFormCommands.put(FmTradeFormAddItemExecutor.aliases, FmTradeFormAddItemExecutor.create());
-        tradeFormCommands.put(FmTradeFormSetItemExecutor.aliases, FmTradeFormSetItemExecutor.create());
-        tradeFormCommands.put(FmTradeFormRemoveItemExecutor.aliases, FmTradeFormRemoveItemExecutor.create());
+        tradeFormCommands.put(FmTradeFormSetTradeTypeExecutor.ALIASES, FmTradeFormSetTradeTypeExecutor.create());
 
-        tradeFormCommands.put(FmTradeFormAddCurrencyExecutor.aliases, FmTradeFormAddCurrencyExecutor.create());
-        tradeFormCommands.put(FmTradeFormSetCurrencyExecutor.aliases, FmTradeFormSetCurrencyExecutor.create());
-        tradeFormCommands.put(FmTradeFormRemoveCurrencyExecutor.aliases, FmTradeFormRemoveCurrencyExecutor.create());
+        tradeFormCommands.put(FmTradeFormAddItemExecutor.ALIASES, FmTradeFormAddItemExecutor.create());
+        tradeFormCommands.put(FmTradeFormSetItemExecutor.ALIASES, FmTradeFormSetItemExecutor.create());
+        tradeFormCommands.put(FmTradeFormRemoveItemExecutor.ALIASES, FmTradeFormRemoveItemExecutor.create());
 
-        subCommands.put(FmTradeFormExecutor.aliases, FmTradeFormExecutor.create(tradeFormCommands));
+        tradeFormCommands.put(FmTradeFormAddCurrencyExecutor.ALIASES, FmTradeFormAddCurrencyExecutor.create());
+        tradeFormCommands.put(FmTradeFormSetCurrencyExecutor.ALIASES, FmTradeFormSetCurrencyExecutor.create());
+        tradeFormCommands.put(FmTradeFormRemoveCurrencyExecutor.ALIASES, FmTradeFormRemoveCurrencyExecutor.create());
 
-        grandChildCommands.put(FmTradeFormExecutor.aliases.get(0), tradeFormCommands);
+        subCommands.put(FmTradeFormExecutor.ALIASES, FmTradeFormExecutor.create(tradeFormCommands));
+
+        grandChildCommands.put(FmTradeFormExecutor.NAME, tradeFormCommands);
+
+        /// === Modifier Commands
+
+        LinkedHashMap<List<String>, CommandSpec> modifierCommands = new LinkedHashMap<>();
+
+        subCommands.put(FmModifierExecutor.ALIASES, FmModifierExecutor.create(modifierCommands));
+
+        grandChildCommands.put(FmModifierExecutor.NAME, modifierCommands);
 
         /// === Shop Commands
 
         LinkedHashMap<List<String>,CommandSpec> shopCommands = new LinkedHashMap<>();
 
-        shopCommands.put(FmShopHelpExecutor.aliases, FmShopHelpExecutor.create());
-        shopCommands.put(FmShopCreateExecutor.aliases, FmShopCreateExecutor.create());
+        shopCommands.put(FmShopHelpExecutor.ALIASES, FmShopHelpExecutor.create());
+        shopCommands.put(FmShopCreateExecutor.ALIASES, FmShopCreateExecutor.create());
 
-        shopCommands.put(Arrays.asList("details", "cat"), CommandSpec.builder()
-                .description(Text.of("Get details about a shop"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.details")
-                .arguments(GenericArguments.optional(GenericArguments.seq(
-                                GenericArguments.string(Text.of("name")),
-                                GenericArguments.string(Text.of("instance")))))
-                .executor(new FmShopDetailsExecutor())
-                .build());
+        shopCommands.put(FmShopRemoveExecutor.ALIASES, FmShopRemoveExecutor.create());
 
-        shopCommands.put(Arrays.asList("list", "l"), CommandSpec.builder()
-                .description(Text.of("List all shops created by you"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.list")
-                .executor(new FmShopListExecutor())
-                .build());
+        shopCommands.put(FmShopListExecutor.ALIASES, FmShopListExecutor.create());
+        shopCommands.put(FmShopDetailsExecutor.ALIASES, FmShopDetailsExecutor.create());
 
-        shopCommands.put(Arrays.asList("remove", "rem"), CommandSpec.builder()
-                .description(Text.of("Removes a shop (sign & reference)"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.remove")
-                .executor(new FmShopRemoveExecutor())
-                .build());
+        shopCommands.put(FmShopCleanExecutor.ALIASES, FmShopCleanExecutor.create());
 
+        shopCommands.put(FmShopSetTradeFormExecutor.ALIASES, FmShopSetTradeFormExecutor.create());
+        shopCommands.put(FmShopSetModifierExecutor.ALIASES, FmShopSetModifierExecutor.create());
 
-        shopCommands.put(Collections.singletonList("clean"), CommandSpec.builder()
-                .description(Text.of("Cleans up shop \"references\" in the database"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.clean")
-                .executor(new FmShopCleanExecutor())
-                .build());
+        subCommands.put(FmShopExecutor.ALIASES, FmShopExecutor.create(shopCommands));
 
-        shopCommands.put(FmShopSetTradeFormExecutor.aliases, FmShopSetTradeFormExecutor.create());
-
-        subCommands.put(FmShopExecutor.aliases, FmShopExecutor.create(shopCommands));
-
-        grandChildCommands.put(FmShopExecutor.aliases.get(0), shopCommands);
+        grandChildCommands.put(FmShopExecutor.NAME, shopCommands);
 
         /// === Trade Commands
 
         LinkedHashMap<List<String>, CommandSpec> tradeCommands = new LinkedHashMap<>();
 
-        subCommands.put(FmTradeExecutor.aliases, FmTradeExecutor.create(tradeCommands));
+        tradeCommands.put(FmTradeHelpExecutor.ALIASES, FmTradeHelpExecutor.create());
 
-        grandChildCommands.put(FmTradeExecutor.aliases.get(0), tradeCommands);
+        subCommands.put(FmTradeExecutor.ALIASES, FmTradeExecutor.create(tradeCommands));
+
+        grandChildCommands.put(FmTradeExecutor.NAME, tradeCommands);
 
         /// === QuickShop Commands
 
         LinkedHashMap<List<String>, CommandSpec> quickShopCommands = new LinkedHashMap<>();
 
-        quickShopCommands.put(FmQuickShopHelpExecutor.aliases, FmQuickShopHelpExecutor.create());
-        quickShopCommands.put(FmQuickShopCreateItemBuyExecutor.aliases, FmQuickShopCreateItemBuyExecutor.create());
-        quickShopCommands.put(FmQuickShopCreateItemSellExecutor.aliases, FmQuickShopCreateItemSellExecutor.create());
-        quickShopCommands.put(FmQuickShopCreateItemTradeExecutor.aliases, FmQuickShopCreateItemTradeExecutor.create());
-        quickShopCommands.put(FmQuickShopCurrencyTradeExecutor.aliases, FmQuickShopCurrencyTradeExecutor.create());
+        quickShopCommands.put(FmQuickShopHelpExecutor.ALIASES, FmQuickShopHelpExecutor.create());
+        quickShopCommands.put(FmQuickShopItemBuyExecutor.ALIASES, FmQuickShopItemBuyExecutor.create());
+        quickShopCommands.put(FmQuickShopItemSellExecutor.ALIASES, FmQuickShopItemSellExecutor.create());
+        quickShopCommands.put(FmQuickShopItemTradeExecutor.ALIASES, FmQuickShopItemTradeExecutor.create());
+        quickShopCommands.put(FmQuickShopCurrencyTradeExecutor.ALIASES, FmQuickShopCurrencyTradeExecutor.create());
 
-        subCommands.put(FmQuickShopExecutor.aliases, FmQuickShopExecutor.create(quickShopCommands));
+        subCommands.put(FmQuickShopExecutor.ALIASES, FmQuickShopExecutor.create(quickShopCommands));
 
-        grandChildCommands.put(FmQuickShopExecutor.aliases.get(0), quickShopCommands);
+        grandChildCommands.put(FmQuickShopExecutor.NAME, quickShopCommands);
 
         /// === QuickTrade Commands
 
         LinkedHashMap<List<String>,CommandSpec> quickTradeCommands = new LinkedHashMap<>();
 
-        /*quickTradeCommands.put(FmQuickTradHelpExecutor.aliases, FmQuickTradeHelpExecutor.create());
-        quickTradeCommands.put(FmQuickTradeCreateItemBuyExecutor.aliases, FmQuickTradeCreateItemBuyExecutor.create());
-        quickTradeCommands.put(FmQuickTradeCreateItemSellExecutor.aliases, FmQuickTradeCreateItemSellExecutor.create());
-        quickTradeCommands.put(FmQuickTradeCreateItemTradeExecutor.aliases, FmQuickTradeCreateItemTradeExecutor.create());
-        quickTradeCommands.put(FmQuickTradeCurrencyTradeExecutor.aliases, FmQuickTradeCurrencyTradeExecutor.create());*/
+        quickTradeCommands.put(FmQuickTradeHelpExecutor.ALIASES, FmQuickTradeHelpExecutor.create());
+        /*quickTradeCommands.put(FmQuickTradeCreateItemBuyExecutor.ALIASES, FmQuickTradeCreateItemBuyExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCreateItemSellExecutor.ALIASES, FmQuickTradeCreateItemSellExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCreateItemTradeExecutor.ALIASES, FmQuickTradeCreateItemTradeExecutor.create());
+        quickTradeCommands.put(FmQuickTradeCurrencyTradeExecutor.ALIASES, FmQuickTradeCurrencyTradeExecutor.create());*/
 
-        subCommands.put(FmQuickTradeExecutor.aliases, FmQuickTradeExecutor.create(quickShopCommands));
+        subCommands.put(FmQuickTradeExecutor.ALIASES, FmQuickTradeExecutor.create(quickShopCommands));
 
-        grandChildCommands.put(FmQuickShopExecutor.aliases.get(0), quickShopCommands);
+        grandChildCommands.put(FmQuickShopExecutor.NAME, quickShopCommands);
 
         /// === Auction Commands
 
         LinkedHashMap<List<String>, CommandSpec> auctionCommands = new LinkedHashMap<>();
 
-        subCommands.put(FmAuctionExecutor.aliases, FmAuctionExecutor.create(auctionCommands));
+        subCommands.put(FmAuctionExecutor.ALIASES, FmAuctionExecutor.create(auctionCommands));
 
-        grandChildCommands.put(FmAuctionExecutor.aliases.get(0), auctionCommands);
+        grandChildCommands.put(FmAuctionExecutor.NAME, auctionCommands);
 
         /// === Depot Commands
 
         LinkedHashMap<List<String>, CommandSpec> depotCommands = new LinkedHashMap<>();
 
-        depotCommands.put(FmDepotHelpExecutor.aliases, FmDepotHelpExecutor.create());
-        depotCommands.put(FmDepotListExecutor.aliases, FmDepotListExecutor.create());
-        depotCommands.put(FmDepotClaimExecutor.aliases, FmDepotClaimExecutor.create());
-        depotCommands.put(FmDepotTossExecutor.aliases, FmDepotTossExecutor.create());
+        depotCommands.put(FmDepotHelpExecutor.ALIASES, FmDepotHelpExecutor.create());
+        depotCommands.put(FmDepotListExecutor.ALIASES, FmDepotListExecutor.create());
+        depotCommands.put(FmDepotClaimExecutor.ALIASES, FmDepotClaimExecutor.create());
+        depotCommands.put(FmDepotTossExecutor.ALIASES, FmDepotTossExecutor.create());
 
-        subCommands.put(FmDepotExecutor.aliases, FmDepotExecutor.create(depotCommands));
+        subCommands.put(FmDepotExecutor.ALIASES, FmDepotExecutor.create(depotCommands));
 
-        grandChildCommands.put(FmDepotExecutor.aliases.get(0), depotCommands);
+        grandChildCommands.put(FmDepotExecutor.NAME, depotCommands);
 
         /// === Main Command
 
-        Sponge.getCommandManager().register(this, FmExecutor.create(subCommands), FmExecutor.aliases);
+        Sponge.getCommandManager().register(this, FmExecutor.create(subCommands), FmExecutor.ALIASES);
 
         getLogger().info("== == FIN == ==");
     }

@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
@@ -24,20 +25,23 @@ import java.util.List;
  */
 public class FmTradeFormDeleteExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("delete", "del");
+    public static final List<String> ALIASES = Arrays.asList("delete", "del");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Delete a trade form (or many)"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.delete")
+                .permission(PERM)
                 .arguments(GenericArguments.allOf(GenericArguments.string(Text.of("names"))))
                 .executor(new FmTradeFormDeleteExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "tradeform delete";
+    public String getName() {
+        return NAME;
     }
 
     @Override

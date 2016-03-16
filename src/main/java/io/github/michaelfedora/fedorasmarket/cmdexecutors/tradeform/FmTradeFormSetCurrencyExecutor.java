@@ -1,6 +1,5 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
-import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
@@ -32,12 +31,15 @@ import java.util.List;
  */
 public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("setcurrency", "setc");
+    public static final List<String> ALIASES = Arrays.asList("setcurrency", "setc");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Sets a currency entry in a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.setcurrency")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.choices(Text.of("party"), PartyType.choices, true),
@@ -48,8 +50,8 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "tradeform setcurrency";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
@@ -72,7 +74,7 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             TradeForm tradeForm;
             if(resultSet.next()) {

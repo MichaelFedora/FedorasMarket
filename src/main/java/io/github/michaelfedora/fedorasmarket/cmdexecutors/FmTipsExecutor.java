@@ -16,19 +16,23 @@ import java.util.List;
  */
 public class FmTipsExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Collections.singletonList("tips");
+    public static final List<String> ALIASES = Collections.singletonList("tips");
+
+    public static final String NAME = ALIASES.get(0);
+    public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
+
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Lists some tips with using this plugin."))
-                .permission(PluginInfo.DATA_ROOT + ".tips")
+                .description(Text.of("Lists some tips with using this plugin"))
+                .permission(PERM)
                 .executor(new FmTipsExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "tips";
+    public String getName() {
+        return NAME;
     }
 
     @Override

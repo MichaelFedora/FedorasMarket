@@ -19,27 +19,30 @@ import java.util.List;
  */
 public class FmQuickShopHelpExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = FmHelpExecutor.aliases;
+    public static final List<String> ALIASES = FmHelpExecutor.ALIASES;
+
+    public static final String NAME = FmQuickShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmQuickShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of(FmHelpExecutor.desc))
-                .extendedDescription(Text.of(FmHelpExecutor.exDesc))
-                .permission(PluginInfo.DATA_ROOT + ".quickshop.help")
+                .description(Text.of(FmHelpExecutor.DESC))
+                .extendedDescription(Text.of(FmHelpExecutor.EX_DESC))
+                .permission(PERM)
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
                 .executor(new FmQuickShopHelpExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "quickshop help";
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands("quickshop").orElseThrow(makeExceptionSupplier("Can't find the subcommands :o")), "quickshop");
+        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands(FmQuickShopExecutor.NAME).orElseThrow(makeExceptionSupplier("Can't find the subcommands :o")), FmQuickShopExecutor.NAME);
 
         return CommandResult.success();
     }

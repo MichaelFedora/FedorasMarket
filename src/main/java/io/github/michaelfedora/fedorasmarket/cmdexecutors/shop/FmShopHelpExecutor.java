@@ -4,6 +4,7 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmHelpExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.FmTradeFormExecutor;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -19,27 +20,29 @@ import java.util.List;
  */
 public class FmShopHelpExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = FmHelpExecutor.aliases;
-    public static final String base = "shop";
+    public static final List<String> ALIASES = FmHelpExecutor.ALIASES;
+
+    public static final String NAME = FmShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
-                .description(Text.of(FmHelpExecutor.desc))
-                .extendedDescription(Text.of(FmHelpExecutor.exDesc))
+                .description(Text.of(FmHelpExecutor.DESC))
+                .extendedDescription(Text.of(FmHelpExecutor.EX_DESC))
                 .permission(PluginInfo.DATA_ROOT + "shop.help")
                 .executor(new FmShopHelpExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "shop help";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands("shop").orElseThrow(makeExceptionSupplier("Can't find the subcommands :o")), "shop");
+        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands(FmShopExecutor.NAME).orElseThrow(makeExceptionSupplier("Can't find the subcommands :o")), FmShopExecutor.NAME);
 
         return CommandResult.success();
     }

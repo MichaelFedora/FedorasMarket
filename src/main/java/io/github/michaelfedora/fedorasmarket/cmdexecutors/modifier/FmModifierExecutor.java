@@ -1,10 +1,8 @@
-package io.github.michaelfedora.fedorasmarket.cmdexecutors.auction;
+package io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.FmTradeFormExecutor;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -20,9 +18,9 @@ import java.util.Map;
 /**
  * Created by Michael on 3/16/2016.
  */
-public class FmAuctionExecutor extends FmExecutorBase {
+public class FmModifierExecutor extends FmExecutorBase {
 
-    public static final List<String> ALIASES = Arrays.asList("auction", "auc");
+    public static final List<String> ALIASES = Arrays.asList("modifier", "mod");
 
     public static final String NAME = ALIASES.get(0);
     public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
@@ -32,7 +30,7 @@ public class FmAuctionExecutor extends FmExecutorBase {
                 .description(Text.of("Do auction things! (lists subcommands"))
                 .permission(PERM + ".use")
                 .children(children)
-                .executor(new FmAuctionExecutor())
+                .executor(new FmModifierExecutor())
                 .build();
     }
 
@@ -48,4 +46,5 @@ public class FmAuctionExecutor extends FmExecutorBase {
 
         return CommandResult.success();
     }
+
 }

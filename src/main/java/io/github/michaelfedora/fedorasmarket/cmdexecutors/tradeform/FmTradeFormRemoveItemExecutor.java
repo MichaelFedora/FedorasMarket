@@ -29,12 +29,15 @@ import java.util.List;
  */
 public class FmTradeFormRemoveItemExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("removeitem", "remi");
+    public static final List<String> ALIASES = Arrays.asList("removeitem", "remi");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Remove an item entry from a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.removeitem")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.enumValue(Text.of("party"), PartyType.class),
@@ -44,8 +47,8 @@ public class FmTradeFormRemoveItemExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "tradeform removeitem";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
@@ -64,7 +67,7 @@ public class FmTradeFormRemoveItemExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             TradeForm tradeForm;
             if(resultSet.next()) {

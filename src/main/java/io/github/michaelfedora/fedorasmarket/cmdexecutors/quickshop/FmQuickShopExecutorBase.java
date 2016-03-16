@@ -1,5 +1,6 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop;
 
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.shop.*;
@@ -19,21 +20,18 @@ import java.util.*;
 /**
  * Created by Michael on 3/13/2016.
  */
-public abstract class FmQuickShopCreateExecutor extends FmExecutorBase {
+public abstract class FmQuickShopExecutorBase extends FmExecutorBase {
 
-    public static Map<UUID, Tuple<String, TradeForm>> to_apply = new HashMap<>();
-    public static Set<UUID> as_server = new HashSet<>();
+    public static Map<UUID, Tuple<TradeForm, Boolean>> to_apply = new HashMap<>();
 
     public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
 
         event.setCancelled(true);
 
         UUID playerId = player.getUniqueId();
-        String name = to_apply.get(playerId).getFirst();
-        TradeForm tradeForm = to_apply.get(playerId).getSecond();
+        TradeForm tradeForm = to_apply.get(playerId).getFirst();
+        boolean isServerOwned = to_apply.get(playerId).getSecond();
         to_apply.remove(playerId);
-        boolean isServerOwned = as_server.contains(playerId);
-        as_server.remove(playerId);
 
         BlockSnapshot blockSnapshot;
         Sign sign;

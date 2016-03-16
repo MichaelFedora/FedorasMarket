@@ -1,6 +1,8 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
+import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.FmTradeFormExecutor;
 import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
@@ -16,21 +18,38 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.Tuple;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by Michael on 3/3/2016.
  */
 public class FmShopCleanExecutor extends FmExecutorBase {
+
+    public static final List<String> ALIASES = Collections.singletonList("clean");
+
+    public static final String NAME = FmShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmShopExecutor.PERM + '.' + ALIASES.get(0);
+
+    public static CommandSpec create() {
+        return CommandSpec.builder()
+                .description(Text.of("Cleans up shop \"references\" in the database"))
+                .permission(PERM)
+                .executor(new FmShopCleanExecutor())
+                .build();
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 
     public static void cleanAll() {
         boolean failed = false;
@@ -99,11 +118,6 @@ public class FmShopCleanExecutor extends FmExecutorBase {
         } catch (SQLException e) {
             logError("[fm shop clean]: SQL Error", e);
         }
-    }
-
-    @Override
-    protected String getName() {
-        return "shop clean";
     }
 
     @Override

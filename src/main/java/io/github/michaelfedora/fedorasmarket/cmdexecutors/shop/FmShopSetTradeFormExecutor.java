@@ -30,12 +30,15 @@ import java.util.UUID;
  */
 public class FmShopSetTradeFormExecutor extends FmShopExecutorBase {
 
-    public static List<String> aliases = Arrays.asList("settradeform", "settf");
+    public static List<String> ALIASES = Arrays.asList("settradeform", "settf");
+
+    public static final String NAME = FmShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Set a shop's tradeform"))
-                .permission(PluginInfo.DATA_ROOT + ".shop.settradeform")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("tradeform")),
                        FmExecutorBase.makeServerFlagArg())
@@ -44,8 +47,8 @@ public class FmShopSetTradeFormExecutor extends FmShopExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "shop settradeform";
+    public String getName() {
+        return NAME;
     }
 
     @Override

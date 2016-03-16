@@ -26,14 +26,17 @@ import java.util.UUID;
 /**
  * Created by Michael on 3/13/2016.
  */
-public class FmQuickShopCreateItemSellExecutor extends FmQuickShopCreateExecutor {
+public class FmQuickShopItemSellExecutor extends FmQuickShopExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("itemsell", "isell");
+    public static final List<String> ALIASES = Arrays.asList("itemsell", "isell");
+
+    public static final String NAME = FmQuickShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmQuickShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Create an ItemSell shop"))
-                .permission(PluginInfo.DATA_ROOT + ".quickshop.itemsell")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.doubleNum(Text.of("currency_amt")),
                         GenericArguments.string(Text.of("currency")),
@@ -43,13 +46,13 @@ public class FmQuickShopCreateItemSellExecutor extends FmQuickShopCreateExecutor
                                 .flag("s", "-server")
                                 .buildWith(GenericArguments.none())
                 )
-                .executor(new FmQuickShopCreateItemSellExecutor())
+                .executor(new FmQuickShopItemSellExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "quickshop itemsell";
+    public String getName() {
+        return NAME;
     }
 
     @Override
@@ -75,10 +78,9 @@ public class FmQuickShopCreateItemSellExecutor extends FmQuickShopCreateExecutor
 
         TradeForm tf = new TradeForm(TradeType.ITEM_SELL, owner, customer);
 
-        if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
-            as_server.add(playerId);
+        boolean asServer = (ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"));
 
-        to_apply.put(playerId, new Tuple<>("ItemSell", tf));
+        to_apply.put(playerId, new Tuple<>(tf, asServer));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");

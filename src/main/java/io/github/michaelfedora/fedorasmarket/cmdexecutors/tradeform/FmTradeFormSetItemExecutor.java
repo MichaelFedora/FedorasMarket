@@ -29,12 +29,15 @@ import java.util.List;
  */
 public class FmTradeFormSetItemExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("setitem", "seti");
+    public static final List<String> ALIASES = Arrays.asList("setitem", "seti");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Set an item entry in a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.setitem")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.enumValue(Text.of("party"), PartyType.class),
@@ -46,8 +49,8 @@ public class FmTradeFormSetItemExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "tradeform setitem";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
@@ -70,7 +73,7 @@ public class FmTradeFormSetItemExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             TradeForm tradeForm;
             if(resultSet.next()) {

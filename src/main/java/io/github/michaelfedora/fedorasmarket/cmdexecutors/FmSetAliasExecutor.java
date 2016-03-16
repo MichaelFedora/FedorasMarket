@@ -23,21 +23,25 @@ import java.util.UUID;
  */
 public class FmSetAliasExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("setalias", "setname", "nick");
+    public static final List<String> ALIASES = Arrays.asList("setalias", "setname", "nick");
+
+    public static final String NAME = ALIASES.get(0);
+    public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
+
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .arguments(GenericArguments.string(Text.of("alias")))
                 .description(Text.of("Set your alias that is displayed on your shops"))
                 .extendedDescription(Text.of("Set your alias that is displayed on your shops. I.e. [FM Shop: Steve]"))
-                .permission(PluginInfo.DATA_ROOT + ".setalias")
+                .permission(PERM)
                 .executor(new FmSetAliasExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "setalias";
+    public String getName() {
+        return NAME;
     }
 
     @Override

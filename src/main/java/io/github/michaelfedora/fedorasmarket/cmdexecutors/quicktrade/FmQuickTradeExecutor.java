@@ -19,26 +19,29 @@ import java.util.*;
  */
 public class FmQuickTradeExecutor extends FmExecutorBase {
 
-    public static List<String> aliases = Arrays.asList("quicktrade", "qt");
+    public static final List<String> ALIASES = Arrays.asList("quicktrade", "qt");
+
+    public static final String NAME = ALIASES.get(0);
+    public static final String PERM = FmQuickTradeExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
                 .description(Text.of("Make a trade, quickly!"))
-                .permission(PluginInfo.DATA_ROOT + ".quicktrade")
+                .permission(PERM + ".use")
                 .children(children)
                 .executor(new FmQuickTradeExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "quicktrade";
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("quicktrade").orElseThrow(makeExceptionSupplier("Can't find subcommands!?")), "quicktrade");
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(NAME).orElseThrow(makeExceptionSupplier("Can't find subcommands!?")), NAME);
 
         return CommandResult.success();
     }

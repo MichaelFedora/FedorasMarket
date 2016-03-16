@@ -171,7 +171,7 @@ public class Shop {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, 1, ref.author, DatabaseCategory.SHOPDATA, ref.instance);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, ref.author, DatabaseCategory.SHOPDATA, ref.instance, "LIMIT 1");
             if(resultSet.next()) {
                 try {
                     Shop shop = new Shop(sign, ref.instance, ((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());

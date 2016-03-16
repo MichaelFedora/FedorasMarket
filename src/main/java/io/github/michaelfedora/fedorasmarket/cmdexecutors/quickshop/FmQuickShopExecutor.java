@@ -18,26 +18,29 @@ import java.util.*;
  */
 public class FmQuickShopExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("quickshop", "qc");
+    public static final List<String> ALIASES = Arrays.asList("quickshop", "qc");
+
+    public static final String NAME = FmQuickShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmQuickShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create(HashMap<List<String>,CommandSpec> children) {
         return CommandSpec.builder()
                 .description(Text.of("Create a shop quickly! (lists sub commands)"))
-                .permission(PluginInfo.DATA_ROOT + ".quickshop.use")
-                .executor(new FmQuickShopExecutor())
+                .permission(PERM + ".use")
                 .children(children)
+                .executor(new FmQuickShopExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "quickshop";
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands("quickshop").orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), "quickshop");
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(ALIASES.get(0)).orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), ALIASES.get(0));
 
         return CommandResult.success();
     }

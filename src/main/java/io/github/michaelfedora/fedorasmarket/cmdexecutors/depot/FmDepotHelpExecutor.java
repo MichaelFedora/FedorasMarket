@@ -19,28 +19,30 @@ import java.util.List;
  */
 public class FmDepotHelpExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = FmHelpExecutor.aliases;
-    public static final String base = FmDepotExecutor.aliases.get(0);
+    public static final List<String> ALIASES = FmHelpExecutor.ALIASES;
+
+    public static final String NAME = FmDepotExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmDepotExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of(FmHelpExecutor.desc))
-                .extendedDescription(Text.of(FmHelpExecutor.exDesc))
-                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
+                .description(Text.of(FmHelpExecutor.DESC))
+                .extendedDescription(Text.of(FmHelpExecutor.EX_DESC))
+                .permission(PERM)
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
                 .executor(new FmDepotHelpExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return base + ' ' + aliases.get(0);
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands("depot").orElseThrow(makeExceptionSupplier("Can't find subcommands!?")), "depot");
+        FmHelpExecutor.helpFunc(src, ctx, FedorasMarket.getGrandChildCommands(FmDepotExecutor.NAME).orElseThrow(makeExceptionSupplier("Can't find subcommands!?")), FmDepotExecutor.NAME);
 
         return CommandResult.success();
     }

@@ -1,6 +1,5 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
-import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
@@ -39,13 +38,15 @@ import java.util.*;
  */
 public class FmShopCreateExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("create", "new");
-    public static final String base = FmShopExecutor.aliases.get(0);
+    public static final List<String> ALIASES = Arrays.asList("create", "new");
+
+    public static final String NAME = FmShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Create a new shop"))
-                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("formname")),
                         GenericArguments.optional(GenericArguments.string(Text.of("modifiername"))),
@@ -58,8 +59,8 @@ public class FmShopCreateExecutor extends FmExecutorBase {
     public static Set<UUID> as_server = new HashSet<>();
 
     @Override
-    protected String getName() {
-        return base + aliases.get(0);
+    public String getName() {
+        return NAME;
     }
 
     public void OnInteractSecondary(InteractBlockEvent.Secondary event, Player player) {
@@ -68,7 +69,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         UUID playerId = player.getUniqueId();
         String name = to_apply.get(playerId).getFirst();
-        String modifier_name = to_apply.get(playerId).getSecond();
+        String modifier_name = to_apply.get(playerId).getSecond(); // TODO: Implement modifiers
         to_apply.remove(playerId);
         boolean isServerOwned = as_server.contains(playerId);
         as_server.remove(playerId);
@@ -173,7 +174,7 @@ public class FmShopCreateExecutor extends FmExecutorBase {
 
         to_apply.put(playerId, new Tuple<>(name, modifier_name));
 
-        if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + '.' + base + ".server")) // todo: make roight perm (shop.server)?
+        if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(FmShopExecutor.SERVER_PERM)) // todo: make roight perm (shop.server)?
             as_server.add(playerId);
 
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);

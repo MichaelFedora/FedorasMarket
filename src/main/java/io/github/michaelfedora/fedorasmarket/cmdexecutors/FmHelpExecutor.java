@@ -3,6 +3,7 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors;
 import com.google.common.collect.Lists;
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.FmQuickShopExecutor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandMapping;
@@ -25,19 +26,20 @@ import java.util.*;
  */
 public class FmHelpExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("help", "?");
+    public static final List<String> ALIASES = Arrays.asList("help", "?");
 
-    public static final Comparator<CommandMapping> CMD_COMPARATOR = (cmd1, cmd2) -> cmd1.getPrimaryAlias().compareTo(cmd2.getPrimaryAlias());
+    public static final String NAME = ALIASES.get(0);
+    public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
 
-    public static final String desc = "Get a list of subcommands";
-    public static final String exDesc = "Get a list of subcommands; optional [cmd] is to display the extended description of the specified command";
+    public static final String DESC = "Get a list of subcommands";
+    public static final String EX_DESC = "Get a list of subcommands; optional [cmd] is to display the extended description of the specified command";
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
-                .description(Text.of(desc))
-                .extendedDescription(Text.of(exDesc))
-                .permission(PluginInfo.DATA_ROOT + ".help")
+                .description(Text.of(DESC))
+                .extendedDescription(Text.of(EX_DESC))
+                .permission(PERM)
                 .executor(new FmHelpExecutor())
                 .build();
     }
@@ -87,13 +89,7 @@ public class FmHelpExecutor extends FmExecutorBase {
                             .onClick(TextActions.suggestCommand(prefix + aliases.get(0)))
                             .append(Text.of(TextColors.GREEN, TextStyles.BOLD, aliases.toString()))
                             .build())
-                    .append(Text.of(usage))/*, "\n"))
-                    .append(Text.of(TextColors.WHITE, "    ",
-                            commandSpec.getShortDescription(src).get(), "\n"))*/
-                    /*.append(Text.of(TextColors.AQUA, "Perm: ",
-                            (commandSpec.testPermission(src)) ? TextColors.GREEN : TextColors.RED,
-                            commandSpec.toString().substring(commandSpec.toString().lastIndexOf("permission") + 11,
-                                    commandSpec.toString().indexOf("argumentParser") - 2)))*/
+                    .append(Text.of(usage))
                     .build();
             helpList.add(commandHelp);
         }
@@ -108,8 +104,8 @@ public class FmHelpExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "help";
+    public String getName() {
+        return NAME;
     }
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {

@@ -25,14 +25,17 @@ import java.util.UUID;
 /**
  * Created by Michael on 3/13/2016.
  */
-public class FmQuickShopCurrencyTradeExecutor extends FmQuickShopCreateExecutor {
+public class FmQuickShopCurrencyTradeExecutor extends FmQuickShopExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("currencytrade", "currt");
+    public static final List<String> ALIASES = Arrays.asList("currencytrade", "currt");
+
+    public static final String NAME = FmQuickShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmQuickShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Create an CurrencyTrade shop"))
-                .permission(PluginInfo.DATA_ROOT + ".quickshop.currencytrade")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.doubleNum(Text.of("currency_amt")),
                         GenericArguments.string(Text.of("currency")),
@@ -47,8 +50,8 @@ public class FmQuickShopCurrencyTradeExecutor extends FmQuickShopCreateExecutor 
     }
 
     @Override
-    protected String getName() {
-        return "quickshop currencytrade";
+    public String getName() {
+        return NAME;
     }
 
     @Override
@@ -75,10 +78,9 @@ public class FmQuickShopCurrencyTradeExecutor extends FmQuickShopCreateExecutor 
 
         TradeForm tf = new TradeForm(TradeType.CURRENCY_TRADE, owner, customer);
 
-        if(ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"))
-            as_server.add(playerId);
+        boolean asServer = (ctx.<Boolean>getOne("s").orElse(false) && src.hasPermission(PluginInfo.DATA_ROOT + ".shop.server"));
 
-        to_apply.put(playerId, new Tuple<>("CurrencyTrade", tf));
+        to_apply.put(playerId, new Tuple<>(tf, asServer));
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 
         msg(src, "Select a block!");

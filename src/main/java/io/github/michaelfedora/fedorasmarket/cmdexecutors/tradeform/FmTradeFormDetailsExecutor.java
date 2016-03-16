@@ -26,20 +26,23 @@ import java.util.List;
  */
 public class FmTradeFormDetailsExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("details", "cat");
+    public static final List<String> ALIASES = Arrays.asList("details", "cat");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Lists the details about a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.details")
+                .permission(PERM)
                 .arguments(GenericArguments.string(Text.of("name")))
                 .executor(new FmTradeFormDetailsExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return "tradeform details";
+    public String getName() {
+        return NAME;
     }
 
     private void printResult(CommandSource src, Object name, Object data) {
@@ -60,7 +63,7 @@ public class FmTradeFormDetailsExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, 1, player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
             msg(src, "Transaction [" + name + "] details: ");
             if(resultSet.next()) {

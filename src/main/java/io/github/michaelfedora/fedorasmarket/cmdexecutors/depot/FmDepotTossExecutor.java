@@ -5,7 +5,6 @@ import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
-import io.github.michaelfedora.fedorasmarket.serializeddata.SerializedItemStack;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -13,10 +12,8 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 
-import javax.xml.crypto.Data;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,22 +26,24 @@ import java.util.UUID;
  */
 public class FmDepotTossExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Collections.singletonList("toss");
-    public static final String base = "depot";
+    public static final List<String> ALIASES = Collections.singletonList("toss");
+
+    public static final String NAME = FmDepotExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmDepotExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Tosses an item from the depot (PERMANENTLY)"))
                 .extendedDescription(Text.of("Tosses an item from the depot. WARNING, THIS PERMANENTLY REMOVES THE ITEM. USE WITH CARE!"))
-                .permission(PluginInfo.DATA_ROOT + '.' + base + '.' + aliases.get(0))
+                .permission(PERM)
                 .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("num"))))
                 .executor(new FmDepotListExecutor())
                 .build();
     }
 
     @Override
-    protected String getName() {
-        return base + ' ' + aliases.get(0);
+    public String getName() {
+        return NAME;
     }
 
     @Override

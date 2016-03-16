@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
@@ -26,12 +27,15 @@ import java.util.List;
  */
 public class FmTradeFormCreateExecutor extends FmExecutorBase {
 
-    public static final List<String> aliases = Arrays.asList("create", "new");
+    public static final List<String> ALIASES = Arrays.asList("create", "new");
+
+    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String PERM = FmTradeFormExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Create a trade form"))
-                .permission(PluginInfo.DATA_ROOT + ".tradeform.create")
+                .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.optional(GenericArguments.enumValue(Text.of("type"), TradeType.class)))
@@ -40,8 +44,8 @@ public class FmTradeFormCreateExecutor extends FmExecutorBase {
     }
 
     @Override
-    protected String getName() {
-        return "tradeform create";
+    public String getName() {
+        return NAME;
     }
 
     @Override
