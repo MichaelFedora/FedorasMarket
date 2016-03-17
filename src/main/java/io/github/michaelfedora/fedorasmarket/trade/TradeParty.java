@@ -120,8 +120,7 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
     public TradeParty cleanItems() {
 
-        Set<ItemType> keys = items.keySet();
-        for(ItemType key : keys)
+        for(ItemType key : items.keySet())
             if(items.get(key) <= 0)
                 items.remove(key);
 
