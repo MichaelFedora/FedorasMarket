@@ -230,9 +230,9 @@ public class FedorasMarket {
         quickTradeCommands.put(FmQuickTradeCreateItemTradeExecutor.ALIASES, FmQuickTradeCreateItemTradeExecutor.create());
         quickTradeCommands.put(FmQuickTradeCurrencyTradeExecutor.ALIASES, FmQuickTradeCurrencyTradeExecutor.create());*/
 
-        subCommands.put(FmQuickTradeExecutor.ALIASES, FmQuickTradeExecutor.create(quickShopCommands));
+        subCommands.put(FmQuickTradeExecutor.ALIASES, FmQuickTradeExecutor.create(quickTradeCommands));
 
-        grandChildCommands.put(FmQuickShopExecutor.NAME, quickShopCommands);
+        grandChildCommands.put(FmQuickTradeExecutor.NAME, quickTradeCommands);
 
         /// === Auction Commands
 

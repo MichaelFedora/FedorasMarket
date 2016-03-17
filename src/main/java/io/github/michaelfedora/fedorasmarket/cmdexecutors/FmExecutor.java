@@ -58,7 +58,7 @@ public class FmExecutor extends FmExecutorBase {
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
         src.sendMessage(Text.of(TextColors.AQUA, PluginInfo.NAME, " ", TextColors.GRAY, "Version: ",
-                TextColors.GOLD, FedorasMarket.getGame().getPluginManager().getPlugin(PluginInfo.ID).get().getVersion()));
+                TextColors.GOLD, FedorasMarket.getGame().getPluginManager().getPlugin(PluginInfo.ID).get().getVersion().get()));
         return CommandResult.success();
     }
 }

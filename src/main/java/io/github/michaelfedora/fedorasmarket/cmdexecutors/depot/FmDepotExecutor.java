@@ -23,12 +23,12 @@ public class FmDepotExecutor extends FmExecutorBase {
 
     public static final List<String> ALIASES = Arrays.asList("depot", "dp");
 
-    public static final String NAME = FmDepotExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String NAME = ALIASES.get(0);
     public static final String PERM = FmDepotExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
-                .description(Text.of("Do things with your depot (item-inbox)! (lists subcommands"))
+                .description(Text.of("Do things with your depot (item-inbox)! (lists subcommands)"))
                 .permission(PERM + ".use")
                 .children(children)
                 .executor(new FmDepotExecutor())

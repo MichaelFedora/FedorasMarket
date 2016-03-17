@@ -20,7 +20,7 @@ public class FmTradeFormExecutor extends FmExecutorBase {
 
     public static final List<String> ALIASES = Arrays.asList("tradeform", "tf");
 
-    public static final String NAME = FmTradeFormExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String NAME = ALIASES.get(0);
     public static final String PERM = FmExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create(HashMap<List<String>, CommandSpec> children) {

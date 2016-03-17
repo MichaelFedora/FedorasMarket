@@ -18,9 +18,9 @@ import java.util.*;
  */
 public class FmQuickShopExecutor extends FmExecutorBase {
 
-    public static final List<String> ALIASES = Arrays.asList("quickshop", "qc");
+    public static final List<String> ALIASES = Arrays.asList("quickshop", "qs");
 
-    public static final String NAME = FmQuickShopExecutor.NAME + ' ' + ALIASES.get(0);
+    public static final String NAME = ALIASES.get(0);
     public static final String PERM = FmQuickShopExecutor.PERM + '.' + ALIASES.get(0);
 
     public static CommandSpec create(HashMap<List<String>,CommandSpec> children) {
@@ -40,7 +40,7 @@ public class FmQuickShopExecutor extends FmExecutorBase {
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(ALIASES.get(0)).orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), ALIASES.get(0));
+        FmExecutor.listSubCommandsFunc(src, FedorasMarket.getGrandChildCommands(NAME).orElseThrow(makeExceptionSupplier("Can't find subcommands?!")), NAME);
 
         return CommandResult.success();
     }

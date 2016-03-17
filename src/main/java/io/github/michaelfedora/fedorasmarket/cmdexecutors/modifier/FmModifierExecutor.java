@@ -27,7 +27,7 @@ public class FmModifierExecutor extends FmExecutorBase {
 
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
-                .description(Text.of("Do auction things! (lists subcommands"))
+                .description(Text.of("Do auction things! (lists subcommands)"))
                 .permission(PERM + ".use")
                 .children(children)
                 .executor(new FmModifierExecutor())

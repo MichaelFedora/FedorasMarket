@@ -31,7 +31,7 @@ public class FmShopSetModifierExecutor extends FmExecutorBase {
                 .arguments(
                         GenericArguments.string(Text.of("modifier")),
                         FmExecutorBase.makeServerFlagArg())
-                .executor(new FmShopSetTradeFormExecutor())
+                .executor(new FmShopSetModifierExecutor())
                 .build();
     }
 
