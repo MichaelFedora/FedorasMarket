@@ -120,9 +120,9 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
     public TradeParty cleanItems() {
 
-        items.keySet().forEach((i) -> {
-            if(items.get(i) <= 0)
-                items.remove(i);
+        items.entrySet().forEach((e) -> {
+            if(e.getValue() <= 0)
+                items.remove(e.getKey());
         });
 
         return this;
@@ -160,9 +160,9 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
     public TradeParty cleanCurrencies() {
 
-        currencies.keySet().forEach((c) -> {
-            if(currencies.get(c).compareTo(BigDecimal.ZERO) <= 0)
-                currencies.remove(c);
+        currencies.entrySet().forEach((e) -> {
+            if(e.getValue().compareTo(BigDecimal.ZERO) <= 0)
+                currencies.remove(e.getKey());
         });
 
         return this;

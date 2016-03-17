@@ -12,6 +12,8 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
+import javax.xml.ws.Holder;
+import java.awt.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -56,7 +58,7 @@ public class FmSetAliasExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            DatabaseManager.insert(conn, playerId, DatabaseCategory.USERDATA, "alias", alias);
+            DatabaseManager.insert(conn, playerId, DatabaseCategory.USERDATA, "alias", new Holder<>(alias));
 
         } catch (SQLException e) {
 

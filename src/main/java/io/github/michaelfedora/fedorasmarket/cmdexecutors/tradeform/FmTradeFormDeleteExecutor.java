@@ -53,7 +53,7 @@ public class FmTradeFormDeleteExecutor extends FmExecutorBase {
 
         Player player = (Player) src;
 
-        Collection<String> names = ctx.<String>getAll("name");
+        Collection<String> names = ctx.<String>getAll("names");
         if(names.size() <= 0)
             throw makeException("No names given!", src);
 

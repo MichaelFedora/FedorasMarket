@@ -39,7 +39,7 @@ public class FmTradeFormSetTradeTypeExecutor extends FmExecutorBase {
                 .permission(PERM)
                 .arguments(
                         GenericArguments.string(Text.of("name")),
-                        GenericArguments.enumValue(Text.of("type"), TradeType.class))
+                        GenericArguments.choices(Text.of("type"), TradeType.choices, true))
                 .executor(new FmTradeFormSetTradeTypeExecutor())
                 .build();
     }

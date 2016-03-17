@@ -1,5 +1,8 @@
 package io.github.michaelfedora.fedorasmarket.trade;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * The Shop Type is what the customer is doing; Are they Buying Items? Selling Items? Trading Currency? Etc.
  */
@@ -50,6 +53,14 @@ public enum TradeType {
 
     public boolean hasWeak(GoodType goodType) {
         return (ownerGoodType.equalsWeak(goodType) || customerGoodType.equalsWeak(goodType));
+    }
+
+    public static final Map<String, TradeType> choices;
+    static {
+        Map<String, TradeType> c = new LinkedHashMap<>();
+        for(TradeType t : TradeType.values())
+            c.put(t.niceName.toLowerCase(), t);
+        choices = c;
     }
 
     public boolean has(GoodType goodType) {

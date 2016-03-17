@@ -52,7 +52,7 @@ public abstract class FmQuickShopExecutorBase extends FmExecutorBase {
         try(Connection conn = DatabaseManager.getConnection()) {
 
             Shop.createNew(conn, sign, shopData);
-
+            msg(player, "(Quickly) made the " + ((isServerOwned) ? "server-" : "" )+ "shop!");
         } catch(SQLException e) {
             throwSafeException("SQL Error", e, player);
             return;

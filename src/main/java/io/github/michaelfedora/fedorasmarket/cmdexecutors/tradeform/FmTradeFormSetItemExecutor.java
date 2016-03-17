@@ -77,7 +77,7 @@ public class FmTradeFormSetItemExecutor extends FmExecutorBase {
 
             TradeForm tradeForm;
             if(resultSet.next()) {
-                tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.NAME.v)).safeDeserialize().get();
+                tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
 
                 switch(partyType) {
                     case OWNER:

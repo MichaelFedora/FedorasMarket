@@ -44,9 +44,6 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Get details about a shop"))
                 .permission(PERM)
-                .arguments(GenericArguments.optional(GenericArguments.seq(
-                        GenericArguments.string(Text.of("name")),
-                        GenericArguments.string(Text.of("instance")))))
                 .executor(new FmShopDetailsExecutor())
                 .build();
     }
@@ -98,9 +95,11 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
             try(Connection conn = DatabaseManager.getConnection()) {
                 ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, shopReference.author, DatabaseCategory.SHOPDATA, shopReference.instance, "LIMIT 1");
                 if(resultSet.next()) {
-                    msg(player, "Shop [" + sign + "] details: ");
+                    msg(player, "Shop details: ");
                     this.printShopReferenceNice(player, shopReference, resultSet.getObject(DatabaseQuery.DATA.v));
-                }
+                } else
+                    msg(player, "Shop exists, but has no details :c");
+
                 conn.close();
 
             } catch (SQLException e) {
@@ -114,13 +113,12 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
     @Override
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        if(!(src instanceof Player)) {
+        if(!(src instanceof Player))
             throw makeSourceNotPlayerException();
-        }
 
         UUID playerId = ((Player) src).getUniqueId();
 
-        //TODO: See if they specified a name/instance
+        //TODO: See if they specified a `Location`
 
         PlayerInteractListener.toRun.put(playerId, this::OnInteractSecondary);
 

@@ -6,6 +6,7 @@ import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.manipulator.DataManipulatorBuilder;
+import org.spongepowered.api.data.persistence.AbstractDataBuilder;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 
 import java.util.Optional;
@@ -13,10 +14,14 @@ import java.util.Optional;
 /**
  * Created by Michael on 2/27/2016.
  */
-public class ShopReferenceDataManipulatorBuilder implements DataManipulatorBuilder<ShopReferenceData, ImmutableShopReferenceData> {
+public class ShopReferenceDataManipulatorBuilder extends AbstractDataBuilder<ShopReferenceData> implements DataManipulatorBuilder<ShopReferenceData, ImmutableShopReferenceData> {
+
+    public ShopReferenceDataManipulatorBuilder() {
+        super(ShopReferenceData.class, 1);
+    }
 
     @Override
-    public Optional<ShopReferenceData> build(DataView container) throws InvalidDataException {
+    public Optional<ShopReferenceData> buildContent(DataView container) throws InvalidDataException {
         if(!container.contains(SHOP_REFERENCE.getQuery()))
             return Optional.empty();
 

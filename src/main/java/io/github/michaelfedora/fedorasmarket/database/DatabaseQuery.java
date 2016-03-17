@@ -6,7 +6,7 @@ package io.github.michaelfedora.fedorasmarket.database;
 public enum DatabaseQuery {
     AUTHOR("author", "uuid"),
     CATEGORY("category", "varchar(255)"),
-    NAME("name", "other"),
+    NAME("name", "varchar(255)"),
     DATA("data", "other");
 
     public final String v;

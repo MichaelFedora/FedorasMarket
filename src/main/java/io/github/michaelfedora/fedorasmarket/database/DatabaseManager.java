@@ -88,10 +88,7 @@ public final class DatabaseManager {
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        if(name instanceof String)
-            preparedStatement.setString(++i, (String) name);
-        else
-            preparedStatement.setObject(++i, name);
+        preparedStatement.setString(++i, name.toString());
 
         return preparedStatement.executeQuery();
     }
@@ -234,10 +231,7 @@ public final class DatabaseManager {
         preparedStatement.setObject(++i, data);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        if(name instanceof String)
-            preparedStatement.setString(++i, (String) name);
-        else
-            preparedStatement.setObject(++i, name);
+        preparedStatement.setString(++i, name.toString());
 
         return preparedStatement.execute();
     }
@@ -250,10 +244,7 @@ public final class DatabaseManager {
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-        if(name instanceof String)
-            preparedStatement.setString(++i, (String) name);
-        else
-            preparedStatement.setObject(++i, name);
+        preparedStatement.setString(++i, name.toString());
 
         return preparedStatement.execute();
     }
@@ -266,11 +257,7 @@ public final class DatabaseManager {
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, author);
         preparedStatement.setString(++i, category.toString());
-
-        if(name instanceof String)
-            preparedStatement.setString(++i, (String) name);
-        else
-            preparedStatement.setObject(++i, name);
+        preparedStatement.setString(++i, name.toString()); // FIXME: try this
 
         preparedStatement.setObject(++i, data);
 

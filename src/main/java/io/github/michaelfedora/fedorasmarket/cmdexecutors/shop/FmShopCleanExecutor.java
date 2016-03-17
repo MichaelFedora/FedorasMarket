@@ -60,7 +60,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
             while(resultSet.next()) {
 
                 UUID playerId = (UUID) resultSet.getObject(DatabaseQuery.AUTHOR.v);
-                UUID instance = (UUID) resultSet.getObject(DatabaseQuery.NAME.v);
+                UUID instance = UUID.fromString(resultSet.getObject(DatabaseQuery.NAME.v).toString());
                 Optional<ShopData> opt_data = Optional.empty();
                 try {
                     opt_data = Optional.of(((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
@@ -88,21 +88,17 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 ShopData data = result.getSecond();
 
                 //String prefix = "[" + name + "::" + instance + "]" + ": ";
-                Optional<TileEntity> opt_te = data.getLocation().getTileEntity();
-                Sign sign;
-                if(!opt_te.isPresent()) {
+                Optional<Sign> opt_sign = data.getLocation().getTileEntity().map((te) -> (Sign) te);
+                if(!opt_sign.isPresent()) {
                     failed = true;
-                    //log(prefix + "Location does not have a tile entity!");
-                } else if(!(opt_te.get() instanceof Sign)) {
-                    failed = true;
-                    //log(prefix + "Tile Entity is not a Sign!");
-                } else if(!((sign = (Sign) opt_te.get()).get(FmDataKeys.SHOP_REFERENCE).isPresent())) {
+                    //log(prefix + "Location does not have a sign!");
+                } else if(!opt_sign.get().get(FmDataKeys.SHOP_REFERENCE).isPresent()) {
                     failed = true;
                     //log(prefix + "Sign does not support the data key!");
-                } else if(!(sign.get(FmDataKeys.SHOP_REFERENCE).get().instance.equals(instance))) {
+                } else if(!(opt_sign.get().get(FmDataKeys.SHOP_REFERENCE).get().instance.equals(instance))) {
                     failed = true;
                     //log(prefix + "Instances do not match up!");
-                } else if(!(Shop.fromSign(sign).isPresent())) {
+                } else if(!(Shop.fromSign(opt_sign.get()).isPresent())) {
                     failed = true;
                     //log(prefix + "Bad data key entry!");
                 } //else
@@ -136,7 +132,7 @@ public class FmShopCleanExecutor extends FmExecutorBase {
             List<Tuple<UUID,ShopData>> results = new ArrayList<>();
             while(resultSet.next()) {
 
-                UUID instance = (UUID) resultSet.getObject(DatabaseQuery.NAME.v);
+                UUID instance = UUID.fromString(resultSet.getString(DatabaseQuery.NAME.v));
                 Optional<ShopData> opt_data = Optional.empty();
                 try {
                     opt_data = Optional.of(((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
@@ -163,23 +159,19 @@ public class FmShopCleanExecutor extends FmExecutorBase {
                 ShopData data = result.getSecond();
 
                 String prefix = "[" + instance + "]" + ": ";
-                Optional<TileEntity> opt_te = data.getLocation().getTileEntity();
-                Sign sign;
-                if(!opt_te.isPresent()) {
+                Optional<Sign> opt_sign = data.getLocation().getTileEntity().map((te) -> (Sign) te);
+                if(!opt_sign.isPresent()) {
                     failed = true;
-                    msg(src, prefix + "Location does not have a tile entity!");
-                } else if(!(opt_te.get() instanceof Sign)) {
-                    failed = true;
-                    msg(src, prefix + "Tile Entity is not a Sign!");
-                } else if(!((sign = (Sign) opt_te.get()).get(FmDataKeys.SHOP_REFERENCE).isPresent())) {
+                    msg(src, prefix + "Location does not have a sign!");
+                } else if(!opt_sign.get().get(FmDataKeys.SHOP_REFERENCE).isPresent()) {
                     failed = true;
                     msg(src, prefix + "Sign does not support the data key!");
-                } else if(!(sign.get(FmDataKeys.SHOP_REFERENCE).get().instance.equals(instance))) {
+                } else if(!opt_sign.get().get(FmDataKeys.SHOP_REFERENCE).get().instance.equals(instance)) {
                     failed = true;
                     msg(src, prefix + "Instances do not match up!");
-                } else if(!(Shop.fromSign(sign).isPresent())) {
+                } else if(!(Shop.fromSign(opt_sign.get()).isPresent())) {
                     failed = true;
-                    msg(src, prefix + "Bad data key entry!");
+                    msg(src, prefix + "Could not get the Shop from the data!");
                 } else
                     msg(src, prefix + "Good!");
 

@@ -42,8 +42,8 @@ public class FmTradeFormAddItemExecutor extends FmExecutorBase {
                 .arguments(
                         GenericArguments.string(Text.of("name")),
                         GenericArguments.enumValue(Text.of("party"), PartyType.class),
-                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class),
-                        GenericArguments.integer(Text.of("amount")))
+                        GenericArguments.integer(Text.of("amount")),
+                        GenericArguments.catalogedElement(Text.of("item"), ItemType.class))
                 .executor(new FmTradeFormAddItemExecutor())
                 .build();
     }
