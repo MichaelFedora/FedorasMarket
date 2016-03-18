@@ -118,19 +118,25 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         return this;
     }
 
-    public TradeParty cleanItems() {
+    private TradeParty cleanItems() {
 
-        for(ItemType key : items.keySet())
-            if(items.get(key) <= 0)
-                items.remove(key);
+        Map<ItemType, Integer> newItems = new HashMap<>();
+
+        items.entrySet().forEach((e) -> {
+            if(e.getValue() > 0)
+                newItems.put(e.getKey(), e.getValue());
+        });
+
+        items = newItems;
 
         return this;
     }
 
     public TradeParty addCurrency(Currency currency, BigDecimal amt) {
 
-        if(this.currencies.containsKey(currency))
+        if(this.currencies.containsKey(currency)) {
             amt = amt.add(this.currencies.get(currency));
+        }
 
         if(amt.compareTo(BigDecimal.ZERO) < 0)
             amt = BigDecimal.ZERO;
@@ -157,11 +163,16 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         return this;
     }
 
-    public TradeParty cleanCurrencies() {
+    private TradeParty cleanCurrencies() {
 
-        for(Currency key : currencies.keySet())
-            if (currencies.get(key).compareTo(BigDecimal.ZERO) <= 0)
-                currencies.remove(key);
+        Map<Currency, BigDecimal> newCurrencies = new HashMap<>();
+
+        currencies.entrySet().forEach((e) -> {
+            if (e.getValue().compareTo(BigDecimal.ZERO) > 0)
+                newCurrencies.put(e.getKey(), e.getValue());
+        });
+
+        currencies = newCurrencies;
 
         return this;
     }

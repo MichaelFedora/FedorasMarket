@@ -76,30 +76,35 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
 
             ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
-            if(resultSet.next()) {
-                TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
+            if(!resultSet.next())
+                throw makeException("Couldn't find tradeform!");
 
-                BigDecimal old_val;
-                switch (partyType) {
-                    case OWNER:
-                        old_val = tradeForm.getOwnerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
-                        tradeForm.setOwnerParty(tradeForm.getOwnerParty().addCurrency(currency, amount));
-                        success = tradeForm.getOwnerParty().currencies.containsKey(currency);
-                        if(success)
-                            success = (old_val.add(amount).compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0);
-                        break;
-                    case CUSTOMER:
-                        old_val = tradeForm.getCustomerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
-                        tradeForm.setCustomerParty(tradeForm.getCustomerParty().addCurrency(currency, amount));
-                        success = tradeForm.getCustomerParty().currencies.containsKey(currency);
-                        if(success)
-                            success = (old_val.add(amount).compareTo(tradeForm.getCustomerParty().currencies.get(currency)) == 0);
-                        break;
-                }
+            TradeForm  tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Bad tradeform data!"));
 
-                DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            BigDecimal old_val;
+            switch (partyType) {
+                case OWNER:
+                    old_val = tradeForm.getOwnerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
+                    tradeForm.setOwnerParty(tradeForm.getOwnerParty().addCurrency(currency, amount));
 
+                    if(tradeForm.getOwnerParty().currencies.containsKey(currency))
+                        success = old_val.add(amount).compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0;
+                    else
+                        success = old_val.add(amount).compareTo(BigDecimal.ZERO) == 0;
+                    break;
+
+                case CUSTOMER:
+                    old_val = tradeForm.getCustomerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
+                    tradeForm.setCustomerParty(tradeForm.getCustomerParty().addCurrency(currency, amount));
+
+                    if(tradeForm.getCustomerParty().currencies.containsKey(currency))
+                        success = old_val.add(amount).compareTo(tradeForm.getCustomerParty().currencies.get(currency)) == 0;
+                    else
+                        success = old_val.add(amount).compareTo(BigDecimal.ZERO) == 0;
+                    break;
             }
+
+            DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);

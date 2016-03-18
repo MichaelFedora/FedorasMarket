@@ -76,27 +76,32 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
             ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
 
-            TradeForm tradeForm;
-            if(resultSet.next()) {
-                tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
+            if(!resultSet.next())
+                throw makeException("Couldn't find tradeform!");
 
-                switch(partyType) {
-                    case OWNER:
-                        tradeForm.setOwnerParty(tradeForm.getOwnerParty().setCurrency(currency, amount));
-                        success = tradeForm.getOwnerParty().currencies.containsKey(currency);
-                        if(success)
-                            success = (amount.compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0);
-                        break;
-                    case CUSTOMER:
-                        tradeForm.setCustomerParty(tradeForm.getCustomerParty().setCurrency(currency, amount));
-                        success = tradeForm.getCustomerParty().currencies.containsKey(currency);
-                        if(success)
-                            success = (amount.compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0);
-                        break;
-                }
+            TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Bad tradeform data!"));
 
-                DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            switch(partyType) {
+                case OWNER:
+                    tradeForm.setOwnerParty(tradeForm.getOwnerParty().setCurrency(currency, amount));
+
+                    if(tradeForm.getOwnerParty().currencies.containsKey(currency))
+                        success = amount.compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0;
+                    else
+                        success = amount.compareTo(BigDecimal.ZERO) == 0;
+                    break;
+
+                case CUSTOMER:
+                    tradeForm.setCustomerParty(tradeForm.getCustomerParty().setCurrency(currency, amount));
+
+                    if(tradeForm.getCustomerParty().currencies.containsKey(currency))
+                        success = amount.compareTo(tradeForm.getCustomerParty().currencies.get(currency)) == 0;
+                    else
+                        success = amount.compareTo(BigDecimal.ZERO) == 0;
+                    break;
             }
+
+            DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);
