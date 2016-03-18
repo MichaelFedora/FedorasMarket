@@ -9,6 +9,7 @@ import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.trade.PartyType;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
+import io.github.michaelfedora.fedorasmarket.trade.TradeParty;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -26,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -81,24 +83,29 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
 
             TradeForm  tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Bad tradeform data!"));
 
+            Map<Currency,BigDecimal> currencies;
             BigDecimal old_val;
             switch (partyType) {
                 case OWNER:
-                    old_val = tradeForm.getOwnerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
+                    currencies = tradeForm.getOwnerParty().getCurrencies();
+                    old_val = currencies.getOrDefault(currency, BigDecimal.ZERO);
                     tradeForm.setOwnerParty(tradeForm.getOwnerParty().addCurrency(currency, amount));
 
-                    if(tradeForm.getOwnerParty().currencies.containsKey(currency))
-                        success = old_val.add(amount).compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0;
+                    currencies = tradeForm.getOwnerParty().getCurrencies();
+                    if(currencies.containsKey(currency))
+                        success = old_val.add(amount).compareTo(currencies.get(currency)) == 0;
                     else
                         success = old_val.add(amount).compareTo(BigDecimal.ZERO) == 0;
                     break;
 
                 case CUSTOMER:
-                    old_val = tradeForm.getCustomerParty().currencies.getOrDefault(currency, BigDecimal.ZERO);
+                    currencies = tradeForm.getCustomerParty().getCurrencies();
+                    old_val = currencies.getOrDefault(currency, BigDecimal.ZERO);
                     tradeForm.setCustomerParty(tradeForm.getCustomerParty().addCurrency(currency, amount));
 
-                    if(tradeForm.getCustomerParty().currencies.containsKey(currency))
-                        success = old_val.add(amount).compareTo(tradeForm.getCustomerParty().currencies.get(currency)) == 0;
+                    currencies = tradeForm.getCustomerParty().getCurrencies();
+                    if(currencies.containsKey(currency))
+                        success = old_val.add(amount).compareTo(currencies.get(currency)) == 0;
                     else
                         success = old_val.add(amount).compareTo(BigDecimal.ZERO) == 0;
                     break;

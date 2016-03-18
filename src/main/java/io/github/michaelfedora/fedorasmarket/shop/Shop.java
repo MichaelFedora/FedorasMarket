@@ -79,7 +79,7 @@ public class Shop {
 
         if(!opt_tec.isPresent())
             return Optional.empty();
-        if(!FedorasMarket.getChestNames().contains(opt_tec.get().getBlock().getName()))
+        if(!FedorasMarket.getChestTypes().contains(opt_tec.get().getBlock().getType()))
             return Optional.empty();
 
         return Optional.of(opt_tec.get().getInventory());

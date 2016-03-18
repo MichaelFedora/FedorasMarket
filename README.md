@@ -3,6 +3,6 @@
 
 A Market plugin, currently in dev, that [will include] chest shops, p2p trading, auctioning, and other things.
 
-**THIS DOES REQUIRE AN ECONOMY IMPLEMENTATION**; I use [EconomyLite](https://github.com/Flibio/EconomyLite).
+**THIS DOES REQUIRE AN ECONOMY IMPLEMENTATION**; I use [FedorasEconomy](https://github.com/MichaelFedora/FedorasEconomy)(no duh).
 
 Enjoy!

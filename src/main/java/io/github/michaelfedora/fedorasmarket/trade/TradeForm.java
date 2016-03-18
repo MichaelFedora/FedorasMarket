@@ -94,7 +94,7 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
 
         // Be VERY careful here; we need to make sure nothing gets transferred if there is an error later on
         if(owner != null) {
-            for (Map.Entry<Currency, BigDecimal> entry : this.ownerParty.currencies.entrySet()) {
+            for (Map.Entry<Currency, BigDecimal> entry : this.ownerParty.getCurrencies().entrySet()) {
                 result = owner.transfer(owner_v, entry.getKey(), entry.getValue(), thisAsCause());
 
                 if (result.getResult() != ResultType.SUCCESS)
@@ -102,7 +102,7 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
             }
         }
 
-        for(Map.Entry<Currency, BigDecimal> entry : this.customerParty.currencies.entrySet()) {
+        for(Map.Entry<Currency, BigDecimal> entry : this.customerParty.getCurrencies().entrySet()) {
             result =  customer.transfer(customer_v, entry.getKey(), entry.getValue(), thisAsCause());
 
             if(result.getResult() != ResultType.SUCCESS)

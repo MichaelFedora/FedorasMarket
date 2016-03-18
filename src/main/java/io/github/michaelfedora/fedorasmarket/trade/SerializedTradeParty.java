@@ -12,8 +12,13 @@ import java.util.Optional;
  * Created by Michael on 3/3/2016.
  */
 public class SerializedTradeParty implements FmSerializedData<TradeParty> {
-    public final Map<String,Integer> items = new HashMap<>();
-    public final Map<String,BigDecimal> currencies = new HashMap<>();
+    public final Map<String,Integer> items;
+    public final Map<String,BigDecimal> currencies;
+
+    public SerializedTradeParty(Map<String,Integer> items, Map<String,BigDecimal> currencies) {
+        this.items = items;
+        this.currencies = currencies;
+    }
 
     @Override
     public Optional<TradeParty> safeDeserialize() {

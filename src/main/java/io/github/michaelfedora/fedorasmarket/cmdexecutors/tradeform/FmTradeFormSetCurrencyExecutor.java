@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -81,12 +82,14 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
 
             TradeForm tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Bad tradeform data!"));
 
+            Map<Currency,BigDecimal> currencies;
             switch(partyType) {
                 case OWNER:
                     tradeForm.setOwnerParty(tradeForm.getOwnerParty().setCurrency(currency, amount));
 
-                    if(tradeForm.getOwnerParty().currencies.containsKey(currency))
-                        success = amount.compareTo(tradeForm.getOwnerParty().currencies.get(currency)) == 0;
+                    currencies = tradeForm.getOwnerParty().getCurrencies();
+                    if(currencies.containsKey(currency))
+                        success = amount.compareTo(currencies.get(currency)) == 0;
                     else
                         success = amount.compareTo(BigDecimal.ZERO) == 0;
                     break;
@@ -94,8 +97,9 @@ public class FmTradeFormSetCurrencyExecutor extends FmExecutorBase {
                 case CUSTOMER:
                     tradeForm.setCustomerParty(tradeForm.getCustomerParty().setCurrency(currency, amount));
 
-                    if(tradeForm.getCustomerParty().currencies.containsKey(currency))
-                        success = amount.compareTo(tradeForm.getCustomerParty().currencies.get(currency)) == 0;
+                    currencies = tradeForm.getCustomerParty().getCurrencies();
+                    if(currencies.containsKey(currency))
+                        success = amount.compareTo(currencies.get(currency)) == 0;
                     else
                         success = amount.compareTo(BigDecimal.ZERO) == 0;
                     break;

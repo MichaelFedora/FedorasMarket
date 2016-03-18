@@ -12,7 +12,6 @@ import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.depot.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier.FmModifierExecutor;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier.FmModifierHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeHelpExecutor;
@@ -31,7 +30,8 @@ import org.slf4j.Logger;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
@@ -43,11 +43,13 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.user.UserStorageService;
-import org.spongepowered.api.text.Text;
 
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * The main class yo!
+ */
 @Updatifier(repoName = "FedorasMarket", repoOwner = "MichaelFedora", version = PluginInfo.VERSION)
 @Plugin(id = PluginInfo.ID, name = PluginInfo.NAME, version = PluginInfo.VERSION, description = PluginInfo.DESCRIPTION, authors = PluginInfo.AUTHORS)
 public class FedorasMarket {
@@ -95,8 +97,8 @@ public class FedorasMarket {
         return Optional.empty();
     }
 
-    private List<String> chestNames = new ArrayList<>();
-    public static List<String> getChestNames() { return instance.chestNames; }
+    private Set<BlockType> chestTypes = new HashSet<>();
+    public static Set<BlockType> getChestTypes() { return instance.chestTypes; }
 
     private int maxItemStacks = 36; // 9 (columns) * 4 (rows) = 36 (slots)
     public static int getMaxItemStacks() { return instance.maxItemStacks; }
@@ -119,16 +121,15 @@ public class FedorasMarket {
         game = Sponge.getGame();
 
         //TODO: Add read-config for chest names
-        chestNames.add("minecraft:chest");
-        chestNames.add("minecraft:trapped_chest");
+        chestTypes.add(BlockTypes.CHEST);
+        chestTypes.add(BlockTypes.TRAPPED_CHEST);
+
+        registerCommands();
 
         getLogger().info("== == FIN == ==");
     }
 
-    @Listener
-    public void onPostInit(GamePostInitializationEvent gpie) {
-
-        getLogger().info("== " + PluginInfo.NAME + " - GamePostInitialization ==");
+    private void registerCommands() {
 
         subCommands = new LinkedHashMap<>();
         grandChildCommands = new LinkedHashMap<>();
@@ -264,8 +265,6 @@ public class FedorasMarket {
         /// === Main Command
 
         Sponge.getCommandManager().register(this, FmExecutor.create(subCommands), FmExecutor.ALIASES);
-
-        getLogger().info("== == FIN == ==");
     }
 
     @Listener

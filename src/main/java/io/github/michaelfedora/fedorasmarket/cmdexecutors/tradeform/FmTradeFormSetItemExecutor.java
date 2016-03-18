@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -79,18 +80,21 @@ public class FmTradeFormSetItemExecutor extends FmExecutorBase {
             if(resultSet.next()) {
                 tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
 
+                Map<ItemType, Integer> items;
                 switch(partyType) {
                     case OWNER:
                         tradeForm.setOwnerParty(tradeForm.getOwnerParty().setItem(itemType, amount));
-                        success = tradeForm.getOwnerParty().items.containsKey(itemType);
-                        if(success)
-                            success = (amount == tradeForm.getOwnerParty().items.get(itemType));
+
+                        items = tradeForm.getOwnerParty().getItems();
+                        if(items.containsKey(itemType))
+                            success = (amount == items.get(itemType));
                         break;
                     case CUSTOMER:
                         tradeForm.setCustomerParty(tradeForm.getCustomerParty().setItem(itemType, amount));
-                        success = tradeForm.getCustomerParty().items.containsKey(itemType);
-                        if(success)
-                            success = (amount == tradeForm.getCustomerParty().items.get(itemType));
+
+                        items = tradeForm.getCustomerParty().getItems();
+                        if(items.containsKey(itemType))
+                            success = (amount == items.get(itemType));
                         break;
                 }
 

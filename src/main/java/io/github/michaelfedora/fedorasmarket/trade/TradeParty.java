@@ -18,23 +18,24 @@ import java.util.Set;
  */
 public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
-    public Map<ItemType,Integer> items = new HashMap<>();
-    public Map<Currency,BigDecimal> currencies = new HashMap<>();
+    private Map<ItemType,Integer> items = new HashMap<>();
+    private Map<String,BigDecimal> currencies = new HashMap<>();
 
     public TradeParty() { }
 
     public SerializedTradeParty serialize() {
-        SerializedTradeParty data = new SerializedTradeParty();
+
+        Map<String,Integer> data_items = new HashMap<>();
 
         for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
-            data.items.put(entry.getKey().getId(), entry.getValue());
+            data_items.put(entry.getKey().getId(), entry.getValue());
         }
 
-        for(Map.Entry<Currency,BigDecimal> entry : this.currencies.entrySet()) {
-            data.currencies.put(entry.getKey().getDisplayName().toPlain(), entry.getValue());
-        }
+        //for(Map.Entry<String,BigDecimal> entry : this.currencies.entrySet()) {
+        //    data.currencies.put(entry.getKey(), entry.getValue());
+        //}
 
-        return data;
+        return new SerializedTradeParty(data_items, this.currencies);
     }
 
     public static TradeParty fromSerializedData(SerializedTradeParty data) {
@@ -50,11 +51,11 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
         Set<Currency> currencies = FedorasMarket.getEconomyService().getCurrencies();
 
-        data.currencies.entrySet().forEach(
-                (e) -> currencies.forEach(
+        data.currencies.forEach(
+                (k, v) -> currencies.forEach(
                         (c) -> {
-                            if(e.getKey().equals(c.getDisplayName().toPlain()))
-                                tradeParty.addCurrency(c, e.getValue());
+                            if(k.equals(c.getId()))
+                                tradeParty.addCurrency(c, v);
                         }
                 )
         );
@@ -69,7 +70,7 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         switch(filter) {
 
             case CURRENCY:
-                return (new TradeParty()).setCurrencies(this.currencies);
+                return (new TradeParty()).setCurrencies_internal(this.currencies);
 
             case ITEM:
                 return (new TradeParty()).setItems(this.items);
@@ -122,9 +123,9 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
         Map<ItemType, Integer> newItems = new HashMap<>();
 
-        items.entrySet().forEach((e) -> {
-            if(e.getValue() > 0)
-                newItems.put(e.getKey(), e.getValue());
+        items.forEach((k, v) -> {
+            if(v > 0)
+                newItems.put(k, v);
         });
 
         items = newItems;
@@ -134,14 +135,14 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
 
     public TradeParty addCurrency(Currency currency, BigDecimal amt) {
 
-        if(this.currencies.containsKey(currency)) {
-            amt = amt.add(this.currencies.get(currency));
+        if(this.currencies.containsKey(currency.getId())) {
+            amt = amt.add(this.currencies.get(currency.getId()));
         }
 
         if(amt.compareTo(BigDecimal.ZERO) < 0)
             amt = BigDecimal.ZERO;
 
-        this.currencies.put(currency, amt);
+        this.currencies.put(currency.getId(), amt);
 
         return this;
     }
@@ -151,25 +152,25 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         if(amt.compareTo(BigDecimal.ZERO) < 0)
             return this;
 
-        this.currencies.put(currency, amt);
+        this.currencies.put(currency.getId(), amt);
 
         return this;
     }
 
     public TradeParty removeCurrency(Currency currency) {
 
-        this.currencies.remove(currency);
+        this.currencies.remove(currency.getId());
 
         return this;
     }
 
     private TradeParty cleanCurrencies() {
 
-        Map<Currency, BigDecimal> newCurrencies = new HashMap<>();
+        Map<String, BigDecimal> newCurrencies = new HashMap<>();
 
-        currencies.entrySet().forEach((e) -> {
-            if (e.getValue().compareTo(BigDecimal.ZERO) > 0)
-                newCurrencies.put(e.getKey(), e.getValue());
+        currencies.forEach((k, v) -> {
+            if (v.compareTo(BigDecimal.ZERO) > 0)
+                newCurrencies.put(k, v);
         });
 
         currencies = newCurrencies;
@@ -192,7 +193,39 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         return this;
     }
 
+    public Map<Currency, BigDecimal> getCurrencies() {
+        Map<Currency, BigDecimal> curr = new HashMap<>();
+
+        Set<Currency> currencies = FedorasMarket.getEconomyService().getCurrencies();
+
+        this.currencies.forEach(
+                (k, v) -> currencies.forEach(
+                        (c) -> {
+                            if(k.equals(c.getId()))
+                                curr.put(c, v);
+                        }
+                )
+        );
+
+        return curr;
+    }
+
+    public Map<ItemType, Integer> getItems() {
+        return items;
+    }
+
     public TradeParty setCurrencies(Map<Currency,BigDecimal> currencies) {
+
+        this.currencies.clear();
+
+        currencies.forEach((k, v) -> {
+            this.currencies.put(k.getId(), v);
+        });
+
+        return this;
+    }
+
+    private TradeParty setCurrencies_internal(Map<String, BigDecimal> currencies) {
 
         this.currencies = currencies;
 
@@ -206,7 +239,7 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         sb.append("items: {");
 
         int i = 0;
-        for(Map.Entry<ItemType,Integer> entry : this.items.entrySet()) {
+        for(Map.Entry<ItemType, Integer> entry : this.items.entrySet()) {
             sb.append(entry.getKey().getName()).append("=").append(entry.getValue());
             if(++i < this.items.entrySet().size()) {
                 sb.append(", ");
@@ -216,7 +249,7 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
         sb.append("}, currencies: {");
 
         i = 0;
-        for(Map.Entry<Currency,BigDecimal> entry : this.currencies.entrySet()) {
+        for(Map.Entry<Currency, BigDecimal> entry : this.getCurrencies().entrySet()) {
             sb.append(entry.getKey().getDisplayName().toPlain()).append("=").append(entry.getValue());
             if(++i < this.currencies.entrySet().size()) {
                 sb.append("; ");

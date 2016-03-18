@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -78,21 +79,28 @@ public class FmTradeFormAddItemExecutor extends FmExecutorBase {
             if(resultSet.next()) {
                 tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().get();
 
+                Map<ItemType, Integer> items;
                 int old_amt;
                 switch(partyType) {
                     case OWNER:
-                        old_amt = tradeForm.getOwnerParty().items.getOrDefault(itemType, 0);
+                        items = tradeForm.getOwnerParty().getItems();
+                        old_amt = items.getOrDefault(itemType, 0);
+
                         tradeForm.setOwnerParty(tradeForm.getOwnerParty().addItem(itemType, amount));
-                        success = tradeForm.getOwnerParty().items.containsKey(itemType);
-                        if(success)
-                            success = (old_amt + amount == tradeForm.getOwnerParty().items.get(itemType));
+
+                        items = tradeForm.getOwnerParty().getItems();
+                        if(items.containsKey(itemType))
+                            success = (old_amt + amount == items.get(itemType));
                         break;
                     case CUSTOMER:
-                        old_amt = tradeForm.getCustomerParty().items.getOrDefault(itemType, 0);
+                        items = tradeForm.getCustomerParty().getItems();
+                        old_amt = items.getOrDefault(itemType, 0);
+
                         tradeForm.setCustomerParty(tradeForm.getCustomerParty().addItem(itemType, amount));
-                        success = tradeForm.getCustomerParty().items.containsKey(itemType);
-                        if(success)
-                            success = (old_amt + amount == tradeForm.getCustomerParty().items.get(itemType));
+
+                        items = tradeForm.getCustomerParty().getItems();
+                        if(items.containsKey(itemType))
+                            success = (old_amt + amount == items.get(itemType));
                         break;
                 }
 
