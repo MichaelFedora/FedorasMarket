@@ -17,8 +17,7 @@ import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.FmTradeExecutor;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.FmTradeHelpExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
@@ -201,6 +200,13 @@ public class FedorasMarket {
         LinkedHashMap<List<String>, CommandSpec> tradeCommands = new LinkedHashMap<>();
 
         tradeCommands.put(FmTradeHelpExecutor.ALIASES, FmTradeHelpExecutor.create());
+        //tradeCommands.put(FmTradeListExecutor.ALIASES, FmTradeListExecutor.create());
+        //tradeCommands.put(FmTradeAcceptExecutor.ALIASES, FmTradeAcceptExecutor.create());
+        //tradeCommands.put(FmTradeDenyExecutor.ALIASES, FmTradeDenyExecutor.create());
+        tradeCommands.put(FmTradeSendExecutor.ALIASES, FmTradeSendExecutor.create());
+        tradeCommands.put(FmTradeCancelExecutor.ALIASES, FmTradeCancelExecutor.create());
+        tradeCommands.put(FmTradeNegotiateExecutor.ALIASES, FmTradeNegotiateExecutor.create());
+
 
         subCommands.put(FmTradeExecutor.ALIASES, FmTradeExecutor.create(tradeCommands));
 
