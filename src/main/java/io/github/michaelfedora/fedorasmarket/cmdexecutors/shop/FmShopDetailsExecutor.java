@@ -1,15 +1,15 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.persistance.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
@@ -17,11 +17,11 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.block.InteractBlockEvent;
+import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -55,13 +55,20 @@ public class FmShopDetailsExecutor extends FmExecutorBase {
 
     private void printShopReferenceNice(CommandSource src, ShopReference shopReference, Object data) {
 
-        String author_name;
+        String author_name = "";
 
-        Optional<User> opt_user = FedorasMarket.getUserStorageService().get(shopReference.author);
-        if(opt_user.isPresent())
-            author_name = opt_user.get().getName();
-        else
+        Optional<UserStorageService> opt_uss = Sponge.getServiceManager().provide(UserStorageService.class);
+        if(opt_uss.isPresent()) {
+
+            Optional<User> opt_user = opt_uss.get().get(shopReference.author);
+
+            if(opt_user.isPresent())
+                author_name = opt_user.get().getName();
+        }
+
+        if(author_name.equals("")){
             author_name = shopReference.author.toString();
+        }
 
         src.sendMessage(Text.of(TextColors.BLUE, "Made by: ", TextColors.WHITE, author_name, TextColors.GREEN, ", ",
                 TextColors.BLUE, "Shop: [", TextColors.WHITE, shopReference.instance, TextColors.BLUE, "]", TextColors.GREEN, ", ",

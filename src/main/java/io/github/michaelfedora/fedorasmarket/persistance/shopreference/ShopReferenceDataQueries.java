@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.data.shopreference;
+package io.github.michaelfedora.fedorasmarket.persistance.shopreference;
 
 import static org.spongepowered.api.data.DataQuery.of;
 

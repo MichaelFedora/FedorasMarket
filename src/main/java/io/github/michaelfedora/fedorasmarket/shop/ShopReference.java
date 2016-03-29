@@ -1,6 +1,6 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataQueries;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataQueries;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.data.MemoryDataContainer;

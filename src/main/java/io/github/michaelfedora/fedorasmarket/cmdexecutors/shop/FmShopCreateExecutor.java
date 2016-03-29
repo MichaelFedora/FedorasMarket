@@ -1,8 +1,8 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;

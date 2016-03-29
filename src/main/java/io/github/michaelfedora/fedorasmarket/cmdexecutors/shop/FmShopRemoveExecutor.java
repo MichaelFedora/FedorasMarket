@@ -2,7 +2,7 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.persistance.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;

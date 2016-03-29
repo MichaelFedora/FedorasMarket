@@ -16,6 +16,10 @@ repositories {
         name = 'jitpack'
         url = 'https://jitpack.io'
     }
+    maven {
+        name = 'minecrell'
+        url = 'http://repo.minecrell.net/releases'
+    }
 }
 
 configurations {
@@ -26,11 +30,12 @@ configurations {
 dependencies {
     compile 'org.spongepowered:spongeapi:4.1.0-SNAPSHOT'
     shade 'com.github.Flibio:Updatifier:v1.4.0:api'
+    shade 'net.minecrell.mcstats:statslite-sponge:0.2.2'
 }
 
 jar {
     manifest {
-        attributes  'Implementation-Title': 'FedorasMarket',
+        attributes  'Implementation-Title': archivesBaseName,
                 'Implementation-Version': version
     }
     configurations.shade.copyRecursive().setTransitive(false).each { artifact -> from (zipTree(artifact))}

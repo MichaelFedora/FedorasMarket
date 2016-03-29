@@ -22,12 +22,12 @@ import java.util.Map;
  */
 public class FmExecutor extends FmExecutorBase {
 
-    public static final List<String> ALIASES = Arrays.asList("fedorasmarket", "fm");
+    public static final List<String> ALIASES = Arrays.asList("fm", "fedorasmarket");
     public static final String PERM = PluginInfo.DATA_ROOT;
 
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
-                .description(Text.of(PluginInfo.NAME + " base command (displays plugin info)"))
+                .description(Text.of("Root command (displays plugin info)"))
                 .permission(PERM + ".use")
                 .children(children)
                 .executor(new FmExecutor())
@@ -58,7 +58,7 @@ public class FmExecutor extends FmExecutorBase {
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
         src.sendMessage(Text.of(TextColors.AQUA, PluginInfo.NAME, " ", TextColors.GRAY, "Version: ",
-                TextColors.GOLD, FedorasMarket.getGame().getPluginManager().getPlugin(PluginInfo.ID).get().getVersion().get()));
+                TextColors.GOLD, PluginInfo.VERSION));
         return CommandResult.success();
     }
 }

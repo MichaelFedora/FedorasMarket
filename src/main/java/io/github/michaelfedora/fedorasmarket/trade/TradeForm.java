@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedorasmarket.trade;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.item.ItemType;
@@ -165,7 +166,7 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
 
     private boolean finishApply(TradeActiveParty owner, TradeActiveParty customer, TradeActiveParty owner_v, TradeActiveParty customer_v) {
 
-        EconomyService eco = FedorasMarket.getEconomyService();
+        //EconomyService EconomyService eco = FedorasMarket.getEconomyService();
 
         finishApplyCurrency(owner.account, customer.account, owner_v.account, customer_v.account);
 
@@ -187,6 +188,7 @@ public class TradeForm implements FmSerializable<SerializedTradeForm> {
      * @return whether or not it succeeded
      */
     public boolean apply(TradeActiveParty owner, TradeActiveParty customer) {
+
         EconomyService eco = FedorasMarket.getEconomyService();
 
         TradeActiveParty owner_v;

@@ -18,31 +18,36 @@ import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTrad
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.shop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.trade.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.*;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ImmutableShopReferenceData;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceBuilder;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
+import io.github.michaelfedora.fedorasmarket.config.FmConfig;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ImmutableShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceBuilder;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.listeners.PlayerInteractListener;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import me.flibio.updatifier.Updatifier;
+import net.minecrell.mcstats.SpongeStatsLite;
 import org.slf4j.Logger;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
+import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
-import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.user.UserStorageService;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -63,49 +68,37 @@ public class FedorasMarket {
     private Logger logger;
     public static Logger getLogger() { return instance.logger; }
 
+    private ConsoleSource console;
+    public static ConsoleSource getConsole() { return instance.console; }
+
     @Inject
-    @ConfigDir(sharedRoot = false)
-    private Path configDir; //TODO: Implement config
-    public static Path getConfigDir() { return instance.configDir; }
+    private SpongeStatsLite stats;
+
+    @Inject
+    @ConfigDir(sharedRoot = true)
+    private Path sharedConfigDir; //TODO: Implement config
+    public static Path getSharedConfigDir() { return instance.sharedConfigDir; }
 
     private EconomyService economyService;
     public static EconomyService getEconomyService() { return instance.economyService; }
-
-    private UserStorageService userStorageService;
-    public static UserStorageService getUserStorageService() { return instance.userStorageService; }
 
     @Listener
     public void onChangeServiceProvider(ChangeServiceProviderEvent event) {
         if(event.getService().equals(EconomyService.class)) {
             economyService = (EconomyService) event.getNewProviderRegistration().getProvider();
-        } else if(event.getService().equals(UserStorageService.class)) {
-            userStorageService = (UserStorageService) event.getNewProviderRegistration().getProvider();
         }
     }
 
-    private Game game;
-    public static Game getGame() { return instance.game; }
-
-    private LinkedHashMap<List<String>, CommandSpec> subCommands;
-    public static LinkedHashMap<List<String>, CommandSpec> getSubCommands() { return instance.subCommands; }
-    private HashMap<String, LinkedHashMap<List<String>, CommandSpec>> grandChildCommands;
-    public static Optional<LinkedHashMap<List<String>, CommandSpec>> getGrandChildCommands(String key) {
-
-        if(instance.grandChildCommands.containsKey(key))
-            return Optional.of(instance.grandChildCommands.get(key));
-
-        return Optional.empty();
+    public static final LinkedHashMap<List<String>, CommandSpec> subCommands = new LinkedHashMap<>();;
+    public static final HashMap<String, LinkedHashMap<List<String>, CommandSpec>> grandChildCommands = new HashMap<>();
+    public static Optional<LinkedHashMap<List<String>, CommandSpec>> getGrandChildCommands(String name) {
+        return Optional.ofNullable(grandChildCommands.get(name));
     }
-
-    private Set<BlockType> chestTypes = new HashSet<>();
-    public static Set<BlockType> getChestTypes() { return instance.chestTypes; }
-
-    private int maxItemStacks = 36; // 9 (columns) * 4 (rows) = 36 (slots)
-    public static int getMaxItemStacks() { return instance.maxItemStacks; }
 
     @Listener
     public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
+        //this.stats.start();
 
         Sponge.getEventManager().registerListeners(this, new PlayerInteractListener());
 
@@ -116,27 +109,35 @@ public class FedorasMarket {
     @Listener
     public void onInit(GameInitializationEvent gie) {
 
-        getLogger().info("== " + PluginInfo.NAME + " -- GameInitialization ==");
+        this.console = Sponge.getServer().getConsole();
 
-        game = Sponge.getGame();
+        console.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "===== ",
+                TextStyles.RESET, TextColors.AQUA, PluginInfo.NAME, TextColors.GRAY, " v", TextColors.YELLOW, PluginInfo.VERSION, TextColors.RESET, ": Initializing!",
+                TextStyles.BOLD, TextColors.GREEN, " ====="));
 
-        //TODO: Add read-config for chest names
-        chestTypes.add(BlockTypes.CHEST);
-        chestTypes.add(BlockTypes.TRAPPED_CHEST);
+        FmConfig.initialize();
+        console.sendMessage(Text.of("MaxItemStacks: ", FmConfig.getMaxItemStacks()));
+        console.sendMessage(Text.of("ValidShopBlockTypes: ", FmConfig.getValidShopBlockTypes()));
 
         registerCommands();
 
-        getLogger().info("== == FIN == ==");
+        DatabaseManager.initialize();
+
+        if(FmConfig.getCleanOnStartup())
+            FmShopCleanExecutor.cleanAll();
+
+        console.sendMessage(Text.of(TextStyles.BOLD, TextColors.GREEN, "===== ",
+                TextStyles.RESET, TextColors.AQUA, PluginInfo.NAME, TextColors.GRAY, " v", TextColors.YELLOW, PluginInfo.VERSION, TextColors.RESET, ": Done!",
+                TextStyles.BOLD, TextColors.GREEN, " ====="));
     }
 
     private void registerCommands() {
 
-        subCommands = new LinkedHashMap<>();
-        grandChildCommands = new LinkedHashMap<>();
-
         /// === Sub Commands
 
         subCommands.put(FmHelpExecutor.ALIASES, FmHelpExecutor.create());
+        subCommands.put(FmGetConfigExecutor.ALIASES, FmGetConfigExecutor.create());
+        subCommands.put(FmSetConfigExecutor.ALIASES, FmSetConfigExecutor.create());
         subCommands.put(FmSetAliasExecutor.ALIASES, FmSetAliasExecutor.create());
         subCommands.put(FmTipsExecutor.ALIASES, FmTipsExecutor.create());
 
@@ -267,7 +268,7 @@ public class FedorasMarket {
         Sponge.getCommandManager().register(this, FmExecutor.create(subCommands), FmExecutor.ALIASES);
     }
 
-    @Listener
+    /*@Listener
     public void onLoadComplete(GameLoadCompleteEvent glce) {
         getLogger().info("== " + PluginInfo.NAME + " - GameLoadComplete ==");
 
@@ -276,5 +277,5 @@ public class FedorasMarket {
         FmShopCleanExecutor.cleanAll();
 
         getLogger().info("== == FIN == ==");
-    }
+    }*/
 }

@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedorasmarket.data;
+package io.github.michaelfedora.fedorasmarket.persistance;
 
 import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;

@@ -1,6 +1,6 @@
-package io.github.michaelfedora.fedorasmarket.data.shopreference;
+package io.github.michaelfedora.fedorasmarket.persistance.shopreference;
 
-import static io.github.michaelfedora.fedorasmarket.data.FmDataKeys.SHOP_REFERENCE;
+import static io.github.michaelfedora.fedorasmarket.persistance.FmDataKeys.SHOP_REFERENCE;
 
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import org.spongepowered.api.data.DataHolder;

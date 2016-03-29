@@ -110,7 +110,7 @@ public class FmHelpExecutor extends FmExecutorBase {
 
     public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException {
 
-        helpFunc(src, ctx, FedorasMarket.getSubCommands(), "");
+        helpFunc(src, ctx, FedorasMarket.subCommands, "");
 
         return CommandResult.success();
     }

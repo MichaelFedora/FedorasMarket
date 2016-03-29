@@ -20,7 +20,7 @@ public final class DatabaseManager {
     private static SqlService SQL;
     public static javax.sql.DataSource getDataSource(String jdbcUrl) throws SQLException {
         if(SQL == null)
-            SQL = Sponge.getServiceManager().provide(SqlService.class).get();
+            SQL = Sponge.getServiceManager().provide(SqlService.class).orElseThrow(() -> new SQLException("Could not 'get' SqlService!"));
 
         return SQL.getDataSource(jdbcUrl);
     }
@@ -31,7 +31,7 @@ public final class DatabaseManager {
 
     public static void initialize() {
 
-        try(Connection conn = getDataSource(DB_ID).getConnection()) {
+        try(Connection conn = getConnection()) {
 
             conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + DB_TABLE + DatabaseQuery.makeConstructor()).execute();
 

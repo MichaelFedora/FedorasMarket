@@ -1,9 +1,10 @@
 package io.github.michaelfedora.fedorasmarket.shop;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
-import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceData;
-import io.github.michaelfedora.fedorasmarket.data.shopreference.ShopReferenceDataManipulatorBuilder;
+import io.github.michaelfedora.fedorasmarket.config.FmConfig;
+import io.github.michaelfedora.fedorasmarket.persistance.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceData;
+import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
@@ -79,7 +80,7 @@ public class Shop {
 
         if(!opt_tec.isPresent())
             return Optional.empty();
-        if(!FedorasMarket.getChestTypes().contains(opt_tec.get().getBlock().getType()))
+        if(!FmConfig.getValidShopBlockTypes().contains(opt_tec.get().getBlock().getType()))
             return Optional.empty();
 
         return Optional.of(opt_tec.get().getInventory());

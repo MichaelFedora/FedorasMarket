@@ -4,6 +4,7 @@ import io.github.michaelfedora.fedorasmarket.FedorasMarket;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.GameRegistry;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.service.economy.Currency;
 
@@ -41,7 +42,7 @@ public class TradeParty implements FmSerializable<SerializedTradeParty> {
     public static TradeParty fromSerializedData(SerializedTradeParty data) {
         TradeParty tradeParty = new TradeParty();
 
-        GameRegistry gameRegistry = FedorasMarket.getGame().getRegistry();
+        GameRegistry gameRegistry = Sponge.getGame().getRegistry();
 
         for(Map.Entry<String,Integer> entry : data.items.entrySet()) {
             Optional<ItemType> opt_itemType = gameRegistry.getType(ItemType.class, entry.getKey());

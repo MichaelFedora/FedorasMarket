@@ -1,9 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.shop;
 
-import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform.FmTradeFormExecutor;
-import io.github.michaelfedora.fedorasmarket.data.FmDataKeys;
+import io.github.michaelfedora.fedorasmarket.persistance.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
@@ -13,7 +11,6 @@ import io.github.michaelfedora.fedorasmarket.shop.Shop;
 import io.github.michaelfedora.fedorasmarket.shop.ShopData;
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
 import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
