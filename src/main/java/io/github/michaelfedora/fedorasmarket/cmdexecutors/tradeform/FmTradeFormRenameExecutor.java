@@ -27,7 +27,8 @@ public class FmTradeFormRenameExecutor extends FmExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Rename a tradeform"))
                 .permission(PERM)
-                .arguments(GenericArguments.string(Text.of("name")))
+                .arguments(GenericArguments.string(Text.of("oldName")),
+                        GenericArguments.string(Text.of("newName")))
                 .executor(new FmTradeFormRenameExecutor())
                 .build();
     }

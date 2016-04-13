@@ -19,7 +19,7 @@ import java.util.UUID;
  */
 public class FmTradeCancelExecutor extends FmExecutorBase {
 
-    public static List<String> ALIASES = Arrays.asList("send", "s");
+    public static List<String> ALIASES = Arrays.asList("cancel", "rem");
 
     public static final String NAME = FmTradeExecutor.NAME + ' ' + ALIASES.get(0);
     public static final String PERM = FmTradeExecutor.PERM + '.' + ALIASES.get(0);

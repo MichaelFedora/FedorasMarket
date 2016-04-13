@@ -10,8 +10,10 @@ import com.google.inject.Inject;
 
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.auction.FmAuctionHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.depot.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier.FmModifierExecutor;
+import io.github.michaelfedora.fedorasmarket.cmdexecutors.modifier.FmModifierHelpExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop.*;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.quicktrade.FmQuickTradeHelpExecutor;
@@ -172,6 +174,7 @@ public class FedorasMarket {
 
         LinkedHashMap<List<String>, CommandSpec> modifierCommands = new LinkedHashMap<>();
 
+        modifierCommands.put(FmModifierHelpExecutor.ALIASES, FmModifierHelpExecutor.create());
         subCommands.put(FmModifierExecutor.ALIASES, FmModifierExecutor.create(modifierCommands));
 
         grandChildCommands.put(FmModifierExecutor.NAME, modifierCommands);
@@ -197,6 +200,20 @@ public class FedorasMarket {
 
         grandChildCommands.put(FmShopExecutor.NAME, shopCommands);
 
+        /// === QuickShop Commands
+
+        LinkedHashMap<List<String>, CommandSpec> quickShopCommands = new LinkedHashMap<>();
+
+        quickShopCommands.put(FmQuickShopHelpExecutor.ALIASES, FmQuickShopHelpExecutor.create());
+        quickShopCommands.put(FmQuickShopItemBuyExecutor.ALIASES, FmQuickShopItemBuyExecutor.create());
+        quickShopCommands.put(FmQuickShopItemSellExecutor.ALIASES, FmQuickShopItemSellExecutor.create());
+        quickShopCommands.put(FmQuickShopItemTradeExecutor.ALIASES, FmQuickShopItemTradeExecutor.create());
+        quickShopCommands.put(FmQuickShopCurrencyTradeExecutor.ALIASES, FmQuickShopCurrencyTradeExecutor.create());
+
+        subCommands.put(FmQuickShopExecutor.ALIASES, FmQuickShopExecutor.create(quickShopCommands));
+
+        grandChildCommands.put(FmQuickShopExecutor.NAME, quickShopCommands);
+
         /// === Trade Commands
 
         LinkedHashMap<List<String>, CommandSpec> tradeCommands = new LinkedHashMap<>();
@@ -213,20 +230,6 @@ public class FedorasMarket {
         subCommands.put(FmTradeExecutor.ALIASES, FmTradeExecutor.create(tradeCommands));
 
         grandChildCommands.put(FmTradeExecutor.NAME, tradeCommands);
-
-        /// === QuickShop Commands
-
-        LinkedHashMap<List<String>, CommandSpec> quickShopCommands = new LinkedHashMap<>();
-
-        quickShopCommands.put(FmQuickShopHelpExecutor.ALIASES, FmQuickShopHelpExecutor.create());
-        quickShopCommands.put(FmQuickShopItemBuyExecutor.ALIASES, FmQuickShopItemBuyExecutor.create());
-        quickShopCommands.put(FmQuickShopItemSellExecutor.ALIASES, FmQuickShopItemSellExecutor.create());
-        quickShopCommands.put(FmQuickShopItemTradeExecutor.ALIASES, FmQuickShopItemTradeExecutor.create());
-        quickShopCommands.put(FmQuickShopCurrencyTradeExecutor.ALIASES, FmQuickShopCurrencyTradeExecutor.create());
-
-        subCommands.put(FmQuickShopExecutor.ALIASES, FmQuickShopExecutor.create(quickShopCommands));
-
-        grandChildCommands.put(FmQuickShopExecutor.NAME, quickShopCommands);
 
         /// === QuickTrade Commands
 
@@ -245,6 +248,8 @@ public class FedorasMarket {
         /// === Auction Commands
 
         LinkedHashMap<List<String>, CommandSpec> auctionCommands = new LinkedHashMap<>();
+
+        auctionCommands.put(FmAuctionHelpExecutor.ALIASES, FmAuctionHelpExecutor.create());
 
         subCommands.put(FmAuctionExecutor.ALIASES, FmAuctionExecutor.create(auctionCommands));
 

@@ -23,10 +23,24 @@ public class FmTradeListExecutor extends FmExecutorBase {
     public static final String NAME = FmTradeExecutor.NAME + ' ' + ALIASES.get(0);
     public static final String PERM = FmTradeExecutor.PERM + '.' + ALIASES.get(0);
 
+    enum Selection {
+        SENT,
+        RECEIVED,
+        ALL;
+
+        public static final Map<String, Selection> choices = new HashMap<>();
+        static {
+            choices.put("sent", SENT);
+            choices.put("recieved", RECEIVED);
+            choices.put("all", ALL);
+        }
+    }
+
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Lists trade requests sent to you"))
                 .permission(PERM)
+                .arguments(GenericArguments.optional(GenericArguments.choices(Text.of("filter"), Selection.choices, true)))
                 .executor(new FmTradeListExecutor())
                 .build();
     }

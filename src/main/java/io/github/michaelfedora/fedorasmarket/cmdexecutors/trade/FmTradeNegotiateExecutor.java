@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class FmTradeNegotiateExecutor extends FmExecutorBase {
 
-    public static List<String> ALIASES = Arrays.asList("send", "s");
+    public static List<String> ALIASES = Arrays.asList("negotiate", "neg");
 
     public static final String NAME = FmTradeExecutor.NAME + ' ' + ALIASES.get(0);
     public static final String PERM = FmTradeExecutor.PERM + '.' + ALIASES.get(0);
