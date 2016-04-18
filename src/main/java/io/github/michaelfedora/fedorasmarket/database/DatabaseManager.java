@@ -68,6 +68,18 @@ public final class DatabaseManager {
         }
     }
 
+    /*
+    TODO: fix database layout
+
+    Database layout:
+    - Tablename: "type:name", contains it's own layout; e.x.
+     - [tradeform:00000-0000-00-0001] {"name", <data>}
+     - [modifier:<uuid>] {"name", <data>}
+     - [depot:server] {<idx>, <item_data>}
+     - [shop:1234-5678-91-01234] {<uuid>, <data>}
+     - [tradereq:4444-4656-87-3535] {<idx>, <data>}
+     */
+
     /**
      * Selects a number of values which match the given parameters, and has an additional entry if the user wants to specify
      * something more
