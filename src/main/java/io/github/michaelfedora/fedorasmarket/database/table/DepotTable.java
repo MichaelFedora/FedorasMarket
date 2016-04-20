@@ -15,6 +15,19 @@ import java.util.*;
  */
 public class DepotTable implements DatabaseTable<ItemStack, Integer> {
 
+    public enum Query {
+        IDX("idx", "integer"),
+        DATA("data", "other");
+
+        public final String v;
+        public final String type;
+
+        Query(String name, String type) {
+            this.v = name;
+            this.type = type;
+        }
+    }
+
     /**
      * Makes the table if it doesn't exist.
      *
@@ -23,7 +36,9 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
      */
     @Override
     public void makeIfNotExist(Connection conn, String id) throws SQLException {
-        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `depot:" + id + "`(idx integer), data other)").execute();
+        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `depot:" + id + "`" +
+                "(" + Query.IDX.v + " " + Query.IDX.type + ", " +
+                Query.DATA.v + Query.DATA.type + ")").execute();
     }
 
     /**
@@ -35,32 +50,30 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
      * @throws SQLException
      */
     @Override
-    public List<ItemStack> getAll(Connection conn, String id) throws SQLException {
-
-        makeIfNotExist(conn, id);
+    public Map<Integer, ItemStack> getAll(Connection conn, String id) throws SQLException {
         
-        List<ItemStack> list = new ArrayList<>();
+        Map<Integer, ItemStack> map = new HashMap<>();
 
-        String statement = "SELECT data FROM `depot:" + id + "`";
+        String statement = "SELECT * FROM `depot:" + id + "`";
 
         ResultSet resultSet = conn.prepareStatement(statement).executeQuery();
 
         Object data;
         while(resultSet.next()) {
 
-            data = resultSet.getObject("data");
+            data = resultSet.getObject(Query.DATA.v);
 
             if(!(data instanceof SerializedItemStack))
                 continue;
 
             try {
-                list.add(((SerializedItemStack) data).deserialize());
+                map.put(resultSet.getInt(Query.IDX.v), ((SerializedItemStack) data).deserialize());
             } catch (BadDataException e) {
                 // do nothing
             }
         }
 
-        return list;
+        return map;
     }
 
     /**
@@ -75,11 +88,9 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
     @Override
     public Optional<ItemStack> get(Connection conn, String id, Integer key) throws SQLException {
 
-        makeIfNotExist(conn, id);
-        
-        String statement = "SELECT data FROM `depot:" + id + "` WHERE key=?";
-
         int i = 0;
+        String statement = "SELECT " + Query.DATA.v + " FROM `depot:" + id + "` WHERE " + Query.IDX.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setInt(++i, key);
 
@@ -87,7 +98,7 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
         if(!resultSet.next())
             return Optional.empty();
 
-        Object data = resultSet.getObject("data");
+        Object data = resultSet.getObject(Query.DATA.v);
         if(!(data instanceof SerializedItemStack))
             return Optional.empty();
 
@@ -110,12 +121,12 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
      */
     @Override
     public boolean update(Connection conn, String id, Integer key, ItemStack value) throws SQLException {
-        
-        String statement = "UPDATE `depot:" + id + "` SET data=? WHERE name=?";
 
         int i = 0;
+        String statement = "UPDATE `depot:" + id + "` SET " + Query.DATA.v + "=? WHERE " + Query.IDX.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, value);
+        preparedStatement.setObject(++i, new SerializedItemStack(value));
         preparedStatement.setInt(++i, key);
 
         return preparedStatement.execute();
@@ -134,7 +145,7 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
     public boolean delete(Connection conn, String id, Integer key) throws SQLException {
         
         int i = 0;
-        String statement = "DELETE FROM `depot:" + id + "` WHERE name=?";
+        String statement = "DELETE FROM `depot:" + id + "` WHERE " + Query.IDX.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setInt(++i, key);
@@ -154,15 +165,13 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
      */
     @Override
     public boolean insert(Connection conn, String id, Integer key, ItemStack value) throws SQLException {
-
-        makeIfNotExist(conn, id);
         
         int i = 0;
-        String statement = "INSERT INTO `depot:" + id + "`(name, data) values (?, ?)";
+        String statement = "INSERT INTO `depot:" + id + "`(" + Query.IDX.v + ", " + Query.DATA.v + ") values (?, ?)";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setInt(++i, key);
-        preparedStatement.setObject(++i, value);
+        preparedStatement.setObject(++i, new SerializedItemStack(value));
 
         return preparedStatement.execute();
     }

@@ -13,6 +13,19 @@ import java.util.*;
  */
 public class ModifierTable implements DatabaseTable<ShopModifier, String> {
 
+    public enum Query {
+        NAME("name", "varchar(255)"),
+        DATA("data", "other");
+
+        public final String v;
+        public final String type;
+
+        Query(String name, String type) {
+            this.v = name;
+            this.type = type;
+        }
+    }
+
     /**
      * Makes the table if it doesn't exist.
      *
@@ -22,7 +35,9 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      */
     @Override
     public void makeIfNotExist(Connection conn, String id) throws SQLException {
-        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `modifier:" + id + "`(name varchar(255), data other)").execute();
+        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `modifier:" + id + "`" +
+                "(" + Query.NAME.v + " " + Query.NAME.type + ", " +
+                Query.DATA.v + Query.DATA.type + ")").execute();
     }
 
     /**
@@ -34,26 +49,26 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      * @throws SQLException
      */
     @Override
-    public List<ShopModifier> getAll(Connection conn, String id) throws SQLException {
+    public Map<String, ShopModifier> getAll(Connection conn, String id) throws SQLException {
 
-        List<ShopModifier> list = new ArrayList<>();
+        Map<String, ShopModifier> map = new HashMap<>();
 
-        String statement = "SELECT data FROM `modifier:" + id + "`";
+        String statement = "SELECT * FROM `modifier:" + id + "`";
 
         ResultSet resultSet = conn.prepareStatement(statement).executeQuery();
 
         Object data;
         while(resultSet.next()) {
 
-            data = resultSet.getObject("data");
+            data = resultSet.getObject(Query.DATA.v);
 
             if(!(data instanceof ShopModifier))
                 continue;
 
-            list.add((ShopModifier) data);
+            map.put(resultSet.getString(Query.NAME.v), (ShopModifier) data);
         }
 
-        return list;
+        return map;
     }
 
     /**
@@ -67,9 +82,10 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      */
     @Override
     public Optional<ShopModifier> get(Connection conn, String id, String key) throws SQLException {
-        String statement = "SELECT data FROM `modifier:" + id + "` WHERE key=?";
 
         int i = 0;
+        String statement = "SELECT " + Query.DATA.v + " FROM `modifier:" + id + "` WHERE " + Query.NAME.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setString(++i, key);
 
@@ -77,7 +93,7 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
         if(!resultSet.next())
             return Optional.empty();
 
-        return Optional.ofNullable(resultSet.getObject("data")).map(a -> (ShopModifier) a);
+        return Optional.ofNullable(resultSet.getObject(Query.DATA.v)).map(a -> (ShopModifier) a);
     }
 
     /**
@@ -92,9 +108,10 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      */
     @Override
     public boolean update(Connection conn, String id, String key, ShopModifier value) throws SQLException {
-        String statement = "UPDATE `modifier:" + id + "` SET data=? WHERE name=?";
 
         int i = 0;
+        String statement = "UPDATE `modifier:" + id + "` SET " + Query.DATA.v + "=? WHERE " + Query.NAME.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, value);
         preparedStatement.setString(++i, key);
@@ -113,8 +130,9 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      */
     @Override
     public boolean delete(Connection conn, String id, String key) throws SQLException {
+
         int i = 0;
-        String statement = "DELETE FROM `modifier:" + id + "` WHERE name=?";
+        String statement = "DELETE FROM `modifier:" + id + "` WHERE " + Query.NAME.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setString(++i, key);
@@ -134,8 +152,9 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      */
     @Override
     public boolean insert(Connection conn, String id, String key, ShopModifier value) throws SQLException {
+
         int i = 0;
-        String statement = "INSERT INTO `modifier:" + id + "`(name, data) values (?, ?)";
+        String statement = "INSERT INTO `modifier:" + id + "`(" + Query.NAME.v + ", " + Query.DATA.v + ") values (?, ?)";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setString(++i, key);

@@ -55,10 +55,9 @@ public class FmSetAliasExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            DatabaseManager.insert(conn, playerId, DatabaseCategory.USERDATA, "alias", new Holder<>(alias));
+            DatabaseManager.userdata.insert(conn, playerId.toString(), "alias", alias);
 
         } catch (SQLException e) {
-
             throw makeException("SQL Error", e, src);
         }
 

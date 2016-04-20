@@ -12,24 +12,21 @@ import java.util.UUID;
  */
 public class ShopReference implements DataSerializable {
 
-    public UUID author;
+    public String owner;
     public UUID instance;
 
     public ShopReference() {
-        author = null;
+        owner = null;
         instance = null;
     }
 
-    public ShopReference(UUID author, UUID instance) {
-        this.author = author;
+    public ShopReference(String owner, UUID instance) {
+        this.owner = owner;
         this.instance = instance;
     }
 
-    public ShopReference(String author, String instance) {
-        if(author != null)
-            this.author = UUID.fromString(author);
-        else
-            this.author = null;
+    public ShopReference(String owner, String instance) {
+        this.owner = owner;
         this.instance = UUID.fromString(instance);
     }
 
@@ -41,7 +38,7 @@ public class ShopReference implements DataSerializable {
     @Override
     public DataContainer toContainer() {
         return new MemoryDataContainer()
-                .set(ShopReferenceDataQueries.AUTHOR, this.author.toString())
+                .set(ShopReferenceDataQueries.AUTHOR, this.owner)
                 .set(ShopReferenceDataQueries.INSTANCE, this.instance.toString());
     }
 }

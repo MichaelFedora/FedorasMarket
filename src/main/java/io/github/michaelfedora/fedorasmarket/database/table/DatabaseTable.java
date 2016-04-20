@@ -2,7 +2,7 @@ package io.github.michaelfedora.fedorasmarket.database.table;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -27,7 +27,7 @@ public interface DatabaseTable<V, K> {
      * @return the list of values
      * @throws SQLException
      */
-    List<V> getAll(Connection conn, String id) throws SQLException;
+    Map<K, V> getAll(Connection conn, String id) throws SQLException;
 
     /**
      * Gets a specific data entry for a particular id and key.

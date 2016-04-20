@@ -1,6 +1,6 @@
 package io.github.michaelfedora.fedorasmarket.persistance.shopreference;
 
-import static io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataQueries.AUTHOR;
+import static io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataQueries.OWNER;
 import static io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataQueries.INSTANCE;
 
 import io.github.michaelfedora.fedorasmarket.shop.ShopReference;
@@ -22,11 +22,11 @@ public class ShopReferenceBuilder extends AbstractDataBuilder<ShopReference> imp
 
     @Override
     public Optional<ShopReference> buildContent(DataView container) throws InvalidDataException {
-        if(!container.contains(AUTHOR, INSTANCE))
+        if(!container.contains(OWNER, INSTANCE))
             return Optional.empty();
 
         ShopReference data = new ShopReference(
-                container.getString(AUTHOR).get(),
+                container.getString(OWNER).get(),
                 container.getString(INSTANCE).get());
         return Optional.of(data);
     }

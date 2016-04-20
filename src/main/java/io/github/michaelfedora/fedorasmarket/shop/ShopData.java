@@ -19,9 +19,9 @@ public class ShopData implements FmSerializable<SerializedShopData> {
     protected TradeForm tradeForm;
     protected ShopModifier modifier;
     protected Location<World> location;
-    protected Optional<UUID> ownerId;
+    protected String ownerId;
 
-    public ShopData(TradeForm tradeForm, ShopModifier modifier, Location<World> location, Optional<UUID> ownerId) {
+    public ShopData(TradeForm tradeForm, ShopModifier modifier, Location<World> location, String ownerId) {
 
         if(!modifier.isValidWith(tradeForm.getTradeType())) {
             modifier = ShopModifier.NONE;
@@ -34,11 +34,11 @@ public class ShopData implements FmSerializable<SerializedShopData> {
     }
 
     public static ShopData asPlayer(TradeForm tradeForm, ShopModifier shopModifier, Location<World> location, UUID playerId) {
-        return new ShopData(tradeForm, shopModifier, location, Optional.of(playerId));
+        return new ShopData(tradeForm, shopModifier, location, playerId.toString());
     }
 
     public static ShopData asServer(TradeForm tradeForm, ShopModifier shopModifier, Location<World> location) {
-        return new ShopData(tradeForm, shopModifier, location, Optional.empty());
+        return new ShopData(tradeForm, shopModifier, location, "server");
     }
 
     public TradeForm getTradeForm() {
@@ -53,7 +53,7 @@ public class ShopData implements FmSerializable<SerializedShopData> {
         return this.location;
     }
 
-    public Optional<UUID> getOwnerId() {
+    public String getOwnerId() {
         return this.ownerId;
     }
 
@@ -73,10 +73,10 @@ public class ShopData implements FmSerializable<SerializedShopData> {
 
     public static ShopData fromSerializedData(SerializedShopData data) throws BadDataException {
         World world = Sponge.getServer().getWorld(data.worldId).orElseThrow(() -> new BadDataException("Could not fetch world [" + data.worldId + "]! Could not create ShopData instance!"));
-        return new ShopData(data.tradeFormData.deserialize(), data.modifier, new Location<>(world, data.position), Optional.ofNullable(data.playerId));
+        return new ShopData(data.tradeFormData.deserialize(), data.modifier, new Location<>(world, data.position), data.ownerId);
     }
 
     public String toString() {
-        return "tradeForm: {" + this.tradeForm + "}, modifier: {" + this.modifier + "}, location: {" + this.location + "}, ownerId: " + ownerId.orElse(null);
+        return "tradeForm: {" + this.tradeForm + "}, modifier: {" + this.modifier + "}, location: {" + this.location + "}, ownerId: \"" + ownerId + "\"";
     }
 }

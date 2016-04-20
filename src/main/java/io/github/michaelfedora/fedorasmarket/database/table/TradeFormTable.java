@@ -8,14 +8,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by Michael on 4/20/2016.
  */
 public class TradeFormTable implements DatabaseTable<TradeForm, String> {
+
+    public enum Query {
+        NAME("name", "varchar(255)"),
+        DATA("data", "other");
+
+        public final String v;
+        public final String type;
+
+        Query(String name, String type) {
+            this.v = name;
+            this.type = type;
+        }
+    }
 
     /**
      * Makes the table if it doesn't exist.
@@ -26,7 +37,9 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      */
     @Override
     public void makeIfNotExist(Connection conn, String id) throws SQLException {
-        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `tradeform:" + id + "`(name varchar(255), data other)").execute();
+        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `tradeform:" + id + "`" +
+                "(" + Query.NAME.v + " " + Query.NAME.type + ", " +
+                Query.DATA.v + Query.DATA.type + ")").execute();
     }
 
     /**
@@ -38,30 +51,30 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      * @throws SQLException
      */
     @Override
-    public List<TradeForm> getAll(Connection conn, String id) throws SQLException {
+    public Map<String, TradeForm> getAll(Connection conn, String id) throws SQLException {
 
-        List<TradeForm> list = new ArrayList<>();
+        Map<String, TradeForm> map = new HashMap<>();
 
-        String statement = "SELECT data FROM `tradeform:" + id + "`";
+        String statement = "SELECT * FROM `tradeform:" + id + "`";
 
         ResultSet resultSet = conn.prepareStatement(statement).executeQuery();
 
         Object data;
         while(resultSet.next()) {
 
-            data = resultSet.getObject("data");
+            data = resultSet.getObject(Query.DATA.v);
 
             if(!(data instanceof SerializedTradeForm))
                 continue;
 
             try {
-                list.add(((SerializedTradeForm) data).deserialize());
+                map.put(resultSet.getString(Query.NAME.v), ((SerializedTradeForm) data).deserialize());
             } catch (BadDataException e) {
                 // do nothing
             }
         }
 
-        return list;
+        return map;
     }
 
     /**
@@ -75,9 +88,10 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      */
     @Override
     public Optional<TradeForm> get(Connection conn, String id, String key) throws SQLException {
-        String statement = "SELECT data FROM `tradeform:" + id + "` WHERE key=?";
 
         int i = 0;
+        String statement = "SELECT " + Query.DATA.v + " FROM `tradeform:" + id + "` WHERE " + Query.NAME.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setString(++i, key);
 
@@ -85,7 +99,7 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
         if(!resultSet.next())
             return Optional.empty();
 
-        Object data = resultSet.getObject("data");
+        Object data = resultSet.getObject(Query.DATA.v);
         if(!(data instanceof SerializedTradeForm))
             return Optional.empty();
 
@@ -108,11 +122,12 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      */
     @Override
     public boolean update(Connection conn, String id, String key, TradeForm value) throws SQLException {
-        String statement = "UPDATE `tradeform:" + id + "` SET data=? WHERE name=?";
 
         int i = 0;
+        String statement = "UPDATE `tradeform:" + id + "` SET " + Query.DATA.v + "=? WHERE " + Query.NAME.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, value);
+        preparedStatement.setObject(++i, value.serialize());
         preparedStatement.setString(++i, key);
 
         return preparedStatement.execute();
@@ -129,8 +144,9 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      */
     @Override
     public boolean delete(Connection conn, String id, String key) throws SQLException {
+
         int i = 0;
-        String statement = "DELETE FROM `tradeform:" + id + "` WHERE name=?";
+        String statement = "DELETE FROM `tradeform:" + id + "` WHERE " + Query.NAME.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setString(++i, key);
@@ -150,12 +166,13 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      */
     @Override
     public boolean insert(Connection conn, String id, String key, TradeForm value) throws SQLException {
+
         int i = 0;
-        String statement = "INSERT INTO `tradeform:" + id + "`(name, data) values (?, ?)";
+        String statement = "INSERT INTO `tradeform:" + id + "`(" + Query.NAME.v + ", " + Query.DATA.v + ") values (?, ?)";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setString(++i, key);
-        preparedStatement.setObject(++i, value);
+        preparedStatement.setObject(++i, value.serialize());
 
         return preparedStatement.execute();
     }

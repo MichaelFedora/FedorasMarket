@@ -8,15 +8,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by Michael on 4/20/2016.
  */
 public class ShopTable implements DatabaseTable<ShopData, UUID> {
+
+    public enum Query {
+        ID("id", "uuid"),
+        DATA("data", "other");
+
+        public final String v;
+        public final String type;
+
+        Query(String name, String type) {
+            this.v = name;
+            this.type = type;
+        }
+    }
 
     /**
      * Makes the table if it doesn't exist.
@@ -27,7 +37,9 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      */
     @Override
     public void makeIfNotExist(Connection conn, String id) throws SQLException {
-        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `shop:" + id + "`(id uuid, data other)").execute();
+        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `shop:" + id + "`" +
+                "(" + Query.ID.v + " " + Query.ID.type + ", " +
+                Query.DATA.v + Query.DATA.type + ")").execute();
     }
 
     /**
@@ -39,30 +51,30 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      * @throws SQLException
      */
     @Override
-    public List<ShopData> getAll(Connection conn, String id) throws SQLException {
+    public Map<UUID, ShopData> getAll(Connection conn, String id) throws SQLException {
 
-        List<ShopData> list = new ArrayList<>();
+        Map<UUID, ShopData> map = new HashMap<>();
 
-        String statement = "SELECT data FROM `shop:" + id + "`";
+        String statement = "SELECT * FROM `shop:" + id + "`";
 
         ResultSet resultSet = conn.prepareStatement(statement).executeQuery();
 
         Object data;
         while(resultSet.next()) {
 
-            data = resultSet.getObject("data");
+            data = resultSet.getObject(Query.DATA.v);
 
             if(!(data instanceof SerializedShopData))
                 continue;
 
             try {
-                list.add(((SerializedShopData) data).deserialize());
-            } catch (BadDataException e) {
+                map.put((UUID) resultSet.getObject(Query.ID.v), ((SerializedShopData) data).deserialize());
+            } catch (Exception e) {
                 // do nothing
             }
         }
 
-        return list;
+        return map;
     }
 
     /**
@@ -76,9 +88,10 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      */
     @Override
     public Optional<ShopData> get(Connection conn, String id, UUID key) throws SQLException {
-        String statement = "SELECT data FROM `shop:" + id + "` WHERE id=?";
 
         int i = 0;
+        String statement = "SELECT " + Query.DATA.v + " FROM `shop:" + id + "` WHERE " + Query.ID.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, key);
 
@@ -86,7 +99,7 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
         if(!resultSet.next())
             return Optional.empty();
 
-        Object data = resultSet.getObject("data");
+        Object data = resultSet.getObject(Query.DATA.v);
         if(!(data instanceof SerializedShopData))
             return Optional.empty();
 
@@ -109,11 +122,12 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      */
     @Override
     public boolean update(Connection conn, String id, UUID key, ShopData value) throws SQLException {
-        String statement = "UPDATE `shop:" + id + "` SET data=? WHERE id=?";
 
         int i = 0;
+        String statement = "UPDATE `shop:" + id + "` SET " + Query.DATA.v + "=? WHERE " + Query.ID.v + "=?";
+
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, value);
+        preparedStatement.setObject(++i, value.serialize());
         preparedStatement.setObject(++i, key);
 
         return preparedStatement.execute();
@@ -130,8 +144,9 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      */
     @Override
     public boolean delete(Connection conn, String id, UUID key) throws SQLException {
+
         int i = 0;
-        String statement = "DELETE FROM `shop:" + id + "` WHERE id=?";
+        String statement = "DELETE FROM `shop:" + id + "` WHERE " + Query.ID.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, key);
@@ -151,12 +166,13 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      */
     @Override
     public boolean insert(Connection conn, String id, UUID key, ShopData value) throws SQLException {
+
         int i = 0;
-        String statement = "INSERT INTO `shop:" + id + "`(id, data) values (?, ?)";
+        String statement = "INSERT INTO `shop:" + id + "`(" + Query.ID.v + ", " + Query.DATA.v + ") values (?, ?)";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
         preparedStatement.setObject(++i, key);
-        preparedStatement.setObject(++i, value);
+        preparedStatement.setObject(++i, value.serialize());
 
         return preparedStatement.execute();
     }

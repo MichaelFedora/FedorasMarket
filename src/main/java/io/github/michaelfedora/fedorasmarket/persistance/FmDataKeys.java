@@ -16,6 +16,6 @@ import org.spongepowered.api.data.value.mutable.Value;
 public class FmDataKeys {
     public static final Key<Value<ShopReference>> SHOP_REFERENCE;
     static {
-        SHOP_REFERENCE = KeyFactory.makeSingleKey(ShopReference.class, Value.class, DataQuery.of(PluginInfo.DATA_ROOT + ".shop_reference"));
+        SHOP_REFERENCE = KeyFactory.makeSingleKey(ShopReference.class, Value.class, DataQuery.of(PluginInfo.DATA_ROOT + ".shopref"));
     }
 }

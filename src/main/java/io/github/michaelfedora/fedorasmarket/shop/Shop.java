@@ -29,6 +29,8 @@ import org.spongepowered.api.world.World;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,7 +58,7 @@ public class Shop {
     public ShopData getData() { return this.data; }
 
     public boolean isServerShop() {
-        return this.data.ownerId.isPresent();
+        return this.data.ownerId == "server";
     }
 
     public boolean shouldHaveInventory() {
@@ -92,7 +94,7 @@ public class Shop {
 
         EconomyService eco = FedorasMarket.getEconomyService();
 
-        return eco.getOrCreateAccount(this.data.ownerId.get()).map((a) -> (Account) a);
+        return eco.getOrCreateAccount(this.data.ownerId);
     }
 
     /**
@@ -116,37 +118,20 @@ public class Shop {
 
         // =====
 
-        ResultSet resultSet = DatabaseManager.selectAll(conn, data.ownerId.orElse(null), DatabaseCategory.SHOPDATA);
+        Map<UUID, ShopData> map = DatabaseManager.shop.getAll(conn, data.ownerId);
 
-        UUID instance;
-
-        boolean foundUnique;
-        while(true) { // find a unique uuid;
-
-            instance = UUID.randomUUID();
-            foundUnique = true;
-            while (resultSet.next()) {
-
-                if (instance.equals(resultSet.getObject(DatabaseQuery.NAME.v))) {
-                    foundUnique = false;
-                    break;
-                }
-            }
-
-            if (foundUnique)
-                break;
-        }
-
-        shop.instance = instance;
+        shop.instance = UUID.randomUUID();
+        while(map.containsKey(shop.instance))
+            shop.instance = UUID.randomUUID();
 
         // =====
 
         ShopReferenceDataManipulatorBuilder builder = (ShopReferenceDataManipulatorBuilder) Sponge.getDataManager().getManipulatorBuilder(ShopReferenceData.class).get();
-        ShopReferenceData refData = builder.createFrom(new ShopReference(data.ownerId.orElse(null), instance));
+        ShopReferenceData refData = builder.createFrom(new ShopReference(data.ownerId, shop.instance));
         DataTransactionResult dtr = sign.offer(refData);
 
         if(dtr.isSuccessful()) {
-            DatabaseManager.insert(conn, data.ownerId.orElse(null), DatabaseCategory.SHOPDATA, instance, data.serialize());
+            DatabaseManager.shop.insert(conn, data.ownerId, shop.instance, data);
             shop.writeToSign();
             //msg(player, "Made the " + ((isServerOwned) ? "server-" : "")+ "shop!");
             return Optional.of(shop);
@@ -156,6 +141,7 @@ public class Shop {
         }
     }
 
+    // TODO: Implement
     public void writeToSign() {
 
     }
@@ -171,15 +157,11 @@ public class Shop {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, ref.author, DatabaseCategory.SHOPDATA, ref.instance, "LIMIT 1");
-            if(resultSet.next()) {
-                try {
-                    Shop shop = new Shop(sign, ref.instance, ((SerializedShopData) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize());
-                    return Optional.of(shop);
-                } catch(BadDataException e) {
-                    FedorasMarket.getLogger().error("Bad shop data :o", e);
-                }
-            }
+            Optional<ShopData> opt_data = DatabaseManager.shop.get(conn, ref.owner, ref.instance);
+            if(opt_data.isPresent()) {
+                Shop shop = new Shop(sign, ref.instance, opt_data.get());
+                return Optional.of(shop);
+            } // else it will return Optional.empty()
 
         } catch (SQLException e) {
             FedorasMarket.getLogger().error("SQL Error", e);
@@ -202,6 +184,7 @@ public class Shop {
         return fromSign(sign);
     }
 
+    // TODO: Implement
     public void refresh() {
         // update with the db reference
     }

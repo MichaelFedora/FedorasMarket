@@ -18,6 +18,23 @@ public final class DatabaseManager {
 
     public static final String DB_ID = "jdbc:h2:./mods/FedorasData/market.db";
 
+    /*
+    Database layout:
+    - Tablename: "type:name", contains it's own layout; e.x.
+     - [tradeform:00000-0000-00-0001] {"name", <data>}
+     - [modifier:<uuid>] {"name", <data>}
+     - [depot:server] {<idx>, <item_data>}
+     - [shop:1234-5678-91-01234] {<uuid>, <data>}
+     - [tradereq:4444-4656-87-3535] {<idx>, <data>}
+     */
+
+    public static final TradeFormTable tradeForm = new TradeFormTable();
+    public static final ModifierTable modifier = new ModifierTable();
+    public static final DepotTable depot = new DepotTable();
+    public static final ShopTable shop = new ShopTable();
+    public static final TradeReqTable tradeReq = new TradeReqTable();
+    public static final UserdataTable userdata = new UserdataTable();
+
     @Inject
     private static PluginContainer plugin;
 
@@ -41,15 +58,15 @@ public final class DatabaseManager {
         depot.makeIfNotExist(conn, id);
         shop.makeIfNotExist(conn, id);
         tradeReq.makeIfNotExist(conn, id);
+        userdata.makeIfNotExist(conn, id);
     }
 
     public static void initialize() {
 
         try(Connection conn = getConnection()) {
 
-            for (Player p : Sponge.getServer().getOnlinePlayers()) {
+            for (Player p : Sponge.getServer().getOnlinePlayers()) // not that this is necessary...
                 makeIfNotExist(conn, p.getUniqueId().toString());
-            }
 
         } catch(SQLException e) {
             plugin.getLogger().error("SQL Error", e);
@@ -66,22 +83,4 @@ public final class DatabaseManager {
             plugin.getLogger().error("SQL Error", e);
         }
     }
-
-    public static final TradeFormTable tradeForm = new TradeFormTable();
-    public static final ModifierTable modifier = new ModifierTable();
-    public static final DepotTable depot = new DepotTable();
-    public static final ShopTable shop = new ShopTable();
-    public static final TradeReqTable tradeReq = new TradeReqTable();
-
-    /*
-    TODO: fix database layout
-
-    Database layout:
-    - Tablename: "type:name", contains it's own layout; e.x.
-     - [tradeform:00000-0000-00-0001] {"name", <data>}
-     - [modifier:<uuid>] {"name", <data>}
-     - [depot:server] {<idx>, <item_data>}
-     - [shop:1234-5678-91-01234] {<uuid>, <data>}
-     - [tradereq:4444-4656-87-3535] {<idx>, <data>}
-     */
 }

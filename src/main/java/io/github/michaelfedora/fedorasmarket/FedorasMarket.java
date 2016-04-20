@@ -32,21 +32,16 @@ import me.flibio.updatifier.Updatifier;
 import net.minecrell.mcstats.SpongeStatsLite;
 import org.slf4j.Logger;
 
-import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.block.BlockType;
-import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
-import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.service.economy.EconomyService;
-import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
@@ -78,7 +73,7 @@ public class FedorasMarket {
 
     @Inject
     @ConfigDir(sharedRoot = true)
-    private Path sharedConfigDir; //TODO: Implement config
+    private Path sharedConfigDir;
     public static Path getSharedConfigDir() { return instance.sharedConfigDir; }
 
     private EconomyService economyService;
