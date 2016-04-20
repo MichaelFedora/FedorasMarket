@@ -1,9 +1,9 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.quickshop;
 
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.shop.*;
+import io.github.michaelfedora.fedorasmarket.shop.modifier.ShopModifier;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
 import org.spongepowered.api.block.BlockSnapshot;

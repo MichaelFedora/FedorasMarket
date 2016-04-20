@@ -3,6 +3,7 @@ package io.github.michaelfedora.fedorasmarket.shop;
 import com.flowpowered.math.vector.Vector3d;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializedData;
+import io.github.michaelfedora.fedorasmarket.shop.modifier.ShopModifier;
 import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
 
 import javax.annotation.Nullable;

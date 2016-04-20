@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedorasmarket.shop;
 
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.FmSerializable;
+import io.github.michaelfedora.fedorasmarket.shop.modifier.ShopModifier;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.world.Location;

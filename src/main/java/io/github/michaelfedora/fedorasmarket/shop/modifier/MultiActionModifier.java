@@ -1,6 +1,6 @@
-package io.github.michaelfedora.fedorasmarket.shop;
+package io.github.michaelfedora.fedorasmarket.shop.modifier;
 
-import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
+import io.github.michaelfedora.fedorasmarket.shop.ShopData;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public final class MultiActionModifier extends ShopModifier {
     @Override
     public void execute(ShopData data, TradeActiveParty owner, TradeActiveParty customer) {
         for(int i = 0; i < number; i++)
-            if(!data.tradeForm.apply(owner, customer))
+            if(!data.getTradeForm().apply(owner, customer))
                 break;
     }
 }

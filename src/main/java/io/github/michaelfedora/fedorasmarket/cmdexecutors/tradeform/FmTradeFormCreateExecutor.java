@@ -1,9 +1,6 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.tradeform;
 
-import io.github.michaelfedora.fedorasmarket.PluginInfo;
-import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutor;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
-import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;

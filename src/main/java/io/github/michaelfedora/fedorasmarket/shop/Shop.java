@@ -7,8 +7,7 @@ import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopRefer
 import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataManipulatorBuilder;
 import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.database.DatabaseCategory;
-import io.github.michaelfedora.fedorasmarket.database.DatabaseQuery;
+import io.github.michaelfedora.fedorasmarket.shop.modifier.ShopModifier;
 import io.github.michaelfedora.fedorasmarket.trade.GoodType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;

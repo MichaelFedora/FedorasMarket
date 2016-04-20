@@ -1,11 +1,11 @@
-package io.github.michaelfedora.fedorasmarket.shop;
+package io.github.michaelfedora.fedorasmarket.shop.modifier;
 
+import io.github.michaelfedora.fedorasmarket.shop.ShopData;
 import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import io.github.michaelfedora.fedorasmarket.trade.TradeParty;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -27,7 +27,8 @@ public final class SellSwitchModifier extends ShopModifier {
     @Override
     public void execute(ShopData data, TradeActiveParty owner, TradeActiveParty customer) {
 
-        TradeForm switchTradeForm = new TradeForm(data.tradeForm.getTradeType(), ownerSellParty, data.tradeForm.getCustomerParty());
+        final TradeForm tf = data.getTradeForm();
+        TradeForm switchTradeForm = new TradeForm(tf.getTradeType(), ownerSellParty, tf.getCustomerParty());
         switchTradeForm.apply(owner, customer);
     }
 }

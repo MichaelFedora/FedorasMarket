@@ -1,5 +1,6 @@
-package io.github.michaelfedora.fedorasmarket.shop;
+package io.github.michaelfedora.fedorasmarket.shop.modifier;
 
+import io.github.michaelfedora.fedorasmarket.shop.ShopData;
 import io.github.michaelfedora.fedorasmarket.trade.TradeType;
 import io.github.michaelfedora.fedorasmarket.trade.TradeActiveParty;
 
