@@ -1,7 +1,12 @@
 package io.github.michaelfedora.fedorasmarket.database;
 
 import io.github.michaelfedora.fedorasmarket.FedorasMarket;
+import io.github.michaelfedora.fedorasmarket.shop.ShopData;
+import io.github.michaelfedora.fedorasmarket.shop.ShopModifier;
+import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
+import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.service.sql.SqlService;
 
 import java.sql.*;
@@ -80,159 +85,221 @@ public final class DatabaseManager {
      - [tradereq:4444-4656-87-3535] {<idx>, <data>}
      */
 
-    /**
-     * Selects a number of values which match the given parameters, and has an additional entry if the user wants to specify
-     * something more
-     * @param conn the connection
-     * @param columns the columns to select
-     * @param author the author
-     * @param category the category of the data
-     * @param name the name of the data
-     * @param more something more to put onto the statement
-     * @return all the values which match the given criteria
-     * @throws SQLException
-     */
-    public static ResultSet selectWithMore(Connection conn, String columns, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
+    public interface Db<V, K> {
 
-        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE author=? AND category=? AND name=? " + more;
+        /**
+         * Gets all the data for a particular id
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id the id of the table/owner
+         * @return the list of values
+         * @throws SQLException
+         */
+        List<V> getAll(Connection conn, String id) throws SQLException;
 
-        int i = 0;
-        PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, author);
-        preparedStatement.setString(++i, category.toString());
-        preparedStatement.setString(++i, name.toString());
+        /**
+         * Gets a specific data entry for a particular id and key
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id the id of the table/owner
+         * @param key the key of the value
+         * @return the value
+         * @throws SQLException
+         */
+        Optional<V> get(Connection conn, String id, K key) throws SQLException;
 
-        return preparedStatement.executeQuery();
+        /**
+         * Updates a particular entry with a new value
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id the id of the table/owner
+         * @param key the key of the entry to update
+         * @param value the new value of the specified key
+         * @return whether or not it succeeded
+         * @throws SQLException
+         */
+        boolean update(Connection conn, String id, K key, V value) throws SQLException;
+
+        /**
+         * Deletes a particular entry
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id the id of the table/owner
+         * @param key the key of the entry to delete
+         * @return whether or not it succeeded
+         * @throws SQLException
+         */
+        boolean delete(Connection conn, String id, K key) throws SQLException;
+
+        /**
+         * Inserts a new entry
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id the id of the table/owner
+         * @param key the key of the entry to insert into
+         * @param value the value of the entry to insert
+         * @return whether or not it succeeded
+         * @throws SQLException
+         */
+        boolean insert(Connection conn, String id, K key, V value) throws SQLException;
     }
 
-    public static ResultSet selectWithMore(Connection conn, String columns, UUID author, DatabaseCategory category, String more) throws SQLException {
+    // [tradeform:<string>] {"name", <data>}
+    public static class DbTradeForm implements Db<TradeForm, String> {
 
-        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE author=? AND category=? " + more;
+        private DbTradeForm() { }
 
-        int i = 0;
-        PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, author);
-        preparedStatement.setString(++i, category.toString());
 
-        return preparedStatement.executeQuery();
+        /**
+         * Gets all the data for a particular id
+         *
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id   the id of the table/owner
+         * @return the list of values
+         * @throws SQLException
+         */
+        @Override
+        public List<TradeForm> getAll(Connection conn, String id) throws SQLException {
+
+            List<TradeForm> list = new ArrayList<>();
+
+            String statement = "SELECT data FROM `tradeform:" + id + "`";
+
+            ResultSet resultSet = conn.prepareStatement(statement).executeQuery();
+
+            Object data;
+            while(resultSet.next()) {
+
+                data = resultSet.getObject("data");
+
+                if(!(data instanceof SerializedTradeForm))
+                    continue;
+
+                try {
+                    list.add(((SerializedTradeForm) data).deserialize());
+                } catch (BadDataException e) {
+                    // do nothing
+                }
+            }
+
+            return list;
+        }
+
+        /**
+         * Gets a specific data entry for a particular id and key
+         *
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id   the id of the table/owner
+         * @param key  the key of the value
+         * @return the value
+         * @throws SQLException
+         */
+        @Override
+        public Optional<TradeForm> get(Connection conn, String id, String key) throws SQLException {
+            String statement = "SELECT data FROM `tradeform:" + id + "` WHERE key=?";
+
+            int i = 0;
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setString(++i, key);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(!resultSet.next())
+                return Optional.empty();
+
+            Object data = resultSet.getObject("data");
+            if(!(data instanceof SerializedTradeForm))
+                return Optional.empty();
+
+            try {
+                return Optional.of(((SerializedTradeForm) data).deserialize());
+            } catch(BadDataException e) {
+                return Optional.empty();
+            }
+        }
+
+        /**
+         * Updates a particular entry with a new value
+         *
+         * @param conn  the database connection (to be used inside a try-catch(-finally)
+         * @param id    the id of the table/owner
+         * @param key   the key of the entry to update
+         * @param value the new value of the specified key
+         * @return whether or not it succeeded
+         * @throws SQLException
+         */
+        @Override
+        public boolean update(Connection conn, String id, String key, TradeForm value) throws SQLException {
+            String statement = "UPDATE `tradeform:" + id + "` SET data=? WHERE name=?";
+
+            int i = 0;
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setObject(++i, value);
+            preparedStatement.setString(++i, key);
+
+            return preparedStatement.execute();
+        }
+
+        /**
+         * Deletes a particular entry
+         *
+         * @param conn the database connection (to be used inside a try-catch(-finally)
+         * @param id   the id of the table/owner
+         * @param key  the key of the entry to delete
+         * @return whether or not it succeeded
+         * @throws SQLException
+         */
+        @Override
+        public boolean delete(Connection conn, String id, String key) throws SQLException {
+            int i = 0;
+            String statement = "DELETE FROM `tradeform:" + id + "` WHERE name=?";
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setString(++i, key);
+
+            return preparedStatement.execute();
+        }
+
+        /**
+         * Inserts a new entry
+         *
+         * @param conn  the database connection (to be used inside a try-catch(-finally)
+         * @param id    the id of the table/owner
+         * @param key   the key of the entry to insert into
+         * @param value the value of the entry to insert
+         * @return whether or not it succeeded
+         * @throws SQLException
+         */
+        @Override
+        public boolean insert(Connection conn, String id, String key, TradeForm value) throws SQLException {
+            int i = 0;
+            String statement = "INSERT INTO `tradeform:" + id + "(name, data) values (?, ?)";
+
+            PreparedStatement preparedStatement = conn.prepareStatement(statement);
+            preparedStatement.setString(++i, key); // FIXME: try this
+            preparedStatement.setObject(++i, value);
+
+            return preparedStatement.execute();
+        }
     }
 
-    public static ResultSet selectWithMore(Connection conn, String columns, UUID author, String more) throws SQLException {
+    // [modifier:<string>] {"name", <data>}
+    public static class DbModifier implements Db<ShopModifier, String> {
 
-        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE author=? " + more;
-
-        int i = 0;
-        PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, author);
-
-        return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, String columns, DatabaseCategory category, String more) throws SQLException {
+    // [depot:<string>] {<idx>, <item_data>}
+    public static class DbDepot implements Db<ItemStack, int> {
 
-        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " WHERE category=? " + more;
-
-        int i = 0;
-        PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setString(++i, category.toString());
-
-        return preparedStatement.executeQuery();
     }
 
-    public static ResultSet selectWithMore(Connection conn, String columns, String more) throws SQLException {
+    // [shop:<string>] {<uuid>, <data>}
 
-        String statement = "SELECT " + columns + " FROM " + DB_TABLE + " " + more;
+    public static class DbShop implements Db<ShopData, UUID> {
 
-        PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        return preparedStatement.executeQuery();
     }
 
-    /**
-     * Selects all the values which match the given parameters, and has an additional entry if the user wants to specify
-     * something more
-     * @param conn the connection
-     * @param author the author
-     * @param category the category of the data
-     * @param name the name of the data
-     * @param more something more to put onto the statement
-     * @return all the values which match the given criteria
-     * @throws SQLException
-     */
-    public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, Object name, String more) throws SQLException {
-        return selectWithMore(conn, "*", author, category, name, more);
+    // [tradereq:<string>] {<idx>, <data>}
+
+    public static class DbTradeReq implements Db<TradeForm, int> {
+
     }
 
-    public static ResultSet selectAllWithMore(Connection conn, UUID author, DatabaseCategory category, String more) throws SQLException {
-        return selectWithMore(conn, "*", author, category, more);
-    }
-
-    public static ResultSet selectAllWithMore(Connection conn, UUID author, String more) throws SQLException {
-        return selectWithMore(conn, "*", author, more);
-    }
-
-    public static ResultSet selectAllWithMore(Connection conn, String more) throws SQLException {
-        return selectWithMore(conn, "*", more);
-    }
-
-    /**
-     * Select the specified amount of values from the given parameters
-     * @param conn the connection
-     * @param columns the columns to select
-     * @param author the author
-     * @param category the category of the data
-     * @param name the name of the data
-     * @return all the values which match the given criteria
-     * @throws SQLException
-     */
-    public static ResultSet select(Connection conn, String columns, UUID author, DatabaseCategory category, Object name) throws SQLException {
-        return selectWithMore(conn, columns, author, category, name, "");
-    }
-
-    public static ResultSet select(Connection conn, String columns, UUID author, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, columns, author, category, "");
-    }
-
-
-    public static ResultSet select(Connection conn, String columns, UUID author) throws SQLException {
-        return selectWithMore(conn, columns, author, "");
-    }
-
-    public static ResultSet select(Connection conn, String columns, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, columns, category, "");
-    }
-
-    public static ResultSet select(Connection conn, String columns) throws SQLException {
-        return selectWithMore(conn, columns, "");
-    }
-
-    /**
-     * Selects all the values which match the given parameters
-     * @param conn the connection
-     * @param author the author
-     * @param category the category of the data
-     * @param name the name of the data
-     * @return all the values which match the given criteria
-     * @throws SQLException
-     */
-    public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category, Object name) throws SQLException {
-        return selectWithMore(conn, "*", author, category, name, "");
-    }
-
-    public static ResultSet selectAll(Connection conn, UUID author, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, "*", author, category, "");
-    }
-
-    public static ResultSet selectAll(Connection conn, UUID author) throws SQLException {
-        return selectWithMore(conn, "*", author, "");
-    }
-
-    public static ResultSet selectAll(Connection conn, DatabaseCategory category) throws SQLException {
-        return selectWithMore(conn, "*", category, "");
-    }
-
-    public static ResultSet selectAll(Connection conn) throws SQLException {
-        return selectWithMore(conn, "*", "");
-    }
+    public static boolean update(Connection conn, String id, )
 
     public static boolean update(Connection conn, Object data, UUID author, DatabaseCategory category, Object name) throws SQLException {
 
