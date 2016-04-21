@@ -8,15 +8,15 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by Michael on 3/16/2016.
@@ -54,11 +54,12 @@ public class FmDepotListExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.select(conn, DatabaseQuery.DATA.v, playerId, DatabaseCategory.DEPOTITEM);
+            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAll(conn, playerId.toString()));
 
-            while(resultSet.next()) {
-                tb.append(Text.of(TextColors.BLUE, "[", TextColors.WHITE, resultSet.getObject(DatabaseQuery.DATA.v), TextColors.BLUE, "]"));
-                if(!resultSet.isLast()) {
+            int i = 0;
+            for(Map.Entry entry : depot.entrySet()) {
+                tb.append(Text.of(TextStyles.BOLD, TextColors.GREEN, ++i, TextStyles.RESET, TextColors.GRAY, "(", entry.getKey(), ") ", TextColors.BLUE, "[", TextColors.WHITE, entry.getValue(), TextColors.BLUE, "]"));
+                if(i < depot.size()) {
                     tb.append(Text.of(TextColors.GRAY, ", "));
                 }
             }

@@ -16,7 +16,7 @@ import java.util.*;
 public class DepotTable implements DatabaseTable<ItemStack, Integer> {
 
     public enum Query {
-        IDX("idx", "integer"),
+        IDX("idx", "int identity"),
         DATA("data", "other");
 
         public final String v;

@@ -1,9 +1,11 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.depot;
 
+import com.google.common.collect.Iterables;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.serializeddata.SerializedItemStack;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
+import javafx.collections.transformation.SortedList;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -18,9 +20,8 @@ import org.spongepowered.api.text.format.TextColors;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Michael on 3/16/2016.
@@ -36,7 +37,8 @@ public class FmDepotClaimExecutor extends FmExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Claim an item from your depot"))
                 .permission(PERM)
-                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("num"))))
+                .arguments(GenericArguments.flags().flag("-raw", "r").buildWith(GenericArguments.none()),
+                        GenericArguments.optional(GenericArguments.integer(Text.of("num"))))
                 .executor(new FmDepotClaimExecutor())
                 .build();
     }
@@ -54,29 +56,33 @@ public class FmDepotClaimExecutor extends FmExecutorBase {
 
         Player player = (Player) src;
         UUID playerId = player.getUniqueId();
-        SerializedItemStack serializedItemStack;
         ItemStack itemStack;
 
         int num = ctx.<Integer>getOne("number").orElse(1) - 1;
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            final String columns = DatabaseQuery.NAME.v + ", " + DatabaseQuery.DATA.v;
-            ResultSet resultSet = DatabaseManager.select(conn, columns, playerId, DatabaseCategory.DEPOTITEM, "LIMIT 1 OFFSET " + num);
+            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAll(conn, playerId.toString()));
 
-            if(!resultSet.next())
-                throw makeException("Couldn't find item #" + num);
+            int key;
+            if(ctx.getOne("-raw").isPresent()) {
+                key = num;
+                if(!depot.containsKey(key))
+                    throw makeException("Key " + key + " does not exist within the depot!");
+            } else {
+                if(depot.size() <= num)
+                    throw makeException("Couldn't find item #" + num);
+                key = Iterables.get(depot.keySet(), num);
+            }
 
-            serializedItemStack = ((SerializedItemStack) resultSet.getObject(DatabaseQuery.DATA.v));
+            itemStack = depot.get(key);
 
-            DatabaseManager.delete(conn, playerId, DatabaseCategory.DEPOTITEM, resultSet.getObject(DatabaseQuery.NAME.v));
+            DatabaseManager.depot.delete(conn, playerId.toString(), key);
 
         } catch(SQLException e) {
 
             throw makeException("SQLError", e, src);
         }
-
-        itemStack = serializedItemStack.safeDeserialize().orElseThrow(makeExceptionSupplier("Couldn't make item stack :c"));
 
         FmUtil.giveItem(itemStack, player);
 

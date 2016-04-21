@@ -1,22 +1,20 @@
 package io.github.michaelfedora.fedorasmarket.database.table;
 
-import io.github.michaelfedora.fedorasmarket.database.BadDataException;
-import io.github.michaelfedora.fedorasmarket.trade.SerializedTradeForm;
-import io.github.michaelfedora.fedorasmarket.trade.TradeForm;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by Michael on 4/20/2016.
  */
-public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
+public class UserdataTable implements DatabaseTable<Object, String> {
 
     public enum Query {
-        IDX("idx", "int identity"),
+        NAME("name", "varchar(255)"),
         DATA("data", "other");
 
         public final String v;
@@ -37,8 +35,8 @@ public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
      */
     @Override
     public void makeIfNotExist(Connection conn, String id) throws SQLException {
-        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `tradereq:" + id + "`" +
-                "(" + Query.IDX.v + " " + Query.IDX.type + ", " +
+        conn.prepareStatement("CREATE TABLE IF NOT EXISTS `tradeform:" + id + "`" +
+                "(" + Query.NAME.v + " " + Query.NAME.type + ", " +
                 Query.DATA.v + Query.DATA.type + ")").execute();
     }
 
@@ -51,28 +49,16 @@ public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
      * @throws SQLException
      */
     @Override
-    public Map<Integer, TradeForm> getAll(Connection conn, String id) throws SQLException {
+    public Map<String, Object> getAll(Connection conn, String id) throws SQLException {
 
-        Map<Integer, TradeForm> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
 
-        String statement = "SELECT * FROM `tradereq:" + id + "`";
+        String statement = "SELECT * FROM `tradeform:" + id + "`";
 
         ResultSet resultSet = conn.prepareStatement(statement).executeQuery();
 
-        Object data;
-        while(resultSet.next()) {
-
-            data = resultSet.getObject(Query.DATA.v);
-
-            if(!(data instanceof SerializedTradeForm))
-                continue;
-
-            try {
-                map.put(resultSet.getInt(Query.IDX.v), ((SerializedTradeForm) data).deserialize());
-            } catch (BadDataException e) {
-                // do nothing
-            }
-        }
+        while(resultSet.next())
+            map.put(resultSet.getString(Query.NAME.v), resultSet.getObject(Query.DATA.v));
 
         return map;
     }
@@ -87,27 +73,19 @@ public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
      * @throws SQLException
      */
     @Override
-    public Optional<TradeForm> get(Connection conn, String id, Integer key) throws SQLException {
+    public Optional<Object> get(Connection conn, String id, String key) throws SQLException {
 
         int i = 0;
-        String statement = "SELECT " + Query.DATA.v + " FROM `tradereq:" + id + "` WHERE " + Query.IDX.v + "=?";
+        String statement = "SELECT " + Query.DATA.v + " FROM `tradeform:" + id + "` WHERE " + Query.NAME.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setInt(++i, key);
+        preparedStatement.setString(++i, key);
 
         ResultSet resultSet = preparedStatement.executeQuery();
         if(!resultSet.next())
             return Optional.empty();
 
-        Object data = resultSet.getObject(Query.DATA.v);
-        if(!(data instanceof SerializedTradeForm))
-            return Optional.empty();
-
-        try {
-            return Optional.of(((SerializedTradeForm) data).deserialize());
-        } catch(BadDataException e) {
-            return Optional.empty();
-        }
+        return Optional.of(resultSet.getObject(Query.DATA.v));
     }
 
     /**
@@ -121,14 +99,14 @@ public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
      * @throws SQLException
      */
     @Override
-    public boolean update(Connection conn, String id, Integer key, TradeForm value) throws SQLException {
+    public boolean update(Connection conn, String id, String key, Object value) throws SQLException {
 
         int i = 0;
-        String statement = "UPDATE `tradereq:" + id + "` SET " + Query.DATA.v + "=? WHERE " + Query.IDX.v + "=?";
+        String statement = "UPDATE `tradeform:" + id + "` SET " + Query.DATA.v + "=? WHERE " + Query.NAME.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setObject(++i, value.serialize());
-        preparedStatement.setInt(++i, key);
+        preparedStatement.setObject(++i, value);
+        preparedStatement.setString(++i, key);
 
         return preparedStatement.execute();
     }
@@ -143,13 +121,13 @@ public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
      * @throws SQLException
      */
     @Override
-    public boolean delete(Connection conn, String id, Integer key) throws SQLException {
+    public boolean delete(Connection conn, String id, String key) throws SQLException {
 
         int i = 0;
-        String statement = "DELETE FROM `tradereq:" + id + "` WHERE " + Query.IDX.v + "=?";
+        String statement = "DELETE FROM `tradeform:" + id + "` WHERE " + Query.NAME.v + "=?";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setInt(++i, key);
+        preparedStatement.setString(++i, key);
 
         return preparedStatement.execute();
     }
@@ -165,14 +143,14 @@ public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
      * @throws SQLException
      */
     @Override
-    public boolean insert(Connection conn, String id, Integer key, TradeForm value) throws SQLException {
+    public boolean insert(Connection conn, String id, String key, Object value) throws SQLException {
 
         int i = 0;
-        String statement = "INSERT INTO `tradereq:" + id + "`(" + Query.IDX.v + ", " + Query.DATA.v + ") values (?, ?)";
+        String statement = "INSERT INTO `tradeform:" + id + "`(" + Query.NAME.v + ", " + Query.DATA.v + ") values (?, ?)";
 
         PreparedStatement preparedStatement = conn.prepareStatement(statement);
-        preparedStatement.setInt(++i, key);
-        preparedStatement.setObject(++i, value.serialize());
+        preparedStatement.setString(++i, key);
+        preparedStatement.setObject(++i, value);
 
         return preparedStatement.execute();
     }

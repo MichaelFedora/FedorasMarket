@@ -1,5 +1,6 @@
 package io.github.michaelfedora.fedorasmarket.cmdexecutors.depot;
 
+import com.google.common.collect.Iterables;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import org.spongepowered.api.command.CommandException;
@@ -9,14 +10,13 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by Michael on 3/16/2016.
@@ -33,7 +33,8 @@ public class FmDepotTossExecutor extends FmExecutorBase {
                 .description(Text.of("Tosses an item from the depot (PERMANENTLY)"))
                 .extendedDescription(Text.of("Tosses an item from the depot. WARNING, THIS PERMANENTLY REMOVES THE ITEM. USE WITH CARE!"))
                 .permission(PERM)
-                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("num"))))
+                .arguments(GenericArguments.flags().flag("-raw", "r").buildWith(GenericArguments.none()),
+                        GenericArguments.optional(GenericArguments.integer(Text.of("num"))))
                 .executor(new FmDepotListExecutor())
                 .build();
     }
@@ -56,14 +57,20 @@ public class FmDepotTossExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.NAME.v, playerId, DatabaseCategory.DEPOTITEM, "LIMIT 1 OFFSET " + num);
+            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAll(conn, playerId.toString()));
 
-            if(!resultSet.next())
-                throw makeException("Couldn't find item #" + num + "! :c");
+            int key = 0;
+            if(ctx.getOne("-raw").isPresent()) {
+                key = num;
+                if(!depot.containsKey(key))
+                    throw makeException("Key " + key + " does not exist within the depot!");
+            } else {
+                if(depot.size() <= num)
+                    throw makeException("Couldn't find item #" + num);
+                key = Iterables.get(depot.keySet(), num);
+            }
 
-            Object name = resultSet.getObject(DatabaseQuery.NAME.v);
-
-            DatabaseManager.delete(conn, playerId, DatabaseCategory.DEPOTITEM, name);
+            DatabaseManager.depot.delete(conn, playerId.toString(), key);
 
         } catch(SQLException e) {
 
