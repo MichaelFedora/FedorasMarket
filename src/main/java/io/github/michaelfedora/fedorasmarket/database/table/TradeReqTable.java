@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * Created by Michael on 4/20/2016.
  */
-public class TradeReqTable implements DatabaseTable<TradeForm, Integer> {
+public class TradeReqTable implements DatabaseTableSet<TradeForm> {
 
     public enum Query {
         IDX("idx", "int identity"),

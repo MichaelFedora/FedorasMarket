@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * Created by Michael on 4/20/2016.
  */
-public class TradeFormTable implements DatabaseTable<TradeForm, String> {
+public class TradeFormTable implements DatabaseTableMap<String, TradeForm> {
 
     public enum Query {
         NAME("name", "varchar(255)"),

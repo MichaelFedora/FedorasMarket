@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Created by Michael on 4/20/2016.
  */
-public class ModifierTable implements DatabaseTable<ShopModifier, String> {
+public class ModifierTable implements DatabaseTableMap<String, ShopModifier> {
 
     public enum Query {
         NAME("name", "varchar(255)"),

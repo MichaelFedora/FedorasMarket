@@ -7,11 +7,12 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by Michael on 4/20/2016.
  */
-public class UserdataTable implements DatabaseTable<Object, String> {
+public class UserdataTable implements DatabaseTableMap<String, Object> {
 
     public enum Query {
         NAME("name", "varchar(255)"),
@@ -38,6 +39,28 @@ public class UserdataTable implements DatabaseTable<Object, String> {
         conn.prepareStatement("CREATE TABLE IF NOT EXISTS `tradeform:" + id + "`" +
                 "(" + Query.NAME.v + " " + Query.NAME.type + ", " +
                 Query.DATA.v + Query.DATA.type + ")").execute();
+    }
+
+    /**
+     * Get's all the "users" of the table (that is, using this prefix).
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @return the set of the users of this table-type
+     * @throws SQLException
+     */
+    @Override
+    public Set<String> getUsers(Connection conn) throws SQLException {
+        return null;
+    }
+
+    /**
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @return A map, of all of this table-types tables, and users, with their data.
+     * @throws SQLException
+     */
+    @Override
+    public Map<String, Map<String, Object>> getAllData(Connection conn) throws SQLException {
+        return null;
     }
 
     /**
@@ -130,6 +153,17 @@ public class UserdataTable implements DatabaseTable<Object, String> {
         preparedStatement.setString(++i, key);
 
         return preparedStatement.execute();
+    }
+
+    /**
+     * Cleans a table of "bad data"; i.e. if you can't {@link #get} the data, then it should be removed from the table.
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @throws SQLException
+     */
+    @Override
+    public void clean(Connection conn) throws SQLException {
+
     }
 
     /**

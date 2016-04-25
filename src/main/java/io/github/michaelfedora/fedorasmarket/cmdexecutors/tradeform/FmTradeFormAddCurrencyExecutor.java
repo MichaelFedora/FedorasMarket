@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by Michael on 2/25/2016.
@@ -71,12 +72,12 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
         boolean success = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, player.getUniqueId(), DatabaseCategory.TRADEFORM, name, "LIMIT 1");
+            Optional<TradeForm> opt_tf = DatabaseManager.tradeForm.get(conn, player.getUniqueId().toString(), name);
 
-            if(!resultSet.next())
+            if(!opt_tf.isPresent())
                 throw makeException("Couldn't find tradeform!");
 
-            TradeForm  tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).safeDeserialize().orElseThrow(makeExceptionSupplier("Bad tradeform data!"));
+            TradeForm  tradeForm = opt_tf.get();
 
             Map<Currency,BigDecimal> currencies;
             BigDecimal old_val;
@@ -106,7 +107,7 @@ public class FmTradeFormAddCurrencyExecutor extends FmExecutorBase {
                     break;
             }
 
-            DatabaseManager.update(conn, tradeForm.serialize(), player.getUniqueId(), DatabaseCategory.TRADEFORM, name);
+            DatabaseManager.tradeForm.update(conn, player.getUniqueId().toString(), name, tradeForm);
 
         } catch(SQLException e) {
             throw makeException("SQL Error", e, src);

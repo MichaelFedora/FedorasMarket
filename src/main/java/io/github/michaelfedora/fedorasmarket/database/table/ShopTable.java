@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by Michael on 4/20/2016.
  */
-public class ShopTable implements DatabaseTable<ShopData, UUID> {
+public class ShopTable implements DatabaseTableMap<UUID, ShopData> {
 
     public enum Query {
         ID("id", "uuid"),

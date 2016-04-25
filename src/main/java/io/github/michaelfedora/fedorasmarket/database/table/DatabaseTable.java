@@ -7,9 +7,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Created by Michael on 4/20/2016.
+ * Created by Michael on 4/25/2016.
  */
-public interface DatabaseTable<V, K> {
+public interface DatabaseTable<K, V, D> {
 
     /**
      * Makes the table if it doesn't exist.
@@ -35,7 +35,7 @@ public interface DatabaseTable<V, K> {
      * @return A map, of all of this table-types tables, and users, with their data.
      * @throws SQLException
      */
-    Map<String, Map<K,V>> getAllData(Connection conn) throws SQLException;
+    Map<String, D> getAllData(Connection conn) throws SQLException;
 
     /**
      * Gets all the data for a particular id.
@@ -45,7 +45,7 @@ public interface DatabaseTable<V, K> {
      * @return the list of values
      * @throws SQLException
      */
-    Map<K, V> getAllFor(Connection conn, String id) throws SQLException;
+    D getAllFor(Connection conn, String id) throws SQLException;
 
     /**
      * Gets a specific data entry for a particular id and key.
@@ -82,22 +82,11 @@ public interface DatabaseTable<V, K> {
     boolean delete(Connection conn, String id, K key) throws SQLException;
 
     /**
-     * Inserts a new entry.
-     *
-     * @param conn the database connection (to be used inside a try-catch(-finally))
-     * @param id the id of the table/owner
-     * @param key the key of the entry to insert into
-     * @param value the value of the entry to insert
-     * @return whether or not it succeeded
-     * @throws SQLException
-     */
-    boolean insert(Connection conn, String id, K key, V value) throws SQLException;
-
-    /**
      * Cleans a table of "bad data"; i.e. if you can't {@link #get} the data, then it should be removed from the table.
      *
      * @param conn the database connection (to be used inside a try-catch(-finally))
      * @throws SQLException
      */
     void clean(Connection conn) throws SQLException;
+
 }
