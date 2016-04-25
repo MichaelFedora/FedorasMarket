@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by Michael on 4/20/2016.
@@ -20,6 +21,23 @@ public interface DatabaseTable<V, K> {
     void makeIfNotExist(Connection conn, String id) throws SQLException;
 
     /**
+     * Get's all the "users" of the table (that is, using this prefix).
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @return the set of the users of this table-type
+     * @throws SQLException
+     */
+    Set<String> getUsers(Connection conn) throws SQLException;
+
+    /**
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @return A map, of all of this table-types tables, and users, with their data.
+     * @throws SQLException
+     */
+    Map<String, Map<K,V>> getAllData(Connection conn) throws SQLException;
+
+    /**
      * Gets all the data for a particular id.
      *
      * @param conn the database connection (to be used inside a try-catch(-finally))
@@ -27,7 +45,7 @@ public interface DatabaseTable<V, K> {
      * @return the list of values
      * @throws SQLException
      */
-    Map<K, V> getAll(Connection conn, String id) throws SQLException;
+    Map<K, V> getAllFor(Connection conn, String id) throws SQLException;
 
     /**
      * Gets a specific data entry for a particular id and key.
@@ -74,4 +92,12 @@ public interface DatabaseTable<V, K> {
      * @throws SQLException
      */
     boolean insert(Connection conn, String id, K key, V value) throws SQLException;
+
+    /**
+     * Cleans a table of "bad data"; i.e. if you can't {@link #get} the data, then it should be removed from the table.
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @throws SQLException
+     */
+    void clean(Connection conn) throws SQLException;
 }

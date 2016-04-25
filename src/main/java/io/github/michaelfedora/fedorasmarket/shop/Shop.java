@@ -5,7 +5,6 @@ import io.github.michaelfedora.fedorasmarket.config.FmConfig;
 import io.github.michaelfedora.fedorasmarket.persistance.FmDataKeys;
 import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceData;
 import io.github.michaelfedora.fedorasmarket.persistance.shopreference.ShopReferenceDataManipulatorBuilder;
-import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
 import io.github.michaelfedora.fedorasmarket.shop.modifier.ShopModifier;
 import io.github.michaelfedora.fedorasmarket.trade.GoodType;
@@ -27,9 +26,7 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -118,7 +115,7 @@ public class Shop {
 
         // =====
 
-        Map<UUID, ShopData> map = DatabaseManager.shop.getAll(conn, data.ownerId);
+        Map<UUID, ShopData> map = DatabaseManager.shop.getAllFor(conn, data.ownerId);
 
         shop.instance = UUID.randomUUID();
         while(map.containsKey(shop.instance))

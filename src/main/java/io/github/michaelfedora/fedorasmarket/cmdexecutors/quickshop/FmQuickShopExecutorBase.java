@@ -48,7 +48,7 @@ public abstract class FmQuickShopExecutorBase extends FmExecutorBase {
             return;
         }
 
-        ShopData shopData = new ShopData(tradeForm, ShopModifier.NONE, sign.getLocation(), (isServerOwned) ? Optional.empty() : Optional.of(playerId));
+        ShopData shopData = new ShopData(tradeForm, ShopModifier.NONE, sign.getLocation(), (isServerOwned) ? "server" : playerId.toString());
         try(Connection conn = DatabaseManager.getConnection()) {
 
             Shop.createNew(conn, sign, shopData);

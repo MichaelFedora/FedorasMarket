@@ -4,10 +4,7 @@ import io.github.michaelfedora.fedorasmarket.database.BadDataException;
 import io.github.michaelfedora.fedorasmarket.shop.ShopData;
 import io.github.michaelfedora.fedorasmarket.shop.SerializedShopData;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -43,6 +40,44 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
     }
 
     /**
+     * Get's all the "users" of the table (that is, using this prefix).
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @return the set of the users of this table-type
+     * @throws SQLException
+     */
+    @Override
+    public Set<String> getUsers(Connection conn) throws SQLException {
+
+        Set<String> users = new HashSet<>();
+
+        ResultSet resultSet = conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES").executeQuery();
+        while(resultSet.next()) {
+            String name = resultSet.getString("NAME");
+            if (name.startsWith("shop:"))
+                users.add(name.substring(5));
+        }
+
+        return users;
+    }
+
+    /**
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @return A map, of all of this table-types tables, and users, with their data.
+     * @throws SQLException
+     */
+    @Override
+    public Map<String, Map<UUID, ShopData>> getAllData(Connection conn) throws SQLException {
+
+        Map<String, Map<UUID, ShopData>> map = new HashMap<>();
+
+        for(String user : getUsers(conn))
+            map.put(user, getAllFor(conn, user));
+
+        return map;
+    }
+
+    /**
      * Gets all the data for a particular id
      *
      * @param conn the database connection (to be used inside a try-catch(-finally)
@@ -51,7 +86,7 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
      * @throws SQLException
      */
     @Override
-    public Map<UUID, ShopData> getAll(Connection conn, String id) throws SQLException {
+    public Map<UUID, ShopData> getAllFor(Connection conn, String id) throws SQLException {
 
         Map<UUID, ShopData> map = new HashMap<>();
 
@@ -175,5 +210,42 @@ public class ShopTable implements DatabaseTable<ShopData, UUID> {
         preparedStatement.setObject(++i, value.serialize());
 
         return preparedStatement.execute();
+    }
+
+    /**
+     * Cleans a table of "bad data"; i.e. if you can't {@link #get} the data, then it should be removed from the table.
+     *
+     * @param conn the database connection (to be used inside a try-catch(-finally))
+     * @throws SQLException
+     */
+    @Override
+    public void clean(Connection conn) throws SQLException {
+
+        for(String user : getUsers(conn)) {
+
+            Set<UUID> toRemove = new HashSet<>();
+
+            ResultSet resultSet_sub = conn.prepareStatement("SELECT * FROM `shop:" + user + "`").executeQuery();
+
+            Object data;
+            while(resultSet_sub.next()) {
+
+                data = resultSet_sub.getObject(Query.DATA.v);
+
+                if(!(data instanceof SerializedShopData)) {
+                    toRemove.add((UUID) resultSet_sub.getObject(Query.ID.v));
+                    continue;
+                }
+
+                try {
+                    ((SerializedShopData) data).deserialize();
+                } catch (Exception e) {
+                    toRemove.add((UUID) resultSet_sub.getObject(Query.ID.v));
+                }
+            }
+
+            for(UUID uuid : toRemove)
+                delete(conn, user, uuid);
+        }
     }
 }

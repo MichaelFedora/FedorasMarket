@@ -50,7 +50,7 @@ public class DepotTable implements DatabaseTable<ItemStack, Integer> {
      * @throws SQLException
      */
     @Override
-    public Map<Integer, ItemStack> getAll(Connection conn, String id) throws SQLException {
+    public Map<Integer, ItemStack> getAllFor(Connection conn, String id) throws SQLException {
         
         Map<Integer, ItemStack> map = new HashMap<>();
 

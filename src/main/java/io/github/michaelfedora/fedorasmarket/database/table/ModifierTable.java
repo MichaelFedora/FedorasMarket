@@ -49,7 +49,7 @@ public class ModifierTable implements DatabaseTable<ShopModifier, String> {
      * @throws SQLException
      */
     @Override
-    public Map<String, ShopModifier> getAll(Connection conn, String id) throws SQLException {
+    public Map<String, ShopModifier> getAllFor(Connection conn, String id) throws SQLException {
 
         Map<String, ShopModifier> map = new HashMap<>();
 

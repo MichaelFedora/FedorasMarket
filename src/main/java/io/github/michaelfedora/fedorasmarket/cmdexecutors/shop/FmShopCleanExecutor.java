@@ -50,11 +50,11 @@ public class FmShopCleanExecutor extends FmExecutorBase {
         boolean failed = false;
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectAll(conn, DatabaseCategory.SHOPDATA);
+            Map<String, Map<UUID, ShopData>> shop = DatabaseManager.shop.getAllData(conn);
             List<Tuple<ShopReference,ShopData>> results = new ArrayList<>();
-            while(resultSet.next()) {
+            for(Map.Entry<String, Map<UUID, ShopData>> entry : shop.entrySet()) {
 
-                UUID playerId = (UUID) resultSet.getObject(DatabaseQuery.AUTHOR.v);
+                String ownerId = entry.getKey();
                 UUID instance = UUID.fromString(resultSet.getObject(DatabaseQuery.NAME.v).toString());
                 Optional<ShopData> opt_data = Optional.empty();
                 try {
@@ -66,13 +66,13 @@ public class FmShopCleanExecutor extends FmExecutorBase {
 
                 if(opt_data.isPresent() && !failed) {
 
-                    results.add(new Tuple<>(new ShopReference(playerId, instance), opt_data.get()));
+                    results.add(new Tuple<>(new ShopReference(ownerId, instance), opt_data.get()));
 
                 } else {
 
                     failed = false;
 
-                    DatabaseManager.delete(conn, playerId, DatabaseCategory.SHOPDATA, instance);
+                    DatabaseManager.delete(conn, ownerId, DatabaseCategory.SHOPDATA, instance);
                 }
             }
 

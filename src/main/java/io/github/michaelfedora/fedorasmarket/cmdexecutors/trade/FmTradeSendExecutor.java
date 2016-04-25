@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -61,16 +62,12 @@ public class FmTradeSendExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            ResultSet resultSet = DatabaseManager.selectWithMore(conn, DatabaseQuery.DATA.v, playerId, DatabaseCategory.TRADEFORM, tradeFormName, "LIMIT 1");
+            Optional<TradeForm> opt_tf = DatabaseManager.tradeForm.get(conn, playerId.toString(), tradeFormName);
 
-            if(!resultSet.next())
-                throw makeException("Bad tradeform name!");
+            if(!opt_tf.isPresent())
+                throw makeException("Bad tradeform!");
 
-            try {
-                tradeForm = ((SerializedTradeForm) resultSet.getObject(DatabaseQuery.DATA.v)).deserialize();
-            } catch(BadDataException e) {
-                throw makeException("Bad data exception (tradeform)", e, src);
-            }
+            tradeForm = opt_tf.get();
 
         } catch(SQLException e) {
             throw makeException("SQLError", e, src);

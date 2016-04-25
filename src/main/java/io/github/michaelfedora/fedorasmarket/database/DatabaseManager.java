@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedorasmarket.database;
 
 import com.google.inject.Inject;
+import io.github.michaelfedora.fedorasmarket.PluginInfo;
 import io.github.michaelfedora.fedorasmarket.database.table.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
@@ -17,6 +18,7 @@ import java.sql.*;
 public final class DatabaseManager {
 
     public static final String DB_ID = "jdbc:h2:./mods/FedorasData/market.db";
+    public static final String DB_TABLE = "tbl" + PluginInfo.DATA_ROOT;
 
     /*
     Database layout:
@@ -72,11 +74,10 @@ public final class DatabaseManager {
             plugin.getLogger().error("SQL Error", e);
         }
 
-        Sponge.getEventManager().registerListeners(plugin, ModifierTable.class);
+        Sponge.getEventManager().registerListener(plugin, ClientConnectionEvent.Join.class, DatabaseManager::OnPlayerJoin);
     }
 
-    @Listener
-    private void OnPlayerJoin(ClientConnectionEvent.Join event) {
+    private static void OnPlayerJoin(ClientConnectionEvent.Join event) {
         try(Connection conn = getConnection()) {
             makeIfNotExist(conn, event.getTargetEntity().getUniqueId().toString());
         } catch(SQLException e) {

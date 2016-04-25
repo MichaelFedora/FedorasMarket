@@ -14,7 +14,6 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -54,7 +53,7 @@ public class FmDepotListExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAll(conn, playerId.toString()));
+            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAllFor(conn, playerId.toString()));
 
             int i = 0;
             for(Map.Entry entry : depot.entrySet()) {

@@ -3,9 +3,7 @@ package io.github.michaelfedora.fedorasmarket.cmdexecutors.depot;
 import com.google.common.collect.Iterables;
 import io.github.michaelfedora.fedorasmarket.cmdexecutors.FmExecutorBase;
 import io.github.michaelfedora.fedorasmarket.database.DatabaseManager;
-import io.github.michaelfedora.fedorasmarket.serializeddata.SerializedItemStack;
 import io.github.michaelfedora.fedorasmarket.util.FmUtil;
-import javafx.collections.transformation.SortedList;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -18,10 +16,8 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by Michael on 3/16/2016.
@@ -62,7 +58,7 @@ public class FmDepotClaimExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAll(conn, playerId.toString()));
+            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAllFor(conn, playerId.toString()));
 
             int key;
             if(ctx.getOne("-raw").isPresent()) {

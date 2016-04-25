@@ -51,7 +51,7 @@ public class TradeFormTable implements DatabaseTable<TradeForm, String> {
      * @throws SQLException
      */
     @Override
-    public Map<String, TradeForm> getAll(Connection conn, String id) throws SQLException {
+    public Map<String, TradeForm> getAllFor(Connection conn, String id) throws SQLException {
 
         Map<String, TradeForm> map = new HashMap<>();
 

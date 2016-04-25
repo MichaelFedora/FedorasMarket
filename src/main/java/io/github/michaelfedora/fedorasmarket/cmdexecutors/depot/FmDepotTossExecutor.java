@@ -14,7 +14,6 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -57,7 +56,7 @@ public class FmDepotTossExecutor extends FmExecutorBase {
 
         try(Connection conn = DatabaseManager.getConnection()) {
 
-            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAll(conn, playerId.toString()));
+            Map<Integer, ItemStack> depot = new TreeMap<>(DatabaseManager.depot.getAllFor(conn, playerId.toString()));
 
             int key = 0;
             if(ctx.getOne("-raw").isPresent()) {

@@ -49,7 +49,7 @@ public class UserdataTable implements DatabaseTable<Object, String> {
      * @throws SQLException
      */
     @Override
-    public Map<String, Object> getAll(Connection conn, String id) throws SQLException {
+    public Map<String, Object> getAllFor(Connection conn, String id) throws SQLException {
 
         Map<String, Object> map = new HashMap<>();
 
